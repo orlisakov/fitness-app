@@ -1,0 +1,1442 @@
+/* ---------------- בסיס ---------------- */
+:root {
+  --pink: #ec407a;
+  --dark-pink: #c2185b;
+  --yellow: #ffd600;
+  --black: #000000;
+  --white: #ffffff;
+  --brown: #4e342e;
+  --accent: #d84315;
+  --accent-hover: #b33411;
+  --background: #fff0f5;
+  --text: #333;
+  --light-grey: #f5f5f5;
+}
+
+body {
+  font-family: "Alef", sans-serif;
+  margin: 0;
+  padding: 0;
+  direction: rtl;
+  background-color: var(--light-grey);
+  color: var(--text);
+}
+
+/* ---------------- עמוד התחברות ---------------- */
+.login-container {
+  display: flex;
+  height: 100vh;
+  font-family: "Alef", sans-serif;
+  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+  color: #ffffff;
+}
+
+.login-left {
+  flex: 1;
+  background-image: url("../assets/couch.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 4rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: white;
+}
+
+.login-left h1 {
+  font-size: 36px;
+  margin-bottom: 20px;
+}
+
+.login-left p {
+  font-size: 16px;
+  line-height: 1.5;
+  max-width: 400px;
+}
+
+.login-right {
+  flex: 1;
+  background: #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-form {
+  width: 100%;
+  max-width: 350px;
+  text-align: center;
+}
+
+.login-logo {
+  width: 100px;
+  height: 100px;
+  border-radius: 12px;
+  object-fit: cover;
+  margin-bottom: 24px;
+}
+
+.login-form input[type="Phone"],
+.login-form input[type="password"],
+.gradient-button {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 16px;
+  font-size: 16px;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+.login-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+
+.forgot-password {
+  color: #999;
+  text-decoration: none;
+}
+
+.gradient-button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(to right, #ff6a00, #ee0979);
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+.gradient-button:hover {
+  opacity: 0.9;
+}
+
+/* ---------------- כותרות / מבנה כללי ---------------- */
+.page-title {
+  margin-bottom: 12px;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #0f0f0f;
+  color: #ffffff;
+  padding: 1rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+.dashboard-logo {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-left: 12px;
+  border: 2px solid #ff4081;
+}
+
+.site-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #fff;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+.site-title:hover {
+  color: #ff4081;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  font-size: 16px;
+}
+.nav-links span {
+  cursor: pointer;
+  color: #eeeeee;
+  transition: color 0.3s ease;
+}
+.nav-links span:hover {
+  color: #ffd600;
+}
+
+.logout-button {
+  background: #ff4081;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: bold;
+  color: white;
+  transition: background-color 0.3s;
+}
+.logout-button:hover {
+  background: #d81b60;
+}
+
+.dashboard-main {
+  padding: 2rem;
+  background-color: #1c1c1c;
+  color: white;
+  min-height: 100vh;
+}
+
+/* ---------------- אלמנטים טפסים גלובליים ---------------- */
+input[type="text"],
+input[type="Phone"],
+input[type="number"],
+input[type="date"],
+textarea,
+select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 16px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 6px;
+}
+.form-label {
+  margin-bottom: 4px;
+}
+
+button,
+.btn {
+  padding: 10px 16px;
+  background-color: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+button:hover,
+.btn:hover {
+  background-color: var(--accent-hover);
+}
+
+.react-select__control {
+  direction: rtl;
+  text-align: right;
+}
+
+/* ---------------- סרגל כלים לדפי טבלאות ---------------- */
+.foods-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+  width: 100%;
+  margin-bottom: 16px;
+}
+.toolbar-right,
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.foods-toolbar input,
+.foods-toolbar button {
+  margin: 0;
+}
+
+.foods-toolbar .search-input {
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  font-size: 16px;
+  direction: rtl;
+  text-align: right;
+  box-sizing: border-box;
+}
+.foods-toolbar .btn {
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.search-btn {
+  background: #4e342e;
+  color: #fff;
+}
+.add-btn {
+  background: #ff4081;
+  color: #fff;
+}
+
+/* ---------------- טבלאות – עיצוב אחיד ---------------- */
+.table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+table.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  color: #333;
+  font-family: "Alef", sans-serif;
+  direction: rtl;
+  table-layout: auto;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+}
+
+.history-table thead {
+  background-color: #f5f5f5;
+  font-weight: bold;
+}
+.history-table th,
+.history-table td {
+  padding: 12px;
+  border: 1px solid #ddd;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 14px;
+}
+.history-table th {
+  color: #333;
+  font-weight: bold;
+}
+.history-table tr:hover {
+  background-color: #f0f0f0;
+}
+.history-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.history-table button {
+  background-color: #ff5722;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  margin: 2px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.history-table button:hover {
+  background-color: #e64a19;
+}
+
+/* כפתורי פעולה ייעודיים לטבלה (לא חובה אם משתמשים ב-history-table button) */
+.action-btn {
+  padding: 8px 16px;
+  margin: 4px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.3s;
+  color: white;
+}
+.action-btn:hover {
+  opacity: 0.9;
+}
+.action-btn.delete-btn {
+  background-color: #e74c3c;
+}
+.action-btn.add-btn {
+  background-color: #27ae60;
+}
+.action-btn.view-btn {
+  background-color: #2980b9;
+}
+
+/* ---------------- מודלים ---------------- */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  position: relative;
+  animation: fadeInScale 0.3s ease;
+}
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.modal button[type="submit"] {
+  background-color: var(--accent);
+}
+.modal button[type="submit"]:hover {
+  background-color: var(--accent-hover);
+}
+.modal,
+.modal input,
+.modal p,
+.modal h2 {
+  color: #333;
+}
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #888;
+}
+
+/* ---------------- הודעות ---------------- */
+.dashboard-message {
+  font-size: 18px;
+  margin-top: 20px;
+  color: #555;
+}
+.dashboard-error {
+  color: red;
+  font-weight: bold;
+  margin-top: 20px;
+}
+
+/* ---------------- ניווט עליון/קונטיינר כללי ---------------- */
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f5f5f5;
+  direction: rtl;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #000000;
+  height: 80px;
+  padding: 0 2rem;
+  color: var(--white);
+  direction: rtl;
+}
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+.nav-links {
+  display: flex;
+  gap: 2rem;
+}
+.nav-link {
+  cursor: pointer;
+  color: white;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: color 0.3s;
+}
+.nav-link:hover {
+  color: #ffd180;
+}
+.main-content {
+  flex: 1;
+  padding: 2rem;
+}
+.left-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.divider {
+  height: 40px;
+  width: 2px;
+  background-color: white;
+  border-radius: 1px;
+}
+
+/* ---------------- תפריט אישי ---------------- */
+.menu-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: var(--light-grey);
+}
+.menu-title {
+  font-size: 28px;
+  text-align: center;
+  margin-bottom: 24px;
+  font-weight: bold;
+  color: var(--accent);
+}
+.meal-card {
+  background-color: var(--white);
+  border: 1px solid var(--brown);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 10px rgba(78, 52, 46, 0.1);
+}
+.meal-title {
+  font-size: 22px;
+  color: var(--dark-pink);
+  margin-bottom: 10px;
+}
+.macros {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  color: var(--brown);
+  font-weight: bold;
+  font-size: 15px;
+  background-color: var(--light-grey);
+  padding: 10px;
+  border-radius: 8px;
+}
+.food-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.food-item {
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 16px;
+  color: var(--text);
+}
+
+/* ====== Trainee page (compact, single source of truth) ====== */
+.trainee-dashboard .section-title {
+  color: #e190bd;
+  font-weight: 800;
+  font-size: 20px;
+  margin: 8px 0 10px;
+}
+
+/* מגביל רוחב כללי לטופס */
+.trainee-dashboard .trainee-form {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+/* ברירת מחדל: 3 עמודות קומפקטיות שלא נמתחות */
+.trainee-dashboard .form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, max-content);
+  column-gap: 12px;
+  row-gap: 8px;
+  justify-content: start; /* ב-RTL = לימין */
+  align-items: end;
+}
+
+/* שורה עם 3 עמודות: שם + אימייל + טלפון */
+.trainee-dashboard .form-grid.three {
+  grid-template-columns: repeat(3, max-content);
+  column-gap: 8px;
+  row-gap: 6px;
+}
+
+/* חישוב מאמן – 4 עמודות קומפקטיות */
+.trainee-dashboard .form-grid.four {
+  grid-template-columns: repeat(4, max-content);
+  column-gap: 12px;
+}
+
+/* שדות */
+.trainee-dashboard .field label {
+  font-size: 12px;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+.trainee-dashboard .field input,
+.trainee-dashboard .field select,
+.trainee-dashboard .field textarea {
+  width: 180px;
+  max-width: 100%;
+  height: 32px;
+  font-size: 13px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #f7f7f7;
+  box-sizing: border-box;
+}
+
+/* צ'קבוקסים בשורה קומפקטית */
+.trainee-dashboard .checks-grid {
+  display: grid;
+  grid-template-columns: repeat(4, max-content);
+  column-gap: 12px;
+  row-gap: 8px;
+  justify-content: start;
+}
+.trainee-dashboard .check input {
+  transform: scale(0.95);
+}
+
+/* רספונסיביות */
+@media (max-width: 900px) {
+  .trainee-dashboard .form-grid {
+    grid-template-columns: repeat(2, max-content);
+  }
+  .trainee-dashboard .form-grid.four {
+    grid-template-columns: repeat(2, max-content);
+  }
+  .trainee-dashboard .checks-grid {
+    grid-template-columns: repeat(2, max-content);
+  }
+}
+@media (max-width: 520px) {
+  .trainee-dashboard .form-grid,
+  .trainee-dashboard .form-grid.four,
+  .trainee-dashboard .checks-grid {
+    grid-template-columns: 1fr;
+  }
+  .trainee-dashboard .field input,
+  .trainee-dashboard .field select {
+    width: 100%;
+  }
+}
+
+/* קומפקט לטבלת המדידות בלבד */
+.history-table.narrow th,
+.history-table.narrow td {
+  padding: 8px 10px; /* היה 12px */
+  font-size: 13px; /* היה 14px */
+}
+
+/* ===== PersonalMenu – Clean Professional Look ===== */
+:root {
+  --bg-page: #f7f8fb;
+  --surface: #ffffff;
+  --text: #111827; /* טקסט כהה - מבטל לבן */
+  --text-muted: #6b7280;
+  --border: #e5e7eb;
+  --chip: #f3f4f6;
+  --chip-strong: #eef2ff;
+  --accent: #4f46e5; /* סגול עדין */
+}
+
+.menu-container {
+  color: var(--text) !important; /* מבטל ירושה של לבן */
+  background: var(--bg-page);
+  padding: 24px 16px;
+  border-radius: 16px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.menu-header {
+  text-align: right;
+  margin-bottom: 16px;
+}
+
+.menu-title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.menu-subtitle {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.meals-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+@media (min-width: 860px) {
+  .meals-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.meal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 18px rgba(17, 24, 39, 0.06);
+}
+
+.meal-title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.macros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.chip {
+  background: var(--chip);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.chip-strong {
+  background: var(--chip-strong);
+  border-color: #e0e7ff;
+  font-weight: 700;
+}
+
+.meal-lists {
+  display: grid;
+  gap: 12px;
+}
+
+.choice-list {
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  background: #fafafa;
+}
+
+.choice-title {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.choice-ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.choice-li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.choice-li:last-child {
+  border-bottom: 0;
+}
+
+.choice-name {
+  font-size: 14px;
+}
+
+.choice-serving {
+  font-size: 13px;
+  background: #fff;
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 999px;
+  min-width: 54px;
+  text-align: center;
+}
+
+.meal-notes {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+  display: grid;
+  gap: 2px;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+.menu-error {
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
+  padding: 10px 14px;
+  border-radius: 12px;
+  text-align: center;
+  max-width: 720px;
+  margin: 8px auto;
+}
+
+.menu-loading {
+  color: var(--text);
+  text-align: center;
+  padding: 8px;
+}
+
+/* תעדוף על נושאי "דארק מוד" גלובליים אם יש: */
+@media (prefers-color-scheme: dark) {
+  .menu-container {
+    color: var(--text) !important;
+  }
+  .meal-card,
+  .choice-list,
+  .choice-serving {
+    background: #ffffff;
+  }
+}
+/* theme.css — תוספות קטנות */
+.ready-options {
+  margin-top: 0.5rem;
+}
+.options-ol {
+  margin: 0.5rem 0 0;
+  padding-inline-start: 1.25rem;
+}
+.option-line {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  margin: 0.4rem 0;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.03);
+  line-height: 1.55;
+}
+
+/* theme.css */
+
+.alt-block {
+  margin: 1rem 0 1.25rem;
+}
+
+.alt-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+
+.alt-title {
+  font-weight: 800;
+  font-size: clamp(1.05rem, 2.4vw, 1.25rem);
+  color: var(--text-1, #111);
+}
+
+.alt-note {
+  font-weight: 600;
+  font-size: clamp(0.9rem, 1.9vw, 1.05rem);
+  color: var(--text-3, #666);
+}
+
+.alt-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  line-height: 1.9;
+}
+
+.alt-item {
+  white-space: nowrap;
+}
+.alt-or {
+  opacity: 0.7;
+  margin: 0 0.25rem;
+}
+
+/* מאפשר ל-\n להישבר לשורות */
+.multi-line {
+  white-space: pre-line;
+  line-height: 1.6;
+}
+
+/* שהבולטים לא ידחסו את השורות המרובות */
+.choice-li {
+  align-items: flex-start;
+}
+/* ===== עיצוב קלטים והכפתורים רק לטפסי Auth (Login/Register) ===== */
+.auth-form input[type="text"],
+.auth-form input[type="password"],
+.auth-form input[type="Phone"],
+.auth-form select {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 16px;
+  font-size: 16px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  background-color: #fff; /* רקע לבן כמו קודם */
+  color: #333; /* טקסט כהה */
+}
+
+.auth-form button,
+.auth-form .gradient-button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(to right, #ff6a00, #ee0979);
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.auth-form button:hover,
+.auth-form .gradient-button:hover {
+  opacity: 0.9;
+}
+
+/* צבע רקע וטקסט של הטופס */
+.auth-form {
+  max-width: 350px;
+  margin: 0 auto;
+  text-align: center;
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 16px;
+  color: #333;
+  font-family: "Alef", sans-serif;
+}
+
+/* כותרת */
+.auth-form h2 {
+  margin-bottom: 16px;
+  color: #333;
+  font-weight: 700;
+  font-size: 24px;
+}
+
+/* הודעות שגיאה */
+.auth-error {
+  color: red;
+  margin-bottom: 12px;
+  font-weight: bold;
+}
+/* קלטים */
+.auth-form input[type="text"],
+.auth-form input[type="Phone"],
+.auth-form input[type="password"],
+.auth-form select {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 16px;
+  font-size: 16px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  background-color: #fff;
+  color: #333;
+}
+
+/* כפתורים */
+.auth-form button,
+.auth-form .gradient-button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(to right, #ff6a00, #ee0979);
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+.auth-form button:hover,
+.auth-form .gradient-button:hover {
+  opacity: 0.9;
+}
+
+/* קישורים אופציונליים (שכחתי סיסמה וכו') */
+.auth-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+.auth-options a {
+  color: #999;
+  text-decoration: none;
+}
+.auth-options a:hover {
+  text-decoration: underline;
+}
+
+/* לוגו / תמונה */
+.auth-logo {
+  width: 300px;
+  height: 300px;
+  border-radius: 12px;
+  object-fit: cover;
+  margin-bottom: 24px;
+}
+
+/* מבנה כללי – רקע וחלוקה */
+.auth-container {
+  display: flex;
+  height: 100vh;
+  font-family: "Alef", sans-serif;
+  color: #ffffff;
+}
+
+.auth-left {
+  flex: 1;
+  background-image: url("../assets/couch.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 4rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: white;
+}
+.auth-left h1 {
+  font-size: 36px;
+  margin-bottom: 20px;
+}
+.auth-left p {
+  font-size: 16px;
+  line-height: 1.5;
+  max-width: 400px;
+}
+.auth-right {
+  flex: 1;
+  background: #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.field-horizontal {
+  display: flex;
+  align-items: center; /* מיישר אנכית את הלייבל עם השדה */
+  gap: 8px; /* רווח בין הטקסט לשדה */
+  margin-bottom: 16px;
+}
+
+.field-horizontal label {
+  font-weight: bold;
+  color: #333; /* טקסט כהה */
+  min-width: 60px; /* רוחב אחיד ללייבל */
+}
+
+.field-horizontal input {
+  width: 180px; /* רוחב אחיד */
+  height: 36px; /* גובה אחיד */
+  padding: 6px 10px; /* ריפוד אחיד */
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  color: #333; /* טקסט כהה */
+  box-sizing: border-box;
+}
+
+.drawer {
+  border: 1px solid #e6e6e6;
+  border-radius: 12px;
+  margin: 8px 0;
+  background: #fff;
+}
+.drawer-summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 10px 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.drawer-summary::-webkit-details-marker {
+  display: none;
+}
+.drawer-count {
+  color: #666;
+  font-weight: 400;
+}
+.drawer[open] .drawer-summary {
+  border-bottom: 1px solid #eee;
+}
+.drawer-content {
+  padding: 8px 14px 12px;
+}
+
+/* === Theme Styling === */
+/* כאן כל הסגנונות הכלליים של האתר שלך */
+body {
+  font-family: "Alef", sans-serif;
+  background-color: #fff;
+  color: #333;
+  direction: rtl;
+}
+
+/* דוגמה לסגנון כפתורים */
+button {
+  font-family: "Rubik", sans-serif;
+  background-color: #4e342e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #6d4c41;
+}
+
+/* כרטיסיות של ארוחות */
+.meal-card {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  background-color: #fefefe;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  break-inside: avoid;
+}
+
+/* תוכן מגירות */
+.drawer-content {
+  padding-top: 10px;
+}
+
+/* === סגנונות להדפסה בלבד === */
+@media print {
+  .menu-actions {
+    display: none !important;
+  }
+
+  .drawer-content {
+    display: block !important;
+  }
+
+  .meal-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}
+.inline-choices {
+  direction: rtl;
+  white-space: normal; /* מאפשר שבירת שורות טבעית */
+  line-height: 1.6; /* דומה למסמך */
+  font-family: "Rubik", "Alef", sans-serif; /* תואם לסגנון שלך */
+  font-size: 0.95rem; /* קצת קטן ונעים */
+  color: #333;
+}
+
+/* כותרות הקבוצות והמרווחים */
+.choice-title {
+  margin: 0 0 6px 0;
+  font-weight: 700;
+}
+
+.ingredient-group + .ingredient-group {
+  margin-top: 16px;
+  padding-top: 8px;
+}
+
+/* ===== Dark Mode (ללא השפעה על התחברות/הרשמה) ===== */
+
+/* 1) משתני צבע לדארק */
+.dark {
+  --bg-page: #000000;
+  --surface: #0f0f0f;
+  --text: #eaeaea;
+  --text-muted: #a8a8a8;
+  --border: #2a2a2a;
+  --chip: #141414;
+  --chip-strong: #1c1c1c;
+  --accent: #ff4081;
+}
+
+/* 2) רקע כללי וטקסט – רק לאזורי האפליקציה (לא login/auth) */
+.dark .dashboard-container,
+.dark .dashboard-main,
+.dark .main-content,
+.dark .menu-container {
+  background-color: var(--bg-page) !important;
+  color: var(--text) !important;
+}
+
+/* 3) כותרת עליונה/ניווט */
+.dark .dashboard-header,
+.dark .top-nav {
+  background: #0a0a0a !important;
+  color: #ffffff !important;
+}
+.dark .nav-links span,
+.dark .nav-link {
+  color: #dddddd !important;
+}
+.dark .nav-links span:hover,
+.dark .nav-link:hover {
+  color: #ffd600 !important;
+}
+
+/* 4) כרטיסים וקופסאות */
+.dark .meal-card,
+.dark .drawer,
+.dark .choice-list,
+.dark .option-line,
+.dark .modal {
+  background-color: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+  box-shadow: none !important;
+}
+.dark .menu-title,
+.dark .meal-title {
+  color: var(--text) !important;
+}
+
+/* 5) טבלאות */
+.dark table.history-table {
+  background-color: #0f0f0f !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+.dark .history-table thead {
+  background-color: #121212 !important;
+}
+.dark .history-table th,
+.dark .history-table td {
+  border-color: var(--border) !important;
+}
+.dark .history-table tr:hover {
+  background-color: #161616 !important;
+}
+.dark .history-table tr:nth-child(even) {
+  background-color: #101010 !important;
+}
+
+/* 6) קלטים ותיוגים – רק בתוך אזורי האפליקציה (לא login/auth) */
+.dark .dashboard-main input[type="text"],
+.dark .dashboard-main input[type="Phone"],
+.dark .dashboard-main input[type="number"],
+.dark .dashboard-main input[type="date"],
+.dark .dashboard-main input[type="password"],
+.dark .dashboard-main textarea,
+.dark .dashboard-main select,
+.dark .menu-container input[type="text"],
+.dark .menu-container input[type="number"],
+.dark .menu-container textarea,
+.dark .menu-container select {
+  background: #0f0f0f !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+}
+.dark .dashboard-main label,
+.dark .menu-container label,
+.dark .form-label {
+  color: var(--text-muted) !important;
+}
+
+/* 7) צ'יפים/תגיות סיכום */
+.dark .chip {
+  background: var(--chip) !important;
+  border-color: var(--border) !important;
+  color: var(--text-muted) !important;
+}
+.dark .chip-strong {
+  background: var(--chip-strong) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+/* 8) קווים/מסגרות קטנות */
+.dark .choice-li,
+.dark .drawer[open] .drawer-summary {
+  border-color: var(--border) !important;
+}
+
+/* 9) כפתורים (שומרים את ה-accent), שוב – רק באזורים שאינם login/auth */
+.dark .dashboard-main button,
+.dark .dashboard-main .btn,
+.dark .menu-container button,
+.dark .menu-container .btn,
+.dark .action-btn,
+.dark .history-table button {
+  background-color: var(--accent);
+  color: #fff !important;
+  border-color: transparent;
+}
+.dark .dashboard-main button:hover,
+.dark .dashboard-main .btn:hover,
+.dark .menu-container button:hover,
+.dark .menu-container .btn:hover,
+.dark .action-btn:hover,
+.dark .history-table button:hover {
+  filter: brightness(1.05);
+}
+
+/* 10) הודעות/טעינה */
+.dark .menu-error {
+  background: #2a0f12 !important;
+  border-color: #512022 !important;
+
+  color: #ffb3b3 !important;
+}
+.dark .menu-loading {
+  color: var(--text) !important;
+}
+
+/* 11) הבהרה: לא משנים מסכי התחברות/הרשמה */
+.dark .login-container,
+.dark .auth-container,
+.dark .auth-form,
+.dark .login-right {
+  all: unset;
+} /* משאיר אותן בדיוק כמו בלייט */
+
+/* הוראות בראש הדף */
+.instructions-card {
+  background: #0f172a;
+  color: #fff;
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin: 8px 0 18px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+.instructions-list {
+  margin: 8px 0 0;
+  padding-inline-start: 22px;
+  line-height: 1.6;
+}
+
+/* עמודה אחת לארוחות */
+.meals-column {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+/* כרטיסי ארוחה – גרסה "stacked" */
+.meal-card.stacked {
+  background: #0b1020;
+  color: #e8eaf1;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.28);
+}
+
+.meal-title {
+  font-size: 18px;
+}
+
+.meal-line {
+  padding: 6px 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+  font-size: 15px;
+}
+.meal-line:last-child {
+  border-bottom: none;
+}
+.meal-line-label {
+  font-weight: 700;
+}
+.meal-line-value {
+  opacity: 0.95;
+}
+
+.menu-error {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.menu-title {
+  font-weight: 800;
+}
+.menu-subtitle {
+  color: #9aa3b2;
+}
+
+/* שימי את זה בסוף theme.css כדי לדרוס הגדרות קודמות */
+
+/* רקעים פנימיים בתוך כרטיס כהה (ארוחות) */
+.meal-card.stacked .choice-list {
+  background: transparent; /* היה #fafafa */
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.meal-card.stacked .chip,
+.meal-card.stacked .chip-strong {
+  background: rgba(255, 255, 255, 0.08); /* היה אפור/לבן */
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #e8eaf1;
+}
+
+.meal-card.stacked .choice-serving {
+  background: rgba(255, 255, 255, 0.08); /* היה #fff */
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #e8eaf1;
+}
+
+/* קווים/טקסט בתוך הכרטיסים הכהים */
+.meal-card.stacked .meal-line {
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+.meal-card.stacked .choice-name {
+  color: #e8eaf1;
+}
+.meal-card {
+  background: #0b1020; /* כהה */
+  color: #e8eaf1;
+  border-color: rgba(255, 255, 255, 0.08);
+}
