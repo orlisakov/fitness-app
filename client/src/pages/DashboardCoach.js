@@ -77,9 +77,14 @@ export default function DashboardCoach() {
   async function fetchTrainees() {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/trainees", {
-        headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
-      });
+      const res = await fetch(
+        "https://fitness-app-wdsh.onrender.com/api/trainees",
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+        }
+      );
       if (!res.ok) throw new Error("לא ניתן לטעון את רשימת המתאמנות");
       const data = await res.json();
       setTrainees(Array.isArray(data) ? data : []);
@@ -132,7 +137,7 @@ export default function DashboardCoach() {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/trainees/${selectedTrainee._id}`,
+        `https://fitness-app-wdsh.onrender.com/api/trainees/${selectedTrainee._id}`,
         {
           method: "PUT",
           headers: {
@@ -161,10 +166,15 @@ export default function DashboardCoach() {
   const handleDelete = async (id) => {
     if (!window.confirm("האם את בטוחה שברצונך למחוק את המתאמנת?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/trainees/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
-      });
+      const res = await fetch(
+        `https://fitness-app-wdsh.onrender.com/api/trainees/${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+        }
+      );
       if (!res.ok) throw new Error("שגיאה במחיקה");
       setTrainees((prev) => prev.filter((t) => t._id !== id));
     } catch (err) {
@@ -189,7 +199,7 @@ export default function DashboardCoach() {
     setSelectedTrainee(trainee);
     try {
       const res = await fetch(
-        `http://localhost:5000/api/measurements/${trainee._id}`,
+        `https://fitness-app-wdsh.onrender.com/api/measurements/${trainee._id}`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,
@@ -208,17 +218,20 @@ export default function DashboardCoach() {
   const handleMeasurementSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/api/measurements", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({
-          ...measurementData,
-          traineeId: selectedTrainee._id,
-        }),
-      });
+      const res = await fetch(
+        "https://fitness-app-wdsh.onrender.com/api/measurements",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            ...measurementData,
+            traineeId: selectedTrainee._id,
+          }),
+        }
+      );
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message || "שגיאה בשמירת המדידה");
@@ -235,7 +248,7 @@ export default function DashboardCoach() {
     if (!window.confirm("למחוק את המדידה הזו?")) return;
     try {
       const res = await fetch(
-        `http://localhost:5000/api/measurements/${measurementId}`,
+        `https://fitness-app-wdsh.onrender.com/api/measurements/${measurementId}`,
         {
           method: "DELETE",
           headers: {
@@ -266,14 +279,17 @@ export default function DashboardCoach() {
       lactoseSensitive: false,
     };
     try {
-      const res = await fetch("http://localhost:5000/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(newTrainee),
-      });
+      const res = await fetch(
+        "https://fitness-app-wdsh.onrender.com/api/auth/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(newTrainee),
+        }
+      );
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || "שגיאה ביצירת מתאמנת");
@@ -299,9 +315,14 @@ export default function DashboardCoach() {
   const openDislikedFoodsModal = async (trainee) => {
     setSelectedTrainee(trainee);
     try {
-      const foodsRes = await fetch("http://localhost:5000/api/foods", {
-        headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
-      });
+      const foodsRes = await fetch(
+        "https://fitness-app-wdsh.onrender.com/api/foods",
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+        }
+      );
       if (!foodsRes.ok) {
         const txt = await foodsRes.text();
         console.error("foods fetch failed:", txt);
@@ -328,7 +349,7 @@ export default function DashboardCoach() {
   const saveDislikedFoods = async () => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/trainees/${selectedTrainee._id}/disliked-foods`,
+        `https://fitness-app-wdsh.onrender.com/api/trainees/${selectedTrainee._id}/disliked-foods`,
         {
           method: "PUT",
           headers: {

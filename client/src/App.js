@@ -23,7 +23,7 @@ export default function App() {
       return; // לא מחוברות => יופנה ל /login ע"י ה-Routes
     }
     // נטען את המשתמש המחובר מהשרת
-    fetch("http://localhost:5000/api/auth/me", {
+    fetch("https://fitness-app-wdsh.onrender.com/api/auth/me", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => (res.ok ? res.json() : Promise.reject()))

@@ -81,7 +81,7 @@ export default function PersonalMenu({ traineeData }) {
         }
 
         const { data } = await axios.post(
-          "http://localhost:5000/api/meal-plan/generate-meal-plan",
+          "https://fitness-app-wdsh.onrender.com/api/meal-plan/generate-meal-plan",
           {
             totalProtein: proteinGrams,
             totalCarbs: carbGrams,

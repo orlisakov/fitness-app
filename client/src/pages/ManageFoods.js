@@ -114,9 +114,14 @@ export default function ManageFoods() {
   const fetchFoods = useCallback(async () => {
     try {
       const query = searchTerm ? `?name=${encodeURIComponent(searchTerm)}` : "";
-      const res = await fetch(`http://localhost:5000/api/foods${query}`, {
-        headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
-      });
+      const res = await fetch(
+        `https://fitness-app-wdsh.onrender.com/api/foods${query}`,
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+        }
+      );
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
         throw new Error(j.message || "שגיאה בטעינת מאכלים");
@@ -135,10 +140,13 @@ export default function ManageFoods() {
 
   const handleDelete = async (id) => {
     if (!window.confirm("את/ה בטוח/ה שברצונך למחוק?")) return;
-    const res = await fetch(`http://localhost:5000/api/foods/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
-    });
+    const res = await fetch(
+      `https://fitness-app-wdsh.onrender.com/api/foods/${id}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
+      }
+    );
     if (!res.ok) {
       const j = await res.json().catch(() => ({}));
       alert(j.message || "שגיאה במחיקה");
@@ -149,14 +157,17 @@ export default function ManageFoods() {
 
   const handleAddFood = async (food) => {
     try {
-      const res = await fetch("http://localhost:5000/api/foods", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(food),
-      });
+      const res = await fetch(
+        "https://fitness-app-wdsh.onrender.com/api/foods",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(food),
+        }
+      );
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -172,14 +183,17 @@ export default function ManageFoods() {
 
   const handleUpdateFood = async (food) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/foods/${food._id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(food),
-      });
+      const res = await fetch(
+        `https://fitness-app-wdsh.onrender.com/api/foods/${food._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(food),
+        }
+      );
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));

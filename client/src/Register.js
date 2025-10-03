@@ -22,11 +22,14 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName, phone, password, role }),
-      });
+      const res = await fetch(
+        "https://fitness-app-wdsh.onrender.com/api/auth/register",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fullName, phone, password, role }),
+        }
+      );
       const data = await res.json();
 
       if (!res.ok) {

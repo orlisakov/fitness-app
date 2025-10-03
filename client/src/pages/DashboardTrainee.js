@@ -29,9 +29,14 @@ export default function DashboardTrainee() {
   const fetchTraineeData = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/auth/me", {
-        headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
-      });
+      const res = await fetch(
+        "https://fitness-app-wdsh.onrender.com/api/auth/me",
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+        }
+      );
       if (!res.ok) throw new Error("שגיאה בשליפת נתוני משתמש");
 
       const data = await res.json();
@@ -68,7 +73,7 @@ export default function DashboardTrainee() {
   const fetchMeasurements = async () => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/measurements/${trainee._id}`,
+        `https://fitness-app-wdsh.onrender.com/api/measurements/${trainee._id}`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,
@@ -126,7 +131,7 @@ export default function DashboardTrainee() {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/trainees/${trainee._id}`,
+        `https://fitness-app-wdsh.onrender.com/api/trainees/${trainee._id}`,
         {
           method: "PUT",
           headers: {
@@ -168,9 +173,14 @@ export default function DashboardTrainee() {
 
   const openDislikedFoodsModal = async () => {
     try {
-      const foodsRes = await fetch("http://localhost:5000/api/foods", {
-        headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
-      });
+      const foodsRes = await fetch(
+        "https://fitness-app-wdsh.onrender.com/api/foods",
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+        }
+      );
       const foods = await foodsRes.json();
 
       // ✅ נרמול – לא משנה אם השרת מחזיר [] או {items: []}
@@ -198,7 +208,7 @@ export default function DashboardTrainee() {
   const saveDislikedFoods = async () => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/trainees/${trainee._id}`,
+        `https://fitness-app-wdsh.onrender.com/api/trainees/${trainee._id}`,
         {
           method: "PUT",
           headers: {

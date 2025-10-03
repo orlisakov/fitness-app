@@ -32,11 +32,14 @@ export default function TraineeDetailsForm() {
 
     async function fetchTrainee() {
       try {
-        const res = await fetch(`http://localhost:5000/api/trainees/${id}`, {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-          },
-        });
+        const res = await fetch(
+          `https://fitness-app-wdsh.onrender.com/api/trainees/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            },
+          }
+        );
         if (!res.ok) throw new Error("שגיאה בטעינת פרטי מתאמנת");
         const data = await res.json();
 
@@ -66,14 +69,17 @@ export default function TraineeDetailsForm() {
     e.preventDefault();
 
     try {
-      const res = await fetch(`http://localhost:5000/api/trainees/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(formData),
-      });
+      const res = await fetch(
+        `https://fitness-app-wdsh.onrender.com/api/trainees/${id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(formData),
+        }
+      );
 
       if (!res.ok) {
         const data = await res.json();

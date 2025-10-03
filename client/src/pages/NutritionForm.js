@@ -19,11 +19,14 @@ export default function NutritionForm() {
 
   const fetchNutritionData = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/nutrition/me", {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-      });
+      const res = await fetch(
+        "https://fitness-app-wdsh.onrender.com/api/nutrition/me",
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+        }
+      );
       if (!res.ok) throw new Error("שגיאה בטעינת נתונים");
       const data = await res.json();
       setForm(data);
@@ -45,14 +48,17 @@ export default function NutritionForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/api/nutrition", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(form),
-      });
+      const res = await fetch(
+        "https://fitness-app-wdsh.onrender.com/api/nutrition",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(form),
+        }
+      );
       if (!res.ok) throw new Error("שגיאה בשמירת הנתונים");
       setSaved(true);
     } catch (err) {
