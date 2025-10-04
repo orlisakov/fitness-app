@@ -1440,3 +1440,80 @@ button:hover {
   color: #e8eaf1;
   border-color: rgba(255, 255, 255, 0.08);
 }
+/* יצוא PDF נקי */
+.meal-card {
+  background: #fff;
+}
+
+@media print {
+  .meal-card {
+    box-shadow: none !important;
+    filter: none !important;
+  }
+}
+/* כרטיס הדגשים */
+.instructions-card {
+  background: #000;
+  color: #fff;
+  padding: 20px 18px;
+  border-radius: 14px;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+/* כותרת צהובה מודגשת */
+.instructions-card .menu-title.highlight {
+  color: #ffd600; /* צהוב */
+  font-weight: 800;
+  text-align: center;
+  margin: 0 0 10px;
+  font-size: 20px;
+}
+
+/* רשימה ממוספרת */
+.instructions-card .instructions-list {
+  margin: 0;
+  padding-inline-start: 22px; /* הזחה למספרים */
+}
+.instructions-card .instructions-list li {
+  margin: 6px 0;
+}
+
+/* יצוא PDF נקי */
+@media print {
+  .meal-card,
+  .instructions-card {
+    box-shadow: none !important;
+    filter: none !important;
+    background: #fff; /* אם תרצי ב־PDF רקע לבן נקי */
+    color: #000;
+  }
+}
+/* --- רשימת הדגשים: מספור ידני מימין, יציב ל-PDF --- */
+.instructions-list {
+  direction: rtl; /* RTL מלא */
+  unicode-bidi: bidi-override;
+  list-style: none; /* מבטלים את ה-ol המובנה */
+  margin: 0;
+  padding: 0;
+  counter-reset: step; /* מתחילים לספור */
+}
+
+.instructions-list li {
+  counter-increment: step;
+  position: relative;
+  padding-right: 1.8em; /* מקום למספר */
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+/* מציירים את המספר מימין */
+.instructions-list li::before {
+  content: counter(step) ".";
+  position: absolute;
+  right: 0; /* מיושר לקצה הימני */
+  top: 0;
+  font-weight: 600;
+  /* לא חובה, אבל עוזר ליישור מספרים */
+  font-variant-numeric: tabular-nums;
+}
