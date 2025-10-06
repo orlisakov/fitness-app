@@ -1,6 +1,14 @@
 // client/src/pages/DashboardTrainee.jsx
 import React, { useEffect, useState } from "react";
 import "../styles/theme.css";
+import config from "../config";
+
+// מיפוי שמות הדרגות לעברית
+const LEVEL_LABELS = {
+  beginner: "מתחילות",
+  intermediate: "בינוניות",
+  advanced: "מתקדמות",
+};
 
 export default function DashboardTrainee() {
   const [trainee, setTrainee] = useState(null);
@@ -29,14 +37,11 @@ export default function DashboardTrainee() {
   const fetchTraineeData = async () => {
     setLoading(true);
     try {
-      const res = await fetch(
-        "https://fitness-app-wdsh.onrender.com/api/auth/me",
-        {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-          },
-        }
-      );
+      const res = await fetch(`${config.apiBaseUrl}/api/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+      });
       if (!res.ok) throw new Error("שגיאה בשליפת נתוני משתמש");
 
       const data = await res.json();
@@ -73,7 +78,7 @@ export default function DashboardTrainee() {
   const fetchMeasurements = async () => {
     try {
       const res = await fetch(
-        `https://fitness-app-wdsh.onrender.com/api/measurements/${trainee._id}`,
+        `${config.apiBaseUrl}/api/measurements/${trainee._id}`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,
@@ -131,7 +136,7 @@ export default function DashboardTrainee() {
 
     try {
       const res = await fetch(
-        `https://fitness-app-wdsh.onrender.com/api/trainees/${trainee._id}`,
+        `${config.apiBaseUrl}/api/trainees/${trainee._id}`,
         {
           method: "PUT",
           headers: {
@@ -173,14 +178,11 @@ export default function DashboardTrainee() {
 
   const openDislikedFoodsModal = async () => {
     try {
-      const foodsRes = await fetch(
-        "https://fitness-app-wdsh.onrender.com/api/foods",
-        {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-          },
-        }
-      );
+      const foodsRes = await fetch(`${config.apiBaseUrl}/api/foods`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+      });
       const foods = await foodsRes.json();
 
       // ✅ נרמול – לא משנה אם השרת מחזיר [] או {items: []}
@@ -208,7 +210,7 @@ export default function DashboardTrainee() {
   const saveDislikedFoods = async () => {
     try {
       const res = await fetch(
-        `https://fitness-app-wdsh.onrender.com/api/trainees/${trainee._id}`,
+        `${config.apiBaseUrl}/api/trainees/${trainee._id}`,
         {
           method: "PUT",
           headers: {
@@ -320,6 +322,16 @@ export default function DashboardTrainee() {
                       [e.target.name]: e.target.value,
                     }))
                   }
+                />
+              </div>
+
+              {/* שדה תצוגה לקריאה בלבד: דרגת אימון */}
+              <div className="field">
+                <label className="form-label">דרגת אימון</label>
+                <input
+                  type="text"
+                  value={LEVEL_LABELS[trainee.trainingLevel] || "מתחילות"}
+                  readOnly
                 />
               </div>
             </div>
@@ -500,6 +512,22 @@ export default function DashboardTrainee() {
                 </div>
               </div>
             )}
+
+            {/* תג דרגת אימון */}
+            <div
+              className="badge"
+              style={{
+                display: "inline-block",
+                background: "#ffe3f0",
+                color: "#c2185b",
+                borderRadius: "999px",
+                padding: "6px 10px",
+                fontWeight: 600,
+                marginBottom: "12px",
+              }}
+            >
+              דרגת אימון: {LEVEL_LABELS[trainee.trainingLevel] || "מתחילות"}
+            </div>
 
             <h3 className="section-title">חישוב מאמן</h3>
             <div className="form-grid four">

@@ -1,49 +1,61 @@
-// קובץ: src/App.js
+// src/App.js (גרסה עם userLoading + RequireRole מתוקן)
 import React, { useState, useEffect } from "react";
-import TraineeDetailsForm from "./components/TraineeDetailsForm";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+
+import DashboardLayout from "./components/DashboardLayout";
 import DashboardCoach from "./pages/DashboardCoach";
 import DashboardTrainee from "./pages/DashboardTrainee";
-import Login from "./Login";
-import Register from "./Register";
-import DashboardLayout from "./components/DashboardLayout";
-import HomeTraining from "./pages/HomeTraining";
+import CoachWorkouts from "./pages/CoachWorkouts";
+import TraineeWorkouts from "./pages/TraineeWorkouts";
 import PersonalMenu from "./pages/PersonalMenu";
 import ManageFoods from "./pages/ManageFoods";
+import TraineeDetailsForm from "./components/TraineeDetailsForm";
+import Login from "./Login";
+import Register from "./Register";
+import config from "./config";
 
 export default function App() {
   const [user, setUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // אם יש טוקן ב-sessionStorage (שורד רענון, לא שורד סגירת טאב/דפדפן)
     const token = sessionStorage.getItem("token");
     if (!token) {
       setUser(null);
-      return; // לא מחוברות => יופנה ל /login ע"י ה-Routes
+      setUserLoading(false);
+      return;
     }
-    // נטען את המשתמש המחובר מהשרת
-    fetch("https://fitness-app-wdsh.onrender.com/api/auth/me", {
+    fetch(`${config.apiBaseUrl}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((me) => setUser(me))
-      .catch(() => setUser(null));
+      .then((me) => setUser(me.user || me))
+      .catch(() => setUser(null))
+      .finally(() => setUserLoading(false));
   }, []);
 
   const handleLogin = (data) => {
-    // נשמור טוקן ל-sessionStorage בלבד כדי שיימחק בסגירת טאב/דפדפן
     sessionStorage.setItem("token", data.token);
-    setUser(data.user);
+    setUser(data.user || null);
   };
 
   const handleLogout = () => {
     sessionStorage.removeItem("token");
-    // אם שמרת בעבר user ב-localStorage – מחיקה הגנתית:
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     navigate("/login", { replace: true });
-    window.location.reload(); // ריענון כדי לנקות
+    window.location.reload();
+  };
+
+  // Guard לפי תפקיד, עם טיפול בטעינה
+  const RequireRole = ({ allow, element }) => {
+    if (userLoading) return <div dir="rtl">טוען…</div>;
+    return user && allow.includes(user.role) ? (
+      element
+    ) : (
+      <Navigate to="/" replace />
+    );
   };
 
   return (
@@ -64,6 +76,7 @@ export default function App() {
           )
         }
       />
+
       <Route path="/trainee/:id" element={<TraineeDetailsForm />} />
 
       <Route
@@ -73,7 +86,9 @@ export default function App() {
         <Route
           index
           element={
-            user ? (
+            userLoading ? (
+              <div dir="rtl">טוען…</div>
+            ) : user ? (
               user.role === "coach" ? (
                 <DashboardCoach user={user} />
               ) : (
@@ -84,21 +99,38 @@ export default function App() {
             )
           }
         />
-        <Route path="home-training" element={<HomeTraining />} />
 
+        {/* מתאמנת */}
+        <Route
+          path="workouts"
+          element={
+            <RequireRole allow={["trainee"]} element={<TraineeWorkouts />} />
+          }
+        />
         <Route
           path="personal-menu"
           element={
-            user && user.role === "trainee" ? (
-              <PersonalMenu traineeData={user} />
-            ) : (
-              <Navigate to="/" replace />
-            )
+            <RequireRole
+              allow={["trainee"]}
+              element={<PersonalMenu traineeData={user} />}
+            />
           }
         />
 
-        <Route path="Manage-Foods" element={<ManageFoods />} />
+        {/* מאמנת */}
+        <Route
+          path="coach-workouts"
+          element={
+            <RequireRole allow={["coach"]} element={<CoachWorkouts />} />
+          }
+        />
+        <Route
+          path="manage-foods"
+          element={<RequireRole allow={["coach"]} element={<ManageFoods />} />}
+        />
       </Route>
+
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

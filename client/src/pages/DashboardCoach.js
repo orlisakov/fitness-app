@@ -1,6 +1,7 @@
 // client/src/pages/DashboardCoach.jsx
 import React, { useEffect, useState } from "react";
 import "../styles/theme.css";
+import config from "../config";
 
 export default function DashboardCoach() {
   const [trainees, setTrainees] = useState([]);
@@ -29,6 +30,7 @@ export default function DashboardCoach() {
     fatGrams: "",
     proteinGrams: "",
     carbGrams: "",
+    trainingLevel: "beginner",
   });
 
   // מדידות
@@ -67,6 +69,7 @@ export default function DashboardCoach() {
       fatGrams: t.fatGrams ?? "",
       proteinGrams: t.proteinGrams ?? "",
       carbGrams: t.carbGrams ?? "",
+      trainingLevel: t.trainingLevel || "beginner",
     });
   };
 
@@ -77,14 +80,11 @@ export default function DashboardCoach() {
   async function fetchTrainees() {
     setLoading(true);
     try {
-      const res = await fetch(
-        "https://fitness-app-wdsh.onrender.com/api/trainees",
-        {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-          },
-        }
-      );
+      const res = await fetch(`${config.apiBaseUrl}/api/trainees`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+      });
       if (!res.ok) throw new Error("לא ניתן לטעון את רשימת המתאמנות");
       const data = await res.json();
       setTrainees(Array.isArray(data) ? data : []);
@@ -104,8 +104,12 @@ export default function DashboardCoach() {
   };
 
   const saveTraineeDetails = async (e) => {
-    e.preventDefault();
-    if (!selectedTrainee?._id) return;
+    e?.preventDefault?.();
+
+    if (!selectedTrainee?._id) {
+      console.warn("No selectedTrainee or _id – cannot save");
+      return;
+    }
 
     const payload = {
       fullName: editData.fullName,
@@ -129,15 +133,18 @@ export default function DashboardCoach() {
           : Number(editData.proteinGrams),
       carbGrams:
         editData.carbGrams === "" ? undefined : Number(editData.carbGrams),
+      trainingLevel: editData.trainingLevel,
     };
 
     Object.keys(payload).forEach(
       (k) => typeof payload[k] === "undefined" && delete payload[k]
     );
 
+    console.log("PUT trainee payload:", selectedTrainee._id, payload);
+
     try {
       const res = await fetch(
-        `https://fitness-app-wdsh.onrender.com/api/trainees/${selectedTrainee._id}`,
+        `${config.apiBaseUrl}/api/trainees/${selectedTrainee._id}`,
         {
           method: "PUT",
           headers: {
@@ -147,17 +154,19 @@ export default function DashboardCoach() {
           body: JSON.stringify(payload),
         }
       );
+
       const data = await res.json().catch(() => ({}));
+      console.log("PUT trainee response:", res.status, data);
+
       if (!res.ok) throw new Error(data.message || "שגיאה בעדכון נתונים");
 
       const saved = data.trainee || data.user || data;
       setTrainees((prev) => prev.map((t) => (t._id === saved._id ? saved : t)));
       setSelectedTrainee(saved);
       setShowTraineeModal(false);
-
-      // ריענון הרשימה לקבלת מצב עדכני מהשרת
-      fetchTrainees();
+      await fetchTrainees();
     } catch (err) {
+      console.error("PUT trainee error:", err);
       alert(err.message || "שגיאה בעדכון נתונים");
     }
   };
@@ -166,15 +175,12 @@ export default function DashboardCoach() {
   const handleDelete = async (id) => {
     if (!window.confirm("האם את בטוחה שברצונך למחוק את המתאמנת?")) return;
     try {
-      const res = await fetch(
-        `https://fitness-app-wdsh.onrender.com/api/trainees/${id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-          },
-        }
-      );
+      const res = await fetch(`${config.apiBaseUrl}/api/trainees/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+      });
       if (!res.ok) throw new Error("שגיאה במחיקה");
       setTrainees((prev) => prev.filter((t) => t._id !== id));
     } catch (err) {
@@ -199,7 +205,7 @@ export default function DashboardCoach() {
     setSelectedTrainee(trainee);
     try {
       const res = await fetch(
-        `https://fitness-app-wdsh.onrender.com/api/measurements/${trainee._id}`,
+        `${config.apiBaseUrl}/api/measurements/${trainee._id}`,
         {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,
@@ -218,20 +224,17 @@ export default function DashboardCoach() {
   const handleMeasurementSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(
-        "https://fitness-app-wdsh.onrender.com/api/measurements",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({
-            ...measurementData,
-            traineeId: selectedTrainee._id,
-          }),
-        }
-      );
+      const res = await fetch(`${config.apiBaseUrl}/api/measurements`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          ...measurementData,
+          traineeId: selectedTrainee._id,
+        }),
+      });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message || "שגיאה בשמירת המדידה");
@@ -248,7 +251,7 @@ export default function DashboardCoach() {
     if (!window.confirm("למחוק את המדידה הזו?")) return;
     try {
       const res = await fetch(
-        `https://fitness-app-wdsh.onrender.com/api/measurements/${measurementId}`,
+        `${config.apiBaseUrl}/api/measurements/${measurementId}`,
         {
           method: "DELETE",
           headers: {
@@ -277,19 +280,17 @@ export default function DashboardCoach() {
       isVegan: false,
       glutenSensitive: false,
       lactoseSensitive: false,
+      trainingLevel: "beginner",
     };
     try {
-      const res = await fetch(
-        "https://fitness-app-wdsh.onrender.com/api/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-          },
-          body: JSON.stringify(newTrainee),
-        }
-      );
+      const res = await fetch(`${config.apiBaseUrl}/api/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(newTrainee),
+      });
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || "שגיאה ביצירת מתאמנת");
@@ -315,14 +316,11 @@ export default function DashboardCoach() {
   const openDislikedFoodsModal = async (trainee) => {
     setSelectedTrainee(trainee);
     try {
-      const foodsRes = await fetch(
-        "https://fitness-app-wdsh.onrender.com/api/foods",
-        {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-          },
-        }
-      );
+      const foodsRes = await fetch(`${config.apiBaseUrl}/api/foods`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+      });
       if (!foodsRes.ok) {
         const txt = await foodsRes.text();
         console.error("foods fetch failed:", txt);
@@ -349,7 +347,7 @@ export default function DashboardCoach() {
   const saveDislikedFoods = async () => {
     try {
       const res = await fetch(
-        `https://fitness-app-wdsh.onrender.com/api/trainees/${selectedTrainee._id}/disliked-foods`,
+        `${config.apiBaseUrl}/api/trainees/${selectedTrainee._id}/disliked-foods`,
         {
           method: "PUT",
           headers: {
@@ -398,6 +396,7 @@ export default function DashboardCoach() {
               <th>טלפון</th>
               <th>פעולות</th>
               <th>היסטוריית שקילויות</th>
+              <th>דרגה</th>
             </tr>
           </thead>
           <tbody>
@@ -438,6 +437,13 @@ export default function DashboardCoach() {
                   >
                     ראה
                   </button>
+                </td>
+                <td>
+                  {t.trainingLevel === "advanced"
+                    ? "מתקדמות"
+                    : t.trainingLevel === "intermediate"
+                    ? "בינוניות"
+                    : "מתחילות"}
                 </td>
               </tr>
             ))}
@@ -552,6 +558,25 @@ export default function DashboardCoach() {
                   />
                 </div>
               </div>
+              <h3 className="section-title">דרגת אימון</h3>
+              <div className="form-grid one">
+                <div className="field">
+                  <label className="form-label">בחרי דרגה:</label>
+                  <select
+                    value={editData.trainingLevel}
+                    onChange={(e) =>
+                      setEditData((p) => ({
+                        ...p,
+                        trainingLevel: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="beginner">מתחילות</option>
+                    <option value="intermediate">בינוניות</option>
+                    <option value="advanced">מתקדמות</option>
+                  </select>
+                </div>
+              </div>
 
               <div className="checks-grid">
                 <label className="check">
@@ -659,6 +684,7 @@ export default function DashboardCoach() {
                 type="submit"
                 className="btn primary"
                 style={{ marginTop: 12 }}
+                onClick={saveTraineeDetails}
               >
                 שמור
               </button>

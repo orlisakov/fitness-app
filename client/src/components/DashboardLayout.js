@@ -1,45 +1,72 @@
+// src/components/DashboardLayout.jsx
 import React from "react";
-import { useNavigate, Outlet } from "react-router-dom";
+import { NavLink, useNavigate, Outlet } from "react-router-dom";
 import "../styles/theme.css";
 import logo from "../assets/logo.jpg";
 
-export default function DashboardLayout({ onLogout, children, user }) {
+export default function DashboardLayout({ onLogout, user }) {
   const navigate = useNavigate();
-
-  // נקרא ישירות מה-prop שמגיע מ-App
   const role = user?.role || null;
+
+  // התאימי לראוטים שהוגדרו ב-App.js
+  // אם הראוט אצלך הוא "/trainee-workouts" — החליפי כאן.
+  const TRAINEE_WORKOUTS_PATH = "/workouts";
+  const COACH_WORKOUTS_PATH = "/coach-workouts";
+  const MANAGE_FOODS_PATH = "/manage-foods";
+  const PERSONAL_MENU_PATH = "/personal-menu";
+
+  const linkCls = ({ isActive }) => `nav-link${isActive ? " active" : ""}`;
 
   return (
     <>
-      <header className="dashboard-header">
+      <header className="dashboard-header" dir="rtl">
         <div className="nav-left">
           <img src={logo} alt="לוגו" className="dashboard-logo" />
-          <span className="site-title" onClick={() => navigate("/")}>
+          <button
+            type="button"
+            className="site-title-btn"
+            onClick={() => navigate("/")}
+            aria-label="חזרה לדשבורד"
+          >
             Eve's Studio
-          </span>
+          </button>
         </div>
 
         <nav className="nav-links">
-          <span onClick={() => navigate("/home-training")}>אימונים ביתיים</span>
-          {role === "trainee" ? (
-            <span onClick={() => navigate("/personal-menu")}>תפריט אישי</span>
-          ) : (
-            <span className="placeholder"></span>
-          )}
+          {/* קישור לאימונים – לפי תפקיד */}
           {role === "coach" ? (
-            <span onClick={() => navigate("/Manage-Foods")}>מזונות</span>
+            <NavLink to={COACH_WORKOUTS_PATH} className={linkCls}>
+              תכניות אימון שלי
+            </NavLink>
           ) : (
-            <span className="placeholder"></span>
+            <NavLink to={TRAINEE_WORKOUTS_PATH} className={linkCls}>
+              אימונים ביתיים
+            </NavLink>
           )}
-          <span className="logout-button" onClick={onLogout}>
+
+          {/* תפריט אישי למתאמנת בלבד */}
+          {role === "trainee" && (
+            <NavLink to={PERSONAL_MENU_PATH} className={linkCls}>
+              תפריט אישי
+            </NavLink>
+          )}
+
+          {/* ניהול מזונות למאמנת בלבד */}
+          {role === "coach" && (
+            <NavLink to={MANAGE_FOODS_PATH} className={linkCls}>
+              מזונות
+            </NavLink>
+          )}
+
+          {/* התנתקות */}
+          <button type="button" className="logout-button" onClick={onLogout}>
             התנתקות
-          </span>
+          </button>
         </nav>
       </header>
 
-      <main className="dashboard-main">
+      <main className="dashboard-main" dir="rtl">
         <Outlet />
-        {children}
       </main>
     </>
   );

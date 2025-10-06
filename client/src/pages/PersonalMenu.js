@@ -4,6 +4,7 @@ import axios from "axios";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import "../styles/theme.css";
+import config from "../config";
 
 export default function PersonalMenu({ traineeData }) {
   const [mealPlan, setMealPlan] = useState(null);
@@ -81,7 +82,7 @@ export default function PersonalMenu({ traineeData }) {
         }
 
         const { data } = await axios.post(
-          "https://fitness-app-wdsh.onrender.com/api/meal-plan/generate-meal-plan",
+          `${config.apiBaseUrl}/api/meal-plan/generate-meal-plan`,
           {
             totalProtein: proteinGrams,
             totalCarbs: carbGrams,

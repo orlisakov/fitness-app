@@ -1,7 +1,8 @@
-// קובץ: src/components/TraineeDetailsForm.js
+// src/components/TraineeDetailsForm.js
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "../styles/theme.css";
+import config from "../config";
 
 export default function TraineeDetailsForm() {
   const { id } = useParams();
@@ -15,6 +16,7 @@ export default function TraineeDetailsForm() {
     dailyCalories: "",
     proteinGrams: "",
     carbGrams: "",
+    trainingLevel: "beginner",
     isVegetarian: false,
     isVegan: false,
     glutenSensitive: false,
@@ -32,14 +34,11 @@ export default function TraineeDetailsForm() {
 
     async function fetchTrainee() {
       try {
-        const res = await fetch(
-          `https://fitness-app-wdsh.onrender.com/api/trainees/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-            },
-          }
-        );
+        const res = await fetch(`${config.apiBaseUrl}/api/trainees/${id}`, {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+        });
         if (!res.ok) throw new Error("שגיאה בטעינת פרטי מתאמנת");
         const data = await res.json();
 
@@ -58,10 +57,10 @@ export default function TraineeDetailsForm() {
   }, [id]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -69,17 +68,14 @@ export default function TraineeDetailsForm() {
     e.preventDefault();
 
     try {
-      const res = await fetch(
-        `https://fitness-app-wdsh.onrender.com/api/trainees/${id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-          },
-          body: JSON.stringify(formData),
-        }
-      );
+      const res = await fetch(`${config.apiBaseUrl}/api/trainees/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(formData),
+      });
 
       if (!res.ok) {
         const data = await res.json();
@@ -87,12 +83,10 @@ export default function TraineeDetailsForm() {
       }
 
       const updatedUserData = await res.json();
-      console.log("updatedUserData:", updatedUserData);
       localStorage.setItem("user", JSON.stringify(updatedUserData));
-      window.location.reload(); // ירענן את האפליקציה עם המשתמש החדש
-
       alert("הנתונים נשמרו בהצלחה!");
       navigate("/");
+      window.location.reload();
     } catch (err) {
       alert(err.message);
     }
@@ -121,6 +115,7 @@ export default function TraineeDetailsForm() {
               onChange={handleChange}
             />
           </label>
+
           <label>
             גובה (ס"מ):
             <input
@@ -130,6 +125,7 @@ export default function TraineeDetailsForm() {
               onChange={handleChange}
             />
           </label>
+
           <label>
             משקל (ק"ג):
             <input
@@ -139,61 +135,62 @@ export default function TraineeDetailsForm() {
               onChange={handleChange}
             />
           </label>
+
+          <label>
+            דרגת אימון:
+            <select
+              name="trainingLevel"
+              value={formData.trainingLevel}
+              onChange={handleChange}
+            >
+              <option value="beginner">מתחילות</option>
+              <option value="intermediate">בינוניות</option>
+              <option value="advanced">מתקדמות</option>
+            </select>
+          </label>
+
           <label className="checkbox-line">
             <input
               type="checkbox"
               name="isVegetarian"
               checked={formData.isVegetarian}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  isVegetarian: e.target.checked,
-                }))
-              }
+              onChange={handleChange}
             />
             צמחונית
           </label>
+
           <label className="checkbox-line">
             <input
               type="checkbox"
               name="isVegan"
               checked={formData.isVegan}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, isVegan: e.target.checked }))
-              }
+              onChange={handleChange}
             />
             טבעונית
           </label>
+
           <label className="checkbox-line">
             <input
               type="checkbox"
               name="glutenSensitive"
               checked={formData.glutenSensitive}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  glutenSensitive: e.target.checked,
-                }))
-              }
+              onChange={handleChange}
             />
             רגישה לגלוטן
           </label>
+
           <label className="checkbox-line">
             <input
               type="checkbox"
               name="lactoseSensitive"
               checked={formData.lactoseSensitive}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  lactoseSensitive: e.target.checked,
-                }))
-              }
+              onChange={handleChange}
             />
             רגישה ללקטוז
           </label>
 
           <h3>חישוב מאמנת</h3>
+
           <label>
             כמות קלוריות יומית:
             <input
@@ -203,6 +200,7 @@ export default function TraineeDetailsForm() {
               onChange={handleChange}
             />
           </label>
+
           <label>
             אחוז שומן:
             <input
@@ -212,6 +210,7 @@ export default function TraineeDetailsForm() {
               onChange={handleChange}
             />
           </label>
+
           <label>
             גרם חלבון:
             <input
@@ -221,6 +220,7 @@ export default function TraineeDetailsForm() {
               onChange={handleChange}
             />
           </label>
+
           <label>
             גרם פחמימה:
             <input

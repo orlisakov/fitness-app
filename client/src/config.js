@@ -1,6 +1,9 @@
 // fitmatch/client/src/config.js
+const URL_WEB = "https://fitness-app-wdsh.onrender.com";
+const URL_local = "http://localhost:5000";
+
 const config = {
-  apiBaseUrl: "https://fitness-app-wdsh.onrender.com",
+  apiBaseUrl: URL_local,
   password: "123456",
 };
 

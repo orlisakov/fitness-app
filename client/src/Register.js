@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "./styles/auth.css"; // ← אותו CSS
 import logo from "./assets/logo.jpg";
+import config from "./config";
 
 export default function Register() {
   const [fullName, setFullName] = useState("");
@@ -22,14 +23,11 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const res = await fetch(
-        "https://fitness-app-wdsh.onrender.com/api/auth/register",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fullName, phone, password, role }),
-        }
-      );
+      const res = await fetch(`${config.apiBaseUrl}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullName, phone, password, role }),
+      });
       const data = await res.json();
 
       if (!res.ok) {

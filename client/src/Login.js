@@ -2,7 +2,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "./styles/auth.css"; // ← קובץ סגנונות חדש ומבודד
-import logo from "./assets/logo.jpg"; // אפשר להחליף
+import logo from "./assets/logo.jpg";
+import config from "./config";
 
 export default function Login({ onLogin }) {
   const [phone, setPhone] = useState("");
@@ -18,23 +19,27 @@ export default function Login({ onLogin }) {
     setLoading(true);
 
     try {
-      const res = await fetch(
-        "https://fitness-app-wdsh.onrender.com/api/auth/login",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone, password }),
-        }
-      );
+      const res = await fetch(`${config.apiBaseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, password }),
+      });
 
       const data = await res.json();
+      console.log("login response:", data);
+
       if (!res.ok) {
         setError(data.message || "שגיאה בהתחברות");
         setLoading(false);
         return;
       }
 
-      sessionStorage.setItem("token", data.token);
+      // אם הטוקן כולל את המילה Bearer, נוריד אותה:
+      const cleanToken = data.token?.replace(/^Bearer\s+/i, "");
+      sessionStorage.setItem("token", cleanToken);
+
+      // אפשר לשמור גם ב-localStorage כדי שישמר אחרי רענון:
+      localStorage.setItem("token", cleanToken);
 
       onLogin?.(data);
     } catch (err) {

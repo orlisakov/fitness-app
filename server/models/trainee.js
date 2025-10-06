@@ -5,6 +5,11 @@ const traineeSchema = new mongoose.Schema({
   phone: { type: String, required: true, unique: true }, // עכשיו חובה וייחודי
   passwordHash: { type: String, required: true },
   role: { type: String, default: "trainee" },
+  trainingLevel: {
+    type: String,
+    enum: ["beginner", "intermediate", "advanced"],
+    default: "beginner",
+  },
 
   // פרטי בריאות
   age: { type: Number },

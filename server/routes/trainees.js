@@ -73,16 +73,15 @@ router.put("/:id", authMiddleware, async (req, res) => {
       proteinGrams,
       carbGrams,
       dislikedFoods,
+      trainingLevel,
     } = req.body;
 
     const $set = {
       ...(typeof fullName !== "undefined" && { fullName }),
       ...(typeof phone !== "undefined" && { phone }),
-      // אם תרצי לשמור גם מייל, הוסיפי לשדה במודל
       ...(typeof age !== "undefined" && { age: toNum(age) }),
       ...(typeof height !== "undefined" && { height: toNum(height) }),
       ...(typeof weight !== "undefined" && { weight: toNum(weight) }),
-
       ...(typeof isVegetarian !== "undefined" && {
         isVegetarian: toBool(isVegetarian),
       }),
@@ -93,7 +92,6 @@ router.put("/:id", authMiddleware, async (req, res) => {
       ...(typeof lactoseSensitive !== "undefined" && {
         lactoseSensitive: toBool(lactoseSensitive),
       }),
-
       ...(typeof dailyCalories !== "undefined" && {
         dailyCalories: toNum(dailyCalories),
       }),
@@ -102,9 +100,21 @@ router.put("/:id", authMiddleware, async (req, res) => {
         proteinGrams: toNum(proteinGrams),
       }),
       ...(typeof carbGrams !== "undefined" && { carbGrams: toNum(carbGrams) }),
-
-      ...(typeof dislikedFoods !== "undefined" && { dislikedFoods }), // מערך ObjectId-ים
+      ...(typeof dislikedFoods !== "undefined" && { dislikedFoods }),
+      ...(typeof trainingLevel !== "undefined" && { trainingLevel }),
     };
+
+    if (typeof trainingLevel !== "undefined") {
+      const allowed = ["beginner", "intermediate", "advanced"];
+      if (!allowed.includes(trainingLevel)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid trainingLevel" });
+      }
+      $set.trainingLevel = trainingLevel;
+    }
+
+    console.log("Updating trainee:", req.params.id, "with $set:", $set);
 
     const updated = await Trainee.findByIdAndUpdate(
       req.params.id,
@@ -118,12 +128,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
         .json({ success: false, message: "מתאמנת לא נמצאה" });
     }
 
-    console.log("UPDATED trainee flags:", {
-      isVegetarian: updated.isVegetarian,
-      isVegan: updated.isVegan,
-      glutenSensitive: updated.glutenSensitive,
-      lactoseSensitive: updated.lactoseSensitive,
-    });
+    console.log("Updated doc:", updated && updated.trainingLevel);
 
     res.json({ success: true, trainee: updated });
   } catch (err) {
