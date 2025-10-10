@@ -225,7 +225,7 @@ export default function PersonalMenu({ traineeData }) {
   function EggsFixedLine(fixed) {
     if (!fixed) return null;
     const name = (fixed.food?.name || "").trim();
-    if (!/egg|ביצה/i.test(name)) return null;
+    if (!/egg|ביצים/i.test(name)) return null;
     const isPieces = /יח׳|יחידה/.test(fixed.displayText);
     const clean = isPieces
       ? fixed.displayText.replace(/[^0-9.]/g, "")
@@ -308,36 +308,52 @@ export default function PersonalMenu({ traineeData }) {
   function BreakfastBlock({ meal }) {
     return <BreakfastLike meal={meal} title="ארוחת בוקר" />;
   }
-  function LunchBlock({ meal }) {
+
+  function LunchBlock({ meal, title = "ארוחת צהריים" }) {
     const t = meal.targets;
-    const protein = meal.groups.find((g) => g.key === "protein")?.options || [];
-    const carbs = meal.groups.find((g) => g.key === "carbs")?.options || [];
-    const legumes = meal.groups.find((g) => g.key === "legumes")?.options || [];
+
+    // מאתרים קבוצות לפי ה-Key
+    const proteinGroup = meal.groups.find((g) => g.key === "protein");
+    const carbsGroup = meal.groups.find((g) => g.key === "carbs");
+    const legumesGroup = meal.groups.find((g) => g.key === "legumes");
+
+    const protein = proteinGroup?.options || [];
+    const carbs = carbsGroup?.options || [];
+    const legumes = legumesGroup?.options || [];
+
+    // אם יש כותרת מהשרת – נשתמש בה. אחרת ברירת מחדל.
+    const proteinLabel = proteinGroup?.title || "חלבון (בחרי אחד)";
+    const carbsLabel = carbsGroup?.title || "פחמימות (בחרי אחד)";
+    const legumesLabel = legumesGroup?.title || "קטניות (בחרי אחד)";
+
     return (
       <div className="meal-card stacked">
-        <SectionTitle>ארוחת צהריים</SectionTitle>
+        <SectionTitle>{title}</SectionTitle>
         <TargetsRow t={t} />
+
         {!!protein.length && (
-          <Line label="חלבון (בחרי אחד)" value={optionsToAmountList(protein)} />
+          <Line label={proteinLabel} value={optionsToAmountList(protein)} />
         )}
+
         {!!carbs.length && (
-          <Line label="פחמימות (בחרי אחד)" value={optionsToAmountList(carbs)} />
+          <Line label={carbsLabel} value={optionsToAmountList(carbs)} />
         )}
+
+        {/* תוצג רק אם קיימת בפועל קבוצת 'legumes' */}
         {!!legumes.length && (
-          <Line
-            label="קטניות (בחרי אחד)"
-            value={optionsToAmountList(legumes)}
-          />
+          <Line label={legumesLabel} value={optionsToAmountList(legumes)} />
         )}
       </div>
     );
   }
+
   function SnackBlock({ meal }) {
     const t = meal.targets;
     const prot =
       meal.groups.find((g) => g.key === "snack_protein")?.options || [];
     const sweets = meal.groups.find((g) => g.key === "sweets")?.options || [];
     const fruits = meal.groups.find((g) => g.key === "fruits")?.options || [];
+
     return (
       <div className="meal-card stacked">
         <SectionTitle>ארוחת ביניים</SectionTitle>
@@ -357,9 +373,19 @@ export default function PersonalMenu({ traineeData }) {
       </div>
     );
   }
+
   function DinnerBlock({ meal }) {
-    const { dairyStyle } = meal;
-    return <BreakfastLike meal={dairyStyle} title="ארוחת ערב — גרסה חלבית" />;
+    const { dairyStyle, meatStyle } = meal;
+    return (
+      <>
+        {dairyStyle && (
+          <BreakfastLike meal={dairyStyle} title="ארוחת ערב — גרסה חלבית" />
+        )}
+        {meatStyle && (
+          <LunchBlock meal={meatStyle} title="ארוחת ערב — גרסה בשרית" />
+        )}
+      </>
+    );
   }
 
   return (
