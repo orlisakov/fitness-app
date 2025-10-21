@@ -1,4 +1,3 @@
-// client/src/pages/DashboardCoach.jsx
 import React, { useEffect, useState } from "react";
 import "../styles/theme.css";
 import config from "../config";
@@ -8,12 +7,10 @@ export default function DashboardCoach() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // יצירת מתאמנת חדשה
   const [showModal, setShowModal] = useState(false);
   const [newFullName, setNewFullName] = useState("");
   const [newPhone, setNewPhone] = useState("");
 
-  // "פרטי מתאמנת" (מודאל הצג)
   const [showTraineeModal, setShowTraineeModal] = useState(false);
   const [selectedTrainee, setSelectedTrainee] = useState(null);
   const [editData, setEditData] = useState({
@@ -31,9 +28,15 @@ export default function DashboardCoach() {
     proteinGrams: "",
     carbGrams: "",
     trainingLevel: "beginner",
+    customSplitMode: "auto",
+    customMeals: {
+      breakfast: { protein: "", carbs: "", fat: "" },
+      lunch: { protein: "", carbs: "", fat: "" },
+      snack: { protein: "", carbs: "", fat: "" },
+      dinner: { protein: "", carbs: "", fat: "" },
+    },
   });
 
-  // מדידות
   const [showMeasurementsModal, setShowMeasurementsModal] = useState(false);
   const [measurementData, setMeasurementData] = useState({
     date: "",
@@ -47,15 +50,16 @@ export default function DashboardCoach() {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [measurements, setMeasurements] = useState([]);
 
-  // מזונות לא נאכלים
   const [allFoods, setAllFoods] = useState([]);
   const [dislikedFoods, setDislikedFoods] = useState([]);
   const [showDislikedFoodsModal, setShowDislikedFoodsModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // ======== עזר ========
   const fillEditDataFromTrainee = (t) => {
-    setEditData({
+    const split = t?.customSplit || { mode: "auto" };
+    const meals = split?.meals || {};
+    setEditData((prev) => ({
+      ...prev,
       fullName: t.fullName || "",
       phone: t.phone || "",
       age: t.age ?? "",
@@ -70,7 +74,30 @@ export default function DashboardCoach() {
       proteinGrams: t.proteinGrams ?? "",
       carbGrams: t.carbGrams ?? "",
       trainingLevel: t.trainingLevel || "beginner",
-    });
+      customSplitMode: split.mode || "auto",
+      customMeals: {
+        breakfast: {
+          protein: meals?.breakfast?.protein ?? "",
+          carbs: meals?.breakfast?.carbs ?? "",
+          fat: meals?.breakfast?.fat ?? "",
+        },
+        lunch: {
+          protein: meals?.lunch?.protein ?? "",
+          carbs: meals?.lunch?.carbs ?? "",
+          fat: meals?.lunch?.fat ?? "",
+        },
+        snack: {
+          protein: meals?.snack?.protein ?? "",
+          carbs: meals?.snack?.carbs ?? "",
+          fat: meals?.snack?.fat ?? "",
+        },
+        dinner: {
+          protein: meals?.dinner?.protein ?? "",
+          carbs: meals?.dinner?.carbs ?? "",
+          fat: meals?.dinner?.fat ?? "",
+        },
+      },
+    }));
   };
 
   useEffect(() => {
@@ -96,7 +123,6 @@ export default function DashboardCoach() {
     }
   }
 
-  // ======== פרטי מתאמנת (מודאל "הצג") ========
   const openTraineeModal = (trainee) => {
     setSelectedTrainee(trainee);
     fillEditDataFromTrainee(trainee);
@@ -109,6 +135,38 @@ export default function DashboardCoach() {
     if (!selectedTrainee?._id) {
       console.warn("No selectedTrainee or _id – cannot save");
       return;
+    }
+
+    let customSplit = undefined;
+    if (editData.customSplitMode === "custom") {
+      const n = (v) => (v === "" || v == null ? undefined : Number(v));
+      customSplit = {
+        mode: "custom",
+        meals: {
+          breakfast: {
+            protein: n(editData.customMeals.breakfast.protein),
+            carbs: n(editData.customMeals.breakfast.carbs),
+            fat: n(editData.customMeals.breakfast.fat),
+          },
+          lunch: {
+            protein: n(editData.customMeals.lunch.protein),
+            carbs: n(editData.customMeals.lunch.carbs),
+            fat: n(editData.customMeals.lunch.fat),
+          },
+          snack: {
+            protein: n(editData.customMeals.snack.protein),
+            carbs: n(editData.customMeals.snack.carbs),
+            fat: n(editData.customMeals.snack.fat),
+          },
+          dinner: {
+            protein: n(editData.customMeals.dinner.protein),
+            carbs: n(editData.customMeals.dinner.carbs),
+            fat: n(editData.customMeals.dinner.fat),
+          },
+        },
+      };
+    } else {
+      customSplit = { mode: "auto" };
     }
 
     const payload = {
@@ -134,13 +192,12 @@ export default function DashboardCoach() {
       carbGrams:
         editData.carbGrams === "" ? undefined : Number(editData.carbGrams),
       trainingLevel: editData.trainingLevel,
+      customSplit,
     };
 
     Object.keys(payload).forEach(
       (k) => typeof payload[k] === "undefined" && delete payload[k]
     );
-
-    console.log("PUT trainee payload:", selectedTrainee._id, payload);
 
     try {
       const res = await fetch(
@@ -156,8 +213,6 @@ export default function DashboardCoach() {
       );
 
       const data = await res.json().catch(() => ({}));
-      console.log("PUT trainee response:", res.status, data);
-
       if (!res.ok) throw new Error(data.message || "שגיאה בעדכון נתונים");
 
       const saved = data.trainee || data.user || data;
@@ -171,7 +226,6 @@ export default function DashboardCoach() {
     }
   };
 
-  // ======== פעולות נוספות ========
   const handleDelete = async (id) => {
     if (!window.confirm("האם את בטוחה שברצונך למחוק את המתאמנת?")) return;
     try {
@@ -269,50 +323,6 @@ export default function DashboardCoach() {
     }
   };
 
-  const handleAddTrainee = async (e) => {
-    e.preventDefault();
-    const newTrainee = {
-      fullName: newFullName,
-      phone: newPhone,
-      password: "123456",
-      role: "trainee",
-      isVegetarian: false,
-      isVegan: false,
-      glutenSensitive: false,
-      lactoseSensitive: false,
-      trainingLevel: "beginner",
-    };
-    try {
-      const res = await fetch(`${config.apiBaseUrl}/api/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(newTrainee),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || "שגיאה ביצירת מתאמנת");
-
-      const created = data.user || data.trainee || data;
-
-      // נסגור מודאל ההוספה ונפתח את מודאל "הצג" עם אותה תצוגה
-      setShowModal(false);
-      setNewFullName("");
-      setNewPhone("");
-
-      setSelectedTrainee(created);
-      fillEditDataFromTrainee(created);
-      setShowTraineeModal(true);
-
-      // נרענן את הטבלה כדי שכבר תופיע
-      fetchTrainees();
-    } catch (err) {
-      alert(err.message || "שגיאה ביצירת מתאמנת");
-    }
-  };
-
   const openDislikedFoodsModal = async (trainee) => {
     setSelectedTrainee(trainee);
     try {
@@ -377,6 +387,71 @@ export default function DashboardCoach() {
   if (error) return <div className="dashboard-error">{error}</div>;
 
   const allFoodsArr = Array.isArray(allFoods) ? allFoods : [];
+
+  const SplitGrid = ({ mealKey, title }) => (
+    <div className="form-grid four tight">
+      <div className="field">
+        <label className="form-label">{title} — חלבון (גרם)</label>
+        <input
+          type="number"
+          value={editData.customMeals[mealKey].protein}
+          onChange={(e) =>
+            setEditData((p) => ({
+              ...p,
+              customMeals: {
+                ...p.customMeals,
+                [mealKey]: {
+                  ...p.customMeals[mealKey],
+                  protein: e.target.value,
+                },
+              },
+            }))
+          }
+          disabled={editData.customSplitMode !== "custom"}
+        />
+      </div>
+      <div className="field">
+        <label className="form-label">{title} — פחמימה (גרם)</label>
+        <input
+          type="number"
+          value={editData.customMeals[mealKey].carbs}
+          onChange={(e) =>
+            setEditData((p) => ({
+              ...p,
+              customMeals: {
+                ...p.customMeals,
+                [mealKey]: {
+                  ...p.customMeals[mealKey],
+                  carbs: e.target.value,
+                },
+              },
+            }))
+          }
+          disabled={editData.customSplitMode !== "custom"}
+        />
+      </div>
+      <div className="field">
+        <label className="form-label">{title} — שומן (גרם)</label>
+        <input
+          type="number"
+          value={editData.customMeals[mealKey].fat}
+          onChange={(e) =>
+            setEditData((p) => ({
+              ...p,
+              customMeals: {
+                ...p.customMeals,
+                [mealKey]: {
+                  ...p.customMeals[mealKey],
+                  fat: e.target.value,
+                },
+              },
+            }))
+          }
+          disabled={editData.customSplitMode !== "custom"}
+        />
+      </div>
+    </div>
+  );
 
   return (
     <div className="coach-dashboard" dir="rtl">
@@ -451,39 +526,6 @@ export default function DashboardCoach() {
         </table>
       )}
 
-      {/* מודאל – יצירת מתאמנת חדשה */}
-      {showModal && (
-        <div className="modal-backdrop">
-          <div className="modal" dir="rtl">
-            <div className="modal-header">
-              <h2>הוספת מתאמנת חדשה</h2>
-              <button className="close-btn" onClick={() => setShowModal(false)}>
-                ←
-              </button>
-            </div>
-            <form onSubmit={handleAddTrainee}>
-              <input
-                type="text"
-                placeholder="שם מלא"
-                value={newFullName}
-                onChange={(e) => setNewFullName(e.target.value)}
-                required
-              />
-              <input
-                type="text"
-                placeholder="טלפון"
-                value={newPhone}
-                onChange={(e) => setNewPhone(e.target.value)}
-                required
-              />
-              <p>סיסמה תיווצר אוטומטית: 123456</p>
-              <button type="submit">צור והמשך</button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* מודאל – פרטי מתאמנת */}
       {showTraineeModal && (
         <div className="modal-backdrop">
           <div className="modal" dir="rtl">
@@ -558,6 +600,7 @@ export default function DashboardCoach() {
                   />
                 </div>
               </div>
+
               <h3 className="section-title">דרגת אימון</h3>
               <div className="form-grid one">
                 <div className="field">
@@ -680,6 +723,37 @@ export default function DashboardCoach() {
                 </div>
               </div>
 
+              <h3 className="section-title">חלוקת מאקרו לארוחות</h3>
+              <div className="form-grid two tight">
+                <label className="check">
+                  <input
+                    type="radio"
+                    name="splitMode"
+                    checked={editData.customSplitMode === "auto"}
+                    onChange={() =>
+                      setEditData((p) => ({ ...p, customSplitMode: "auto" }))
+                    }
+                  />
+                  מצב אוטומטי (אלגוריתם)
+                </label>
+                <label className="check">
+                  <input
+                    type="radio"
+                    name="splitMode"
+                    checked={editData.customSplitMode === "custom"}
+                    onChange={() =>
+                      setEditData((p) => ({ ...p, customSplitMode: "custom" }))
+                    }
+                  />
+                  מצב ידני (גרמים לכל ארוחה)
+                </label>
+              </div>
+
+              <SplitGrid mealKey="breakfast" title="בוקר" />
+              <SplitGrid mealKey="lunch" title="צהריים" />
+              <SplitGrid mealKey="snack" title="ביניים" />
+              <SplitGrid mealKey="dinner" title="ערב" />
+
               <button
                 type="submit"
                 className="btn primary"
@@ -693,7 +767,7 @@ export default function DashboardCoach() {
         </div>
       )}
 
-      {/* מודאל – מדידה */}
+      {/* מודאלים נוספים (מדידות, היסטוריה, מזונות) נשארו */}
       {showMeasurementsModal && (
         <div className="modal-backdrop">
           <div className="modal" dir="rtl">
@@ -763,7 +837,6 @@ export default function DashboardCoach() {
         </div>
       )}
 
-      {/* מודאל – היסטוריית מדידות */}
       {showHistoryModal && (
         <div className="modal-backdrop">
           <div className="modal" dir="rtl">
@@ -818,7 +891,6 @@ export default function DashboardCoach() {
         </div>
       )}
 
-      {/* מודאל – מזונות לא נאכלים */}
       {showDislikedFoodsModal && (
         <div className="modal-backdrop">
           <div className="modal" dir="rtl">

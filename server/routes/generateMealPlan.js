@@ -26,6 +26,11 @@ const LUNCH_TOPUP_FLEX = 1.06;
 // טולרנסים לארוחת ביניים (מדויק בחלבון/קל', נדיב קצת בפחמ'/שומן)
 const SNACK_FLEXS = { protein: 1.03, carbs: 1.06, fat: 1.07, calories: 1.04 };
 
+function n(v) {
+  const x = Number(v);
+  return Number.isFinite(x) ? x : 0;
+}
+
 // פורמט לתצוגה בלבד
 const fmt = (n, d = 2) => {
   const num = Number(n);
@@ -548,23 +553,266 @@ function refineAndTunePair(pOpt, cOpt, totalTargets, flexMap) {
   return tunePairToTargets(pOpt, cOpt, totalTargets, flexMap, 3);
 }
 
+/* ===================== Dynamic Meal Split ===================== */
+
+// משקלי בסיס (אפשר לכוון מאוחר יותר בהתאם להעדפות שלך)
+const DEFAULT_WEIGHTS = {
+  protein: { breakfast: 0.25, lunch: 0.4, snack: 0.15, dinner: 0.2 },
+  carbs: { breakfast: 0.25, lunch: 0.35, snack: 0.2, dinner: 0.2 },
+  fat: { breakfast: 0.25, lunch: 0.3, snack: 0.15, dinner: 0.3 },
+  calories: { breakfast: 0.2, lunch: 0.3, snack: 0.15, dinner: 0.35 },
+};
+
+// מגבלות מינימום/מקסימום פר ארוחה (גרמים)
+const DEFAULT_BOUNDS = {
+  protein: {
+    breakfast: { min: 15, max: 70 },
+    lunch: { min: 25, max: 90 },
+    snack: { min: 10, max: 45 },
+    dinner: { min: 20, max: 80 },
+  },
+  carbs: {
+    breakfast: { min: 10, max: 65 },
+    lunch: { min: 20, max: 120 },
+    snack: { min: 10, max: 50 },
+    dinner: { min: 10, max: 80 },
+  },
+  fat: {
+    breakfast: { min: 8, max: 35 },
+    lunch: { min: 10, max: 40 },
+    snack: { min: 4, max: 25 },
+    dinner: { min: 8, max: 40 },
+  },
+};
+
+function normalizeWeights(map) {
+  const sum = Object.values(map).reduce((a, b) => a + (b || 0), 0) || 1;
+  const out = {};
+  for (const k of Object.keys(map)) out[k] = (map[k] || 0) / sum;
+  return out;
+}
+
+// התאמות הקשר (ctx)
+function applyContextTweaks(baseWeights, ctx = {}) {
+  // ctx דוגמא: { isTrainingDay, workoutTime: 'morning'|'noon'|'evening'|null,
+  //               preferLowCarbDinner, higherBreakfastProtein, meals:['breakfast','lunch','snack','dinner'] }
+  const W = JSON.parse(JSON.stringify(baseWeights));
+
+  if (ctx.isTrainingDay && ctx.workoutTime === "morning") {
+    W.carbs.breakfast += 0.03;
+    W.carbs.lunch += 0.03;
+    W.carbs.snack += 0.02;
+    W.carbs.dinner -= 0.08;
+  }
+  if (ctx.isTrainingDay && ctx.workoutTime === "noon") {
+    W.carbs.lunch += 0.05;
+    W.carbs.snack += 0.03;
+    W.carbs.dinner -= 0.04;
+    W.carbs.breakfast -= 0.04;
+  }
+  if (ctx.isTrainingDay && ctx.workoutTime === "evening") {
+    W.carbs.dinner += 0.06;
+    W.carbs.snack += 0.02;
+    W.carbs.lunch -= 0.04;
+    W.carbs.breakfast -= 0.04;
+  }
+  if (ctx.preferLowCarbDinner) {
+    W.carbs.dinner *= 0.65;
+    W.carbs.lunch *= 1.1;
+    W.carbs.snack *= 1.05;
+  }
+  if (ctx.higherBreakfastProtein) {
+    W.protein.breakfast *= 1.15;
+    W.protein.snack *= 0.95;
+    W.protein.dinner *= 0.95;
+  }
+
+  // נירמול לכל מאקרו
+  W.protein = normalizeWeights(W.protein);
+  W.carbs = normalizeWeights(W.carbs);
+  W.fat = normalizeWeights(W.fat);
+  W.calories = normalizeWeights(W.calories);
+
+  // תמיכה ב־3 ארוחות (או כל סט אחר)
+  if (ctx.meals && Array.isArray(ctx.meals)) {
+    for (const macro of Object.keys(W)) {
+      const filtered = {};
+      for (const m of ctx.meals) filtered[m] = W[macro][m] || 0;
+      W[macro] = normalizeWeights(filtered);
+    }
+  }
+  return W;
+}
+
+function allocateMacro(total, weights, bounds, roundTo = 1) {
+  const meals = Object.keys(weights);
+  const raw = {};
+  for (const m of meals) raw[m] = total * (weights[m] || 0);
+
+  // קלאמפ לפי מינימום/מקסימום
+  const clamped = {};
+  let delta = 0;
+  for (const m of meals) {
+    const min = bounds?.[m]?.min ?? 0;
+    const max = bounds?.[m]?.max ?? Number.POSITIVE_INFINITY;
+    const v = Math.min(Math.max(raw[m], min), max);
+    clamped[m] = v;
+    delta += v;
+  }
+
+  // איזון חזרה לסה״כ
+  function adjustToTotal(target, current, vec, direction) {
+    let remaining = target - current;
+    if (Math.abs(remaining) < 1e-6) return vec;
+    const keys = Object.keys(vec);
+    let capacity = 0;
+    for (const k of keys) {
+      const min = bounds?.[k]?.min ?? 0;
+      const max = bounds?.[k]?.max ?? Infinity;
+      capacity +=
+        direction > 0 ? Math.max(0, max - vec[k]) : Math.max(0, vec[k] - min);
+    }
+    if (capacity < 1e-6) return vec;
+    for (const k of keys) {
+      const min = bounds?.[k]?.min ?? 0;
+      const max = bounds?.[k]?.max ?? Infinity;
+      const room = direction > 0 ? max - vec[k] : vec[k] - min;
+      if (room <= 0) continue;
+      const share = room / capacity;
+      const bump = share * remaining;
+      vec[k] = Math.min(Math.max(vec[k] + bump, min), max);
+    }
+    return vec;
+  }
+
+  let result = { ...clamped };
+  if (delta > total + 1e-6) result = adjustToTotal(total, delta, result, -1);
+  else if (delta < total - 1e-6)
+    result = adjustToTotal(total, delta, result, +1);
+
+  // עיגול ושימור סכומים
+  const rounded = {};
+  let sumRounded = 0;
+  for (const m of Object.keys(result)) {
+    const r = Math.round(result[m] / roundTo) * roundTo;
+    rounded[m] = r;
+    sumRounded += r;
+  }
+  const diff = total - sumRounded;
+  if (diff !== 0) {
+    const order = Object.keys(rounded).sort(
+      (a, b) => (weights[b] || 0) - (weights[a] || 0)
+    );
+    let left = Math.round(diff / roundTo);
+    for (const k of order) {
+      if (left === 0) break;
+      const min = bounds?.[k]?.min ?? 0;
+      const max = bounds?.[k]?.max ?? Infinity;
+      const candidate = rounded[k] + Math.sign(diff) * roundTo;
+      if (candidate >= min && candidate <= max) {
+        rounded[k] = candidate;
+        left -= Math.sign(diff);
+      }
+    }
+  }
+  return rounded;
+}
+
+function buildDynamicSplitInGrams(totals, ctx = {}) {
+  const base = JSON.parse(JSON.stringify(DEFAULT_WEIGHTS));
+  const tweaked = applyContextTweaks(base, ctx);
+
+  const protein = allocateMacro(
+    totals.protein,
+    tweaked.protein,
+    DEFAULT_BOUNDS.protein,
+    1
+  );
+  const carbs = allocateMacro(
+    totals.carbs,
+    tweaked.carbs,
+    DEFAULT_BOUNDS.carbs,
+    1
+  );
+  const fat = allocateMacro(totals.fat, tweaked.fat, DEFAULT_BOUNDS.fat, 1);
+
+  // קלוריות (לנוחות הצגה)
+  const meals = Object.keys(protein);
+  const calories = {};
+  for (const m of meals)
+    calories[m] = Math.round(protein[m] * 4 + carbs[m] * 4 + fat[m] * 9);
+
+  return { protein, carbs, fat, calories };
+}
+
+// helper: grams-per-meal -> split percentages per meal
+function gramsToSplitPct(mealGrams, totals) {
+  const safe = (x) => (typeof x === "number" && isFinite(x) ? x : 0);
+
+  const Ptot = Math.max(1e-9, safe(totals.totalProtein));
+  const Ctot = Math.max(1e-9, safe(totals.totalCarbs));
+  const Ftot = Math.max(1e-9, safe(totals.totalFat));
+  const Ktot = Math.max(1e-9, safe(totals.totalCalories));
+
+  const out = {};
+  for (const meal of Object.keys(mealGrams || {})) {
+    const m = mealGrams[meal] || {};
+    const p = safe(m.protein),
+      c = safe(m.carbs),
+      f = safe(m.fat);
+    const k = p * 4 + c * 4 + f * 9;
+
+    out[meal] = {
+      protein: p / Ptot,
+      carbs: c / Ctot,
+      fat: f / Ftot,
+      calories: k / Ktot,
+    };
+  }
+  return out;
+}
+
 /* ===================== מתכנן לפי חוקים ===================== */
 class RuleBasedPlanner {
-  constructor(foods, targets, prefs) {
+  constructor(foods, targets, prefs, ctx = {}, splitOverridePct = null) {
     this.foods = foods;
     this.targets = targets;
     this.prefs = prefs;
 
-    this.split = {
-      breakfast: { protein: 0.25, carbs: 0.25, fat: 0.25, calories: 0.2 },
-      lunch: { protein: 0.4, carbs: 0.35, fat: 0.3, calories: 0.3 },
-      snack: { protein: 0.15, carbs: 0.2, fat: 0.15, calories: 0.15 },
-      dinner: { protein: 0.2, carbs: 0.2, fat: 0.3, calories: 0.35 },
-    };
+    if (splitOverridePct && Object.keys(splitOverridePct).length) {
+      this.split = splitOverridePct; // ❗ משתמשים בחלוקה ידנית
+      return;
+    }
+
+    // בניית חלוקה דינמית בגרמים לפי הקשר
+    const grams = buildDynamicSplitInGrams(
+      {
+        protein: targets.totalProtein,
+        carbs: targets.totalCarbs,
+        fat: targets.totalFat,
+        calories: targets.totalCalories,
+      },
+      ctx
+    );
+
+    // המרה לאחוזים (מה שסעיפי mealTargets שלך משתמשים בו)
+    const splitPct = {};
+    const meals = Object.keys(grams.protein);
+    for (const meal of meals) {
+      splitPct[meal] = {
+        protein: (grams.protein[meal] || 0) / (targets.totalProtein || 1),
+        carbs: (grams.carbs[meal] || 0) / (targets.totalCarbs || 1),
+        fat: (grams.fat[meal] || 0) / (targets.totalFat || 1),
+        calories:
+          (grams.calories[meal] || 0) /
+          (targets.totalCalories || Math.max(1, grams.calories[meal] || 1)),
+      };
+    }
+    this.split = splitPct;
   }
 
   mealTargets(meal) {
-    const s = this.split[meal];
+    const s = this.split[meal] || { protein: 0, carbs: 0, fat: 0, calories: 0 };
     return {
       protein: this.targets.totalProtein * s.protein,
       carbs: this.targets.totalCarbs * s.carbs,
@@ -868,10 +1116,97 @@ class RuleBasedPlanner {
     return null;
   }
 
+  // בתוך class RuleBasedPlanner
+  buildSnack(totalTargets) {
+    // Builder לאופציות לפי מאקרו יחיד
+    function buildSingleMacroOptions(pool, macroKey, targetVal, want = 40) {
+      const BIG = 1e9;
+      const T = { protein: BIG, carbs: BIG, fat: BIG, calories: BIG };
+      T[macroKey] = Math.max(0, Number(targetVal) || 0);
+
+      // בודקות רק את המאקרו הרלוונטי
+      const customCheck = (nut) =>
+        nut[macroKey] <=
+        T[macroKey] * (typeof FLEX === "number" ? FLEX : 1.005) + 1e-9;
+
+      const candidates = [];
+      for (const food of pool) {
+        const pack = computeQuantityForTargets(food, T, null, customCheck);
+        if (!pack) continue;
+        const s = Math.abs(T[macroKey] - pack.nut[macroKey]);
+        candidates.push({
+          food,
+          quantity: pack.q,
+          displayText: getDisplayText(food, pack.q),
+          nutrition: pack.nut,
+          _score: s,
+        });
+      }
+
+      // הכי קרוב ליעד; שובר שוויון: קל׳ נמוכות יותר
+      candidates.sort(
+        (a, b) =>
+          a._score - b._score ||
+          (a.nutrition?.calories || 0) - (b.nutrition?.calories || 0)
+      );
+
+      return candidates.slice(0, want);
+    }
+
+    // מאגרים
+    const proteinPool = this.getProteinSnack(0); // חלבוני-ביניים
+    const sweetsPool = this.getSweetSnack(); // פחמימות לביניים (חטיפים/מתוקים)
+    const fruitsPool = this.getFruitSnack(); // חלופה לפחמימה: פרי
+
+    // אופציות לפי מאקרו יחיד
+    const proteins = buildSingleMacroOptions(
+      proteinPool,
+      "protein",
+      totalTargets.protein,
+      60
+    );
+    const sweetsAsCarb = buildSingleMacroOptions(
+      sweetsPool,
+      "carbs",
+      totalTargets.carbs,
+      20
+    );
+    const fruitsAsAlt = buildSingleMacroOptions(
+      fruitsPool,
+      "carbs",
+      totalTargets.carbs,
+      20
+    );
+
+    return {
+      mode: "variety",
+      targets: totalTargets,
+      groups: [
+        {
+          title: "חלבון ביניים (בחרי אחד)",
+          key: "snack_protein",
+          options: proteins,
+          selected: proteins[0] || undefined,
+        },
+        {
+          title: "פחמימות ביניים (בחרי אחד)",
+          key: "sweets",
+          options: sweetsAsCarb,
+          selected: sweetsAsCarb[0] || undefined,
+        },
+        {
+          title: "פירות (חלופה לפחמימות הביניים)",
+          key: "fruits",
+          options: fruitsAsAlt,
+        },
+      ],
+    };
+  }
+
   /* ======== BUILDERS ======== */
 
-  /** תבנית ארוחת בוקר (ביצים קבועות, דיוק גבוה) */
   buildBreakfastTemplate(mealType, totalTargets) {
+    // 🥚 אם יש ביצים ומתאים להעדפות – נציג אותן (כמות קבועה)
     let eggsFixed = null;
     const eggsPool = this.getEggsPool(mealType);
     if (eggsPool.length && !this.prefs.isVegan) {
@@ -879,49 +1214,80 @@ class RuleBasedPlanner {
       if (fixed) eggsFixed = fixed;
     }
 
-    const remain = eggsFixed
-      ? {
-          protein: Math.max(
-            0,
-            totalTargets.protein - eggsFixed.nutrition.protein
-          ),
-          carbs: Math.max(0, totalTargets.carbs - eggsFixed.nutrition.carbs),
-          fat: Math.max(0, totalTargets.fat - eggsFixed.nutrition.fat),
-          calories: Math.max(
-            0,
-            totalTargets.calories - eggsFixed.nutrition.calories
-          ),
-        }
-      : totalTargets;
+    // ✅ חישוב יעד חלבון לקבוצת החלבון *אחרי הורדת הביצים* בלבד
+    const eggsProt = eggsFixed?.nutrition?.protein || 0;
+    const proteinTargetAfterEggs = Math.max(0, totalTargets.protein - eggsProt);
 
-    const { protT, carbsT } = allocateRemainBetweenProtAndCarbs(remain);
+    const BIG = 1e9;
 
+    // חלבון לבוקר — לפי יעד חלבון אחרי הורדת ביצים
+    const protT = {
+      protein: proteinTargetAfterEggs,
+      carbs: BIG,
+      fat: BIG,
+      calories: BIG,
+    };
+
+    // פחמימות לבוקר — נשאר לפי יעד הפחמימות המקורי (לפי הבקשה משנים רק את החלבון)
+    const carbsT = {
+      protein: BIG,
+      carbs: Math.max(0, totalTargets.carbs),
+      fat: BIG,
+      calories: BIG,
+    };
+
+    // בדיקות לקבוצה חלבונית/פחמימתית (בודקות רק המאקרו הרלוונטי)
+    const checkProteinOnly = (nut, T) =>
+      nut.protein <=
+      T.protein * (typeof FLEX === "number" ? FLEX : 1.005) + 1e-9;
+    const checkCarbsOnly = (nut, T) =>
+      nut.carbs <= T.carbs * (typeof FLEX === "number" ? FLEX : 1.005) + 1e-9;
+
+    // מאגרים
     const protPool = this.getBreakfastProteinPool();
-    const proteinOptions = this.buildGroupOptions(protPool, protT, 30);
-    const bestProtein = proteinOptions[0] || null;
-
     const carbsPool = this.getBreakfastCarbsPool();
-    const carbsOptions = this.buildGroupOptions(carbsPool, carbsT, 30);
 
+    // אופציות
+    const proteinOptions = this.buildGroupOptions(
+      protPool,
+      protT,
+      30,
+      null,
+      checkProteinOnly
+    );
+    const carbsOptions = this.buildGroupOptions(
+      carbsPool,
+      carbsT,
+      30,
+      null,
+      checkCarbsOnly
+    );
+
+    const finalProtein = proteinOptions[0] || null;
+    const finalCarbs = carbsOptions[0] || null;
+
+    // טונה במים? להציע כף מיונז — החישוב של ה-Remain מתבסס על יעד *אחרי הביצים*
     const hasWaterTunaOption = proteinOptions.some((opt) =>
       this.isWaterTuna(opt.food)
     );
     let mayoAddon = null;
-
-    const remainAfterProt = {
-      protein: Math.max(
-        0,
-        remain.protein - (bestProtein?.nutrition.protein || 0)
-      ),
-      carbs: Math.max(0, remain.carbs - (bestProtein?.nutrition.carbs || 0)),
-      fat: Math.max(0, remain.fat - (bestProtein?.nutrition.fat || 0)),
-      calories: Math.max(
-        0,
-        remain.calories - (bestProtein?.nutrition.calories || 0)
-      ),
-    };
-
     if (hasWaterTunaOption) {
+      const remainAfterProt = {
+        // 👇 יעד חלבון אחרי ביצים פחות מה שנבחר בקבוצת החלבון
+        protein: Math.max(
+          0,
+          proteinTargetAfterEggs - (finalProtein?.nutrition.protein || 0)
+        ),
+        carbs: Math.max(
+          0,
+          totalTargets.carbs - (finalProtein?.nutrition.carbs || 0)
+        ),
+        fat: Math.max(0, totalTargets.fat - (finalProtein?.nutrition.fat || 0)),
+        calories: Math.max(
+          0,
+          totalTargets.calories - (finalProtein?.nutrition.calories || 0)
+        ),
+      };
       mayoAddon = this.buildOneTbspMayoOption(remainAfterProt);
     }
 
@@ -931,80 +1297,12 @@ class RuleBasedPlanner {
       "חופשי"
     );
 
-    let finalProtein = bestProtein;
-    let finalCarbs = carbsOptions[0] || null;
-
-    const currentTotals = {
-      protein:
-        (eggsFixed?.nutrition.protein || 0) +
-        (finalProtein?.nutrition.protein || 0) +
-        (finalCarbs?.nutrition.protein || 0),
-      carbs:
-        (eggsFixed?.nutrition.carbs || 0) +
-        (finalProtein?.nutrition.carbs || 0) +
-        (finalCarbs?.nutrition.carbs || 0),
-      fat:
-        (eggsFixed?.nutrition.fat || 0) +
-        (finalProtein?.nutrition.fat || 0) +
-        (finalCarbs?.nutrition.fat || 0),
-      calories:
-        (eggsFixed?.nutrition.calories || 0) +
-        (finalProtein?.nutrition.calories || 0) +
-        (finalCarbs?.nutrition.calories || 0),
-    };
-
-    const gapP = totalTargets.protein - currentTotals.protein;
-    const gapC = totalTargets.carbs - currentTotals.carbs;
-
-    if (Math.abs(gapP) > 1 || Math.abs(gapC) > 3) {
-      const bestCombo = [...proteinOptions.slice(0, 5)].flatMap((p) =>
-        carbsOptions.slice(0, 5).map((c) => ({
-          p,
-          c,
-          total: {
-            protein:
-              (eggsFixed?.nutrition.protein || 0) +
-              p.nutrition.protein +
-              c.nutrition.protein,
-            carbs:
-              (eggsFixed?.nutrition.carbs || 0) +
-              p.nutrition.carbs +
-              c.nutrition.carbs,
-            fat:
-              (eggsFixed?.nutrition.fat || 0) +
-              p.nutrition.fat +
-              c.nutrition.fat,
-            calories:
-              (eggsFixed?.nutrition.calories || 0) +
-              p.nutrition.calories +
-              c.nutrition.calories,
-          },
-        }))
-      );
-
-      bestCombo.sort((a, b) => {
-        const sA = score(a.total, totalTargets);
-        const sB = score(b.total, totalTargets);
-        return sA - sB;
-      });
-
-      const best = bestCombo[0];
-      if (best) {
-        finalProtein = best.p;
-        finalCarbs = best.c;
-      }
-    }
-
     return {
       mode: "variety",
       header: mealType === "dinner" ? "ערב — גרסה חלבית" : undefined,
       targets: totalTargets,
       groups: [
-        eggsFixed && {
-          title: "ביצים (קבוע)",
-          key: "eggs",
-          fixed: eggsFixed,
-        },
+        eggsFixed && { title: "ביצים (קבוע)", key: "eggs", fixed: eggsFixed },
         {
           title: "חלבון לבוקר — גבינות/טונה/דגים (בחרי אחד)",
           key: "prot_breakfast",
@@ -1031,236 +1329,164 @@ class RuleBasedPlanner {
   }
 
   buildLunch(totalTargets) {
-    // יעד תת־קבוצה מאוזן (סכומי המקרו בין שתי הקבוצות ≈ 1.0)
-    const proteinT = {
-      protein: totalTargets.protein * 0.7 * LUNCH_SAFETY,
-      carbs: totalTargets.carbs * 0.35 * LUNCH_SAFETY,
-      fat: totalTargets.fat * 0.6 * LUNCH_SAFETY,
-      calories: totalTargets.calories * 0.5 * LUNCH_SAFETY,
-    };
-    const carbsLegumesT = {
-      protein: totalTargets.protein * 0.3 * LUNCH_SAFETY,
-      carbs: totalTargets.carbs * 0.65 * LUNCH_SAFETY,
-      fat: totalTargets.fat * 0.4 * LUNCH_SAFETY,
-      calories: totalTargets.calories * 0.5 * LUNCH_SAFETY,
-    };
+    // עוזרת לבנות אופציות לפי מאקרו יחיד (protein או carbs) מול יעד הארוחה
+    function buildSingleMacroOptions(pool, macroKey, targetVal, want = 40) {
+      const BIG = 1e9;
+      const T = { protein: BIG, carbs: BIG, fat: BIG, calories: BIG };
+      T[macroKey] = Math.max(0, Number(targetVal) || 0);
 
-    const checkLunch = (nut, T) => withinTargetsByFlexMap(nut, T, LUNCH_FLEXS);
+      // נבדוק רק את המאקרו הרלוונטי (להתעלם משאר המקרו/קל׳)
+      const customCheck = (nut) =>
+        nut[macroKey] <=
+        T[macroKey] * (typeof FLEX === "number" ? FLEX : 1.005) + 1e-9;
 
-    const proteins = this.buildGroupOptions(
-      this.getProteinLunch(),
-      proteinT,
-      40,
-      null,
-      checkLunch
-    );
-    let carbsLegumes = this.buildGroupOptions(
-      this.getCarbsOrLegumesLunch(),
-      carbsLegumesT,
-      80,
-      null,
-      checkLunch
-    );
-
-    // fallback אם אין בכלל אופציות
-    if (!carbsLegumes || carbsLegumes.length === 0) {
-      const carbsT_orig = {
-        protein: totalTargets.protein * 0.1,
-        carbs: totalTargets.carbs * 0.65,
-        fat: totalTargets.fat * 0.12,
-        calories: totalTargets.calories * 0.45,
-      };
-      const legumesT_orig = {
-        protein: totalTargets.protein * 0.2,
-        carbs: totalTargets.carbs * 0.35,
-        fat: totalTargets.fat * 0.1,
-        calories: totalTargets.calories * 0.3,
-      };
-      const relaxed = addTargets(carbsT_orig, legumesT_orig);
-      carbsLegumes = this.buildGroupOptions(
-        this.getCarbsOrLegumesLunch(),
-        relaxed,
-        80,
-        null,
-        checkLunch
-      );
-    }
-
-    // בחירת הזוג הטוב ביותר מול יעד הארוחה (מותר מעט מעל לפי LUNCH_FLEXS)
-    const candProt = proteins.slice(0, 12);
-    const candCL = carbsLegumes.slice(0, 16);
-
-    let best = null;
-    for (const p of candProt) {
-      for (const c of candCL) {
-        const total = {
-          protein: (p.nutrition?.protein || 0) + (c.nutrition?.protein || 0),
-          carbs: (p.nutrition?.carbs || 0) + (c.nutrition?.carbs || 0),
-          fat: (p.nutrition?.fat || 0) + (c.nutrition?.fat || 0),
-          calories: (p.nutrition?.calories || 0) + (c.nutrition?.calories || 0),
-        };
-        if (!withinTargetsByFlexMap(total, totalTargets, LUNCH_FLEXS)) continue;
-        const s = score(total, totalTargets);
-        if (!best || s < best.s) best = { p, c, s, total };
+      const candidates = [];
+      for (const food of pool) {
+        const pack = computeQuantityForTargets(food, T, null, customCheck);
+        if (!pack) continue;
+        const s = Math.abs(T[macroKey] - pack.nut[macroKey]);
+        candidates.push({
+          food,
+          quantity: pack.q,
+          displayText: getDisplayText(food, pack.q),
+          nutrition: pack.nut,
+          _score: s,
+        });
       }
-    }
-    // אם אין זוג שעומד בטולרנסים — הקרוב ביותר
-    if (!best) {
-      for (const p of candProt) {
-        for (const c of candCL) {
-          const total = {
-            protein: (p.nutrition?.protein || 0) + (c.nutrition?.protein || 0),
-            carbs: (p.nutrition?.carbs || 0) + (c.nutrition?.carbs || 0),
-            fat: (p.nutrition?.fat || 0) + (c.nutrition?.fat || 0),
-            calories:
-              (p.nutrition?.calories || 0) + (c.nutrition?.calories || 0),
-          };
-          const s = score(total, totalTargets);
-          if (!best || s < best.s) best = { p, c, s, total };
-        }
-      }
-    }
 
-    let selectedProtein = best?.p || proteins[0] || null;
-    let selectedCarbLeg = best?.c || carbsLegumes[0] || null;
-
-    // טיוב משולב מדויק מול יעדי הארוחה
-    const tuned = refineAndTunePair(
-      selectedProtein,
-      selectedCarbLeg,
-      totalTargets,
-      LUNCH_FLEXS
-    );
-    const selectedAfterRefineP = tuned.p;
-    const selectedAfterRefineC = tuned.c;
-
-    // חישוב יתרה + top-up אם צריך
-    const current = {
-      protein:
-        (selectedAfterRefineP?.nutrition?.protein || 0) +
-        (selectedAfterRefineC?.nutrition?.protein || 0),
-      carbs:
-        (selectedAfterRefineP?.nutrition?.carbs || 0) +
-        (selectedAfterRefineC?.nutrition?.carbs || 0),
-      fat:
-        (selectedAfterRefineP?.nutrition?.fat || 0) +
-        (selectedAfterRefineC?.nutrition?.fat || 0),
-      calories:
-        (selectedAfterRefineP?.nutrition?.calories || 0) +
-        (selectedAfterRefineC?.nutrition?.calories || 0),
-    };
-    const remain = {
-      protein: totalTargets.protein - current.protein,
-      carbs: totalTargets.carbs - current.carbs,
-      fat: totalTargets.fat - current.fat,
-      calories: totalTargets.calories - current.calories,
-    };
-
-    let topup = null;
-    if (remain.calories > 20 || remain.protein > 3 || remain.carbs > 5) {
-      topup = topUpFromPool(
-        remain,
-        carbsLegumes.map((x) => x.food),
-        12
+      // מיון: הכי קרוב ליעד המאקרו המבוקש; שובר שוויון — קל׳ נמוכות יותר
+      candidates.sort(
+        (a, b) =>
+          a._score - b._score ||
+          (a.nutrition?.calories || 0) - (b.nutrition?.calories || 0)
       );
-      if (!topup)
-        topup = topUpFromPool(
-          remain,
-          proteins.map((x) => x.food),
-          12
-        );
+
+      return candidates.slice(0, want);
     }
 
-    const groups = [
-      {
-        title: "חלבון לצהריים (בחרי אחד)",
-        key: "protein",
-        options: proteins,
-        selected: selectedAfterRefineP || undefined,
-      },
-      {
-        title: "פחמימות / קטניות (בחרי אחד)",
-        key: "carbs",
-        options: carbsLegumes,
-        selected: selectedAfterRefineC || undefined,
-      },
-    ];
-    if (topup) {
-      groups.push({
-        title: "תוספת קטנה לשיפור דיוק הארוחה",
-        key: "lunch_topup",
-        options: [topup],
-        selected: topup,
-      });
-    }
+    // מאגרים קיימים בקוד:
+    const proteinPool = this.getProteinLunch(); // חלבון לצהריים
+    const carbsLegumesPool = this.getCarbsOrLegumesLunch(); // פחמימות/קטניות לצהריים
 
-    return { mode: "variety", targets: totalTargets, groups };
+    // בונים אופציות לפי מאקרו יחיד לכל קבוצה:
+    const proteins = buildSingleMacroOptions(
+      proteinPool,
+      "protein",
+      totalTargets.protein,
+      60
+    );
+
+    const carbsLegumes = buildSingleMacroOptions(
+      carbsLegumesPool,
+      "carbs",
+      totalTargets.carbs,
+      80
+    );
+
+    // בחירות ברירת מחדל (הכי קרובות ליעדים)
+    const selectedProtein = proteins[0] || null;
+    const selectedCarbLeg = carbsLegumes[0] || null;
+
+    // מחזירים במבנה שה-UI מצפה לו (ללא top-up/טיוב זוגי)
+    return {
+      mode: "variety",
+      targets: totalTargets,
+      groups: [
+        {
+          title: "חלבון לצהריים (בחרי אחד)",
+          key: "protein",
+          options: proteins,
+          selected: selectedProtein || undefined,
+        },
+        {
+          title: "פחמימות / קטניות (בחרי אחד)",
+          key: "carbs",
+          options: carbsLegumes,
+          selected: selectedCarbLeg || undefined,
+        },
+      ],
+    };
   }
 
-  /** ערב: שתי גרסאות – חלבית (כמו בוקר) ובשרית (כמו צהריים עם קטגוריות ערב) */
+  buildBreakfast(totalTargets) {
+    return this.buildBreakfastTemplate("breakfast", totalTargets);
+  }
+
+  // בתוך class RuleBasedPlanner
   buildDinner(totalTargets) {
-    // גרסה חלבית (נשארת כמו שהייתה)
+    // 1) גרסה חלבית — בדיוק כמו אלגוריתם הבוקר (כבר מותאם אצלך)
     const dairyStyle = this.buildBreakfastTemplate("dinner", totalTargets);
     dairyStyle.header = "ערב — גרסה חלבית";
 
-    // יעדי תתי־קבוצות (כמו קודם)
-    const proteinT = {
-      protein: totalTargets.protein * 0.55 * SAFETY,
-      carbs: totalTargets.carbs * 0.15 * SAFETY,
-      fat: totalTargets.fat * 0.3 * SAFETY,
-      calories: totalTargets.calories * 0.45 * SAFETY,
-    };
-    const carbsT = {
-      protein: totalTargets.protein * 0.1 * SAFETY,
-      carbs: totalTargets.carbs * 0.65 * SAFETY,
-      fat: totalTargets.fat * 0.12 * SAFETY,
-      calories: totalTargets.calories * 0.45 * SAFETY,
-    };
-    const legumesT = {
-      protein: totalTargets.protein * 0.2 * SAFETY,
-      carbs: totalTargets.carbs * 0.35 * SAFETY,
-      fat: totalTargets.fat * 0.1 * SAFETY,
-      calories: totalTargets.calories * 0.3 * SAFETY,
-    };
+    // 2) גרסה בשרית — בדיוק כמו אלגוריתם הצהריים (מאקרו בודד לכל קבוצה)
 
-    // ⚠️ חלבון לערב – מאגר "בשרי" שמסנן חלבי
-    const proteinsMeaty = this.buildGroupOptions(
-      this.getProteinDinnerMeaty(),
-      proteinT,
-      30,
-      FLEX_BIG_MEALS
-    );
+    // עוזרת לבנות אופציות לפי מאקרו יחיד (protein או carbs) מול יעד הארוחה
+    function buildSingleMacroOptions(pool, macroKey, targetVal, want = 40) {
+      const BIG = 1e9;
+      const T = { protein: BIG, carbs: BIG, fat: BIG, calories: BIG };
+      T[macroKey] = Math.max(0, Number(targetVal) || 0);
 
-    // פחמימות וקטניות (נשאר)
-    const carbs = this.buildGroupOptions(
-      this.getCarbsDinner(),
-      carbsT,
-      30,
-      FLEX_BIG_MEALS
-    );
-    const legumes = this.buildGroupOptions(
-      this.getLegumesDinner(),
-      legumesT,
-      30,
-      FLEX_BIG_MEALS
-    );
-    const vegFree = this.buildFreeList(this.getVegDinner(), 12, "חופשי");
+      // בודקות רק את המאקרו הרלוונטי (התעלמות משאר המקרו/קל׳)
+      const customCheck = (nut) =>
+        nut[macroKey] <=
+        T[macroKey] * (typeof FLEX === "number" ? FLEX : 1.005) + 1e-9;
 
-    // איחוד פחמימות/קטניות לקבוצה אחת (כמו בצהריים)
-    function dedupOptions(options) {
-      const seen = new Set();
-      const out = [];
-      for (const o of options) {
-        const id = String(
-          o?.food?._id || o?.food?.id || o?.food?.name || Math.random()
-        );
-        if (seen.has(id)) continue;
-        seen.add(id);
-        out.push(o);
+      const candidates = [];
+      for (const food of pool) {
+        const pack = computeQuantityForTargets(food, T, null, customCheck);
+        if (!pack) continue;
+        const s = Math.abs(T[macroKey] - pack.nut[macroKey]);
+        candidates.push({
+          food,
+          quantity: pack.q,
+          displayText: getDisplayText(food, pack.q),
+          nutrition: pack.nut,
+          _score: s,
+        });
       }
-      return out;
+
+      // הכי קרוב ליעד; שובר שוויון — קל׳ נמוכות יותר
+      candidates.sort(
+        (a, b) =>
+          a._score - b._score ||
+          (a.nutrition?.calories || 0) - (b.nutrition?.calories || 0)
+      );
+
+      return candidates.slice(0, want);
     }
-    const carbsOrLegumes = dedupOptions([...(carbs || []), ...(legumes || [])]);
+
+    // מאגרי ערב לקבוצות:
+    const proteinMeatyPool = this.getProteinDinnerMeaty(); // חלבון בשרי לערב
+    // מאחדות פחמימות וקטניות לערב לקבוצה אחת
+    const carbsDinnerPool = this.getCarbsDinner();
+    const legumesDinnerPool = this.getLegumesDinner();
+    // איחוד + דה-דופ לפי id/name
+    const seen = new Set();
+    const carbsLegumesPool = [...carbsDinnerPool, ...legumesDinnerPool].filter(
+      (f) => {
+        const id = String(f?._id || f?.id || f?.name || Math.random());
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      }
+    );
+
+    // בונים אופציות לפי מאקרו יחיד לכל קבוצה:
+    const proteinsMeaty = buildSingleMacroOptions(
+      proteinMeatyPool,
+      "protein",
+      totalTargets.protein,
+      60
+    );
+    const carbsOrLegumes = buildSingleMacroOptions(
+      carbsLegumesPool,
+      "carbs",
+      totalTargets.carbs,
+      80
+    );
+
+    // ירקות חופשיים לערב — כמו קודם
+    const vegFree = this.buildFreeList(this.getVegDinner(), 12, "חופשי");
 
     const meatStyle = {
       mode: "variety",
@@ -1271,11 +1497,13 @@ class RuleBasedPlanner {
           title: "חלבון לערב (בחרי אחד)",
           key: "protein",
           options: proteinsMeaty,
+          selected: proteinsMeaty[0] || undefined,
         },
         {
           title: "פחמימות / קטניות (בחרי אחד)",
           key: "carbs",
           options: carbsOrLegumes,
+          selected: carbsOrLegumes[0] || undefined,
         },
         { title: "ירקות לערב (חופשי)", key: "veg_free", options: vegFree },
       ],
@@ -1284,116 +1512,15 @@ class RuleBasedPlanner {
     return { dairyStyle, meatStyle };
   }
 
-  buildBreakfast(totalTargets) {
-    return this.buildBreakfastTemplate("breakfast", totalTargets);
-  }
-
-  buildSnack(totalTargets) {
-    // תתי-יעדים (כמו קודם)
-    const protT = {
-      protein: totalTargets.protein * 0.7 * SAFETY,
-      carbs: totalTargets.carbs * 0.15 * SAFETY,
-      fat: totalTargets.fat * 0.25 * SAFETY,
-      calories: totalTargets.calories * 0.55 * SAFETY,
-    };
-    const sweetT = {
-      protein: totalTargets.protein * 0.05 * SAFETY,
-      carbs: totalTargets.carbs * 0.6 * SAFETY,
-      fat: totalTargets.fat * 0.2 * SAFETY,
-      calories: totalTargets.calories * 0.45 * SAFETY,
-    };
-    const fruitT = {
-      protein: totalTargets.protein * 0.05 * SAFETY,
-      carbs: totalTargets.carbs * 0.6 * SAFETY,
-      fat: totalTargets.fat * 0.05 * SAFETY,
-      calories: totalTargets.calories * 0.45 * SAFETY,
-    };
-
-    // מאגר חלבון לביניים: רק protein_snack (כולל פריטים שאין להם ציון התאמה)
-    const proteinPool = this.getProteinSnack(0);
-
-    // מפרידים בין "רציפים" (שאפשר לכוונן כמות) לבין "יחידה שלמה" (לא שוברות)
-    const adjustable = proteinPool.filter((f) => !isFixedUnit(f));
-    const fixedUnits = proteinPool.filter(isFixedUnit);
-
-    // 2א) אופציות חלבון "רציפות" — כמו קודם (עם SNACK_FLEXS + נפילות חן)
-    let proteins = this.buildGroupOptions(
-      adjustable,
-      protT,
-      60,
-      null,
-      (nut, T) => withinTargetsByFlexMap(nut, T, SNACK_FLEXS)
-    );
-    if (!proteins.length) {
-      const FLEX_WIDE = {
-        protein: 1.06,
-        carbs: 1.1,
-        fat: 1.12,
-        calories: 1.06,
-      };
-      proteins = this.buildGroupOptions(adjustable, protT, 60, null, (nut, T) =>
-        withinTargetsByFlexMap(nut, T, FLEX_WIDE)
-      );
-    }
-    if (!proteins.length) {
-      proteins = this.buildGroupOptions(
-        adjustable,
-        protT,
-        60,
-        1.12, // flexOverride כללי
-        null
-      );
-    }
-
-    // 2ב) מוסיפות גם את כל ה"יחידות השלמות" אם הן קרובות מספיק לתת-היעד
-    const fixedAdds = fixedUnits
-      .map((f) => packAsFixedIfClose(f, protT))
-      .filter(Boolean);
-
-    // מאחדות, מדרגות לפי ציון, ופותחות את הברז לכמות גדולה של אופציות
-    proteins = [...proteins, ...fixedAdds]
-      .sort((a, b) => a._score - b._score)
-      .slice(0, 100); // "כמה שיותר אופציות" — אפשר להגדיל/להקטין
-
-    // מתוקים / פירות — כמו קודם
-    const sweets = this.buildGroupOptions(
-      this.getSweetSnack(),
-      sweetT,
-      14,
-      null,
-      (nut, T) => withinTargetsByFlexMap(nut, T, SNACK_FLEXS)
-    );
-
-    const fruits = this.buildGroupOptions(
-      this.getFruitSnack(),
-      fruitT,
-      20,
-      null,
-      (nut, T) => withinTargetsByFlexMap(nut, T, SNACK_FLEXS)
-    );
-
-    return {
-      mode: "variety",
-      targets: totalTargets,
-      groups: [
-        { title: "חלבון (בחרי אחד)", key: "snack_protein", options: proteins },
-        {
-          title: "מתוקים / חטיפים",
-          key: "sweets",
-          options: sweets,
-          altTitle: "אפשר להחליף ל־פירות",
-        },
-        { title: "פירות (חלופה למתוקים)", key: "fruits", options: fruits },
-      ],
-    };
-  }
-
   buildAll() {
     const out = {};
-    out.breakfast = this.buildBreakfast(this.mealTargets("breakfast"));
-    out.lunch = this.buildLunch(this.mealTargets("lunch"));
-    out.snack = this.buildSnack(this.mealTargets("snack"));
-    out.dinner = this.buildDinner(this.mealTargets("dinner"));
+    for (const meal of Object.keys(this.split || {})) {
+      const t = this.mealTargets(meal);
+      if (meal === "breakfast") out.breakfast = this.buildBreakfast(t);
+      else if (meal === "lunch") out.lunch = this.buildLunch(t);
+      else if (meal === "snack") out.snack = this.buildSnack(t);
+      else if (meal === "dinner") out.dinner = this.buildDinner(t);
+    }
     return {
       meals: out,
       totalNutrition: { protein: 0, carbs: 0, fat: 0, calories: 0 },
@@ -1444,6 +1571,21 @@ router.post("/generate-meal-plan", authMiddleware, async (req, res) => {
       dislikedFoods,
     } = req.body;
 
+    // ctx: הקשר לחלוקת מאקרו דינמית (אופציונלי מהקליינט)
+    const ctx = {
+      isTrainingDay: !!(req.body?.ctx && req.body.ctx.isTrainingDay),
+      workoutTime: (req.body?.ctx && req.body.ctx.workoutTime) || null, // 'morning' | 'noon' | 'evening' | null
+      preferLowCarbDinner: !!(
+        req.body?.ctx && req.body.ctx.preferLowCarbDinner
+      ),
+      higherBreakfastProtein: !!(
+        req.body?.ctx && req.body.ctx.higherBreakfastProtein
+      ),
+      meals: Array.isArray(req.body?.ctx?.meals)
+        ? req.body.ctx.meals
+        : ["breakfast", "lunch", "snack", "dinner"],
+    };
+
     if (
       [totalProtein, totalCarbs, totalFat].some(
         (x) => typeof x !== "number" || Number.isNaN(x)
@@ -1462,7 +1604,7 @@ router.post("/generate-meal-plan", authMiddleware, async (req, res) => {
     const trainee = userId
       ? await Trainee.findById(userId)
           .select(
-            "isVegetarian isVegan glutenSensitive lactoseSensitive dislikedFoods"
+            "isVegetarian isVegan glutenSensitive lactoseSensitive dislikedFoods customSplit" // 👈 הוספנו customSplit
           )
           .lean()
       : null;
@@ -1503,10 +1645,62 @@ router.post("/generate-meal-plan", authMiddleware, async (req, res) => {
       totalCalories: calculatedCalories,
     };
 
-    const planner = new RuleBasedPlanner(filteredFoods, targets, prefs);
+    // --- splitOverridePct from trainee.customSplit (if mode === "custom") ---
+    let splitOverridePct = null;
+    let usedSplitMode = "auto";
+
+    if (
+      trainee?.customSplit?.mode === "custom" &&
+      trainee?.customSplit?.meals
+    ) {
+      const mealsGrams = trainee.customSplit.meals || {};
+      const mealGrams = {};
+
+      ["breakfast", "lunch", "snack", "dinner"].forEach((meal) => {
+        const m = mealsGrams[meal];
+        if (!m) return;
+        mealGrams[meal] = {
+          protein: Number(m.protein) || 0,
+          carbs: Number(m.carbs) || 0,
+          fat: Number(m.fat) || 0,
+        };
+        if (
+          (mealGrams[meal].protein || 0) === 0 &&
+          (mealGrams[meal].carbs || 0) === 0 &&
+          (mealGrams[meal].fat || 0) === 0
+        ) {
+          delete mealGrams[meal];
+        }
+      });
+
+      if (Object.keys(mealGrams).length) {
+        splitOverridePct = gramsToSplitPct(mealGrams, {
+          totalProtein: targets.totalProtein,
+          totalCarbs: targets.totalCarbs,
+          totalFat: targets.totalFat,
+          totalCalories: targets.totalCalories,
+        });
+        usedSplitMode = "custom";
+      }
+    }
+
+    const planner = new RuleBasedPlanner(
+      filteredFoods,
+      targets,
+      prefs,
+      ctx,
+      splitOverridePct
+    );
+
     const mealPlan = planner.buildAll();
 
-    res.json({ success: true, appliedPrefs: prefs, mealPlan });
+    res.json({
+      success: true,
+      appliedPrefs: prefs,
+      usedSplitMode, // "custom" | "auto"
+      usedSplitPct: planner.split,
+      mealPlan,
+    });
   } catch (err) {
     console.error("Error generating rule-based meal plan:", err);
     res.status(500).json({

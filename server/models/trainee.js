@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const traineeSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
-  phone: { type: String, required: true, unique: true }, // עכשיו חובה וייחודי
+  phone: { type: String, required: true, unique: true },
   passwordHash: { type: String, required: true },
   role: { type: String, default: "trainee" },
   trainingLevel: {
@@ -25,6 +25,17 @@ const traineeSchema = new mongoose.Schema({
   dailyCalories: { type: Number },
   proteinGrams: { type: Number },
   carbGrams: { type: Number },
+
+  // חלוקה ידנית של מאקרו לגרמים לכל ארוחה
+  customSplit: {
+    mode: { type: String, enum: ["auto", "custom"], default: "auto" },
+    meals: {
+      breakfast: { protein: Number, carbs: Number, fat: Number },
+      lunch: { protein: Number, carbs: Number, fat: Number },
+      snack: { protein: Number, carbs: Number, fat: Number },
+      dinner: { protein: Number, carbs: Number, fat: Number },
+    },
+  },
 
   dislikedFoods: [
     {

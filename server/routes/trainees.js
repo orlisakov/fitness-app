@@ -53,11 +53,9 @@ router.get("/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// ✅ PUT - עדכון מתאמנת לפי ID עם קואורציה וסינון שדות
+// ✅ PUT - עדכון מתאמנת לפי ID עם קואורציה וסינון שדות + customSplit
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
-    console.log("PUT /trainees body:", req.body);
-
     const {
       fullName,
       phone,
@@ -74,6 +72,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
       carbGrams,
       dislikedFoods,
       trainingLevel,
+      customSplit, // 👈 חדש
     } = req.body;
 
     const $set = {
@@ -104,6 +103,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
       ...(typeof trainingLevel !== "undefined" && { trainingLevel }),
     };
 
+    // 🔎 אימות דרגה
     if (typeof trainingLevel !== "undefined") {
       const allowed = ["beginner", "intermediate", "advanced"];
       if (!allowed.includes(trainingLevel)) {
@@ -111,10 +111,59 @@ router.put("/:id", authMiddleware, async (req, res) => {
           .status(400)
           .json({ success: false, message: "Invalid trainingLevel" });
       }
-      $set.trainingLevel = trainingLevel;
     }
 
-    console.log("Updating trainee:", req.params.id, "with $set:", $set);
+    // ✅ customSplit: ולידציה/נירמול ושמירה
+    if (typeof customSplit !== "undefined") {
+      const mode = customSplit?.mode === "custom" ? "custom" : "auto";
+
+      // פונקציית עזר לנירמול ערכי גרמים למספרים או undefined
+      const num = (v) =>
+        v === "" || v === null || typeof v === "undefined"
+          ? undefined
+          : Number(v);
+
+      if (mode === "custom") {
+        const meals = customSplit?.meals || {};
+        const safeMeals = {
+          breakfast: {
+            protein: num(meals?.breakfast?.protein),
+            carbs: num(meals?.breakfast?.carbs),
+            fat: num(meals?.breakfast?.fat),
+          },
+          lunch: {
+            protein: num(meals?.lunch?.protein),
+            carbs: num(meals?.lunch?.carbs),
+            fat: num(meals?.lunch?.fat),
+          },
+          snack: {
+            protein: num(meals?.snack?.protein),
+            carbs: num(meals?.snack?.carbs),
+            fat: num(meals?.snack?.fat),
+          },
+          dinner: {
+            protein: num(meals?.dinner?.protein),
+            carbs: num(meals?.dinner?.carbs),
+            fat: num(meals?.dinner?.fat),
+          },
+        };
+
+        // ולידציה קלה: לוודא שלפחות ארוחה אחת כוללת ערך כלשהו
+        const anyValue = Object.values(safeMeals).some(
+          (m) => (m.protein ?? 0) || (m.carbs ?? 0) || (m.fat ?? 0)
+        );
+        if (!anyValue) {
+          return res
+            .status(400)
+            .json({ success: false, message: "customSplit.meals חסר או ריק" });
+        }
+
+        $set.customSplit = { mode: "custom", meals: safeMeals };
+      } else {
+        // mode === "auto" → מאפסים meals כדי לא לשמר נתונים ישנים
+        $set.customSplit = { mode: "auto", meals: undefined };
+      }
+    }
 
     const updated = await Trainee.findByIdAndUpdate(
       req.params.id,
@@ -127,17 +176,16 @@ router.put("/:id", authMiddleware, async (req, res) => {
         .status(404)
         .json({ success: false, message: "מתאמנת לא נמצאה" });
     }
-
-    console.log("Updated doc:", updated && updated.trainingLevel);
-
     res.json({ success: true, trainee: updated });
   } catch (err) {
     console.error("PUT /trainees error:", err);
-    res.status(500).json({
-      success: false,
-      message: "שגיאה בעדכון מתאמנת",
-      error: err.message,
-    });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "שגיאה בעדכון מתאמנת",
+        error: err.message,
+      });
   }
 });
 
