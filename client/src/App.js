@@ -77,7 +77,7 @@ export default function App() {
         }
       />
 
-      <Route path="/trainee/:id" element={<TraineeDetailsForm />} />
+      <Route path="/trainees/:id" element={<TraineeDetailsForm />} />
 
       <Route
         path="/"

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Trainee = require("../models/trainee");
 const authMiddleware = require("../middleware/authMiddleware");
+const bcrypt = require("bcryptjs");
 
 // עוזרים קטנים להמרות סוגים
 const toNum = (v) =>
@@ -179,13 +180,11 @@ router.put("/:id", authMiddleware, async (req, res) => {
     res.json({ success: true, trainee: updated });
   } catch (err) {
     console.error("PUT /trainees error:", err);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "שגיאה בעדכון מתאמנת",
-        error: err.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "שגיאה בעדכון מתאמנת",
+      error: err.message,
+    });
   }
 });
 

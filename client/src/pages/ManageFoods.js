@@ -464,7 +464,7 @@ function FoodModal({ title, onClose, onSave, food = {} }) {
               />
             </label>
             <label>
-              חלבון (גרם):
+              חלבון:
               <input
                 type="number"
                 value={form.protein}
@@ -475,7 +475,7 @@ function FoodModal({ title, onClose, onSave, food = {} }) {
               />
             </label>
             <label>
-              פחמימה (גרם):
+              פחמימה:
               <input
                 type="number"
                 value={form.carbs}
@@ -486,7 +486,7 @@ function FoodModal({ title, onClose, onSave, food = {} }) {
               />
             </label>
             <label>
-              שומן (גרם):
+              שומן:
               <input
                 type="number"
                 value={form.fat}

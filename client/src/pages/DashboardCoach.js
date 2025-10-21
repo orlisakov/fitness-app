@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/theme.css";
 import config from "../config";
 
 export default function DashboardCoach() {
+  const navigate = useNavigate();
+
   const [trainees, setTrainees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -13,6 +16,7 @@ export default function DashboardCoach() {
 
   const [showTraineeModal, setShowTraineeModal] = useState(false);
   const [selectedTrainee, setSelectedTrainee] = useState(null);
+
   const [editData, setEditData] = useState({
     fullName: "",
     phone: "",
@@ -122,6 +126,48 @@ export default function DashboardCoach() {
       setLoading(false);
     }
   }
+
+  const createTrainee = async (e) => {
+    e?.preventDefault?.();
+    if (!newFullName.trim()) return alert("יש להזין שם מלא");
+    if (!newPhone.trim()) return alert("יש להזין טלפון");
+
+    try {
+      const res = await fetch(`${config.apiBaseUrl}/api/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          fullName: newFullName.trim(),
+          phone: newPhone.trim(),
+          role: "trainee",
+          password: "123456",
+          customSplit: { mode: "auto" },
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || "שגיאה ביצירת מתאמנת");
+
+      alert("המתאמנת נוצרה. הסיסמה הראשונית: 123456");
+      setShowModal(false);
+      setNewFullName("");
+      setNewPhone("");
+
+      await fetchTrainees();
+
+      const newId = data?.user?._id || data?.user?.id;
+      if (newId) {
+        navigate(`/trainees/${newId}`);
+      } else {
+        console.warn("No new trainee id returned from register", data);
+      }
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
   const openTraineeModal = (trainee) => {
     setSelectedTrainee(trainee);
@@ -386,72 +432,70 @@ export default function DashboardCoach() {
   if (loading) return <div className="dashboard-message">טוען נתונים...</div>;
   if (error) return <div className="dashboard-error">{error}</div>;
 
-  const allFoodsArr = Array.isArray(allFoods) ? allFoods : [];
+  // בתוך DashboardCoach.jsx
 
-  const SplitGrid = ({ mealKey, title }) => (
-    <div className="form-grid four tight">
-      <div className="field">
-        <label className="form-label">{title} — חלבון (גרם)</label>
-        <input
-          type="number"
-          value={editData.customMeals[mealKey].protein}
-          onChange={(e) =>
-            setEditData((p) => ({
-              ...p,
-              customMeals: {
-                ...p.customMeals,
-                [mealKey]: {
-                  ...p.customMeals[mealKey],
-                  protein: e.target.value,
-                },
-              },
-            }))
-          }
-          disabled={editData.customSplitMode !== "custom"}
-        />
+  const MealRow = ({ mealKey, title }) => {
+    const value = editData.customMeals[mealKey];
+    const disabled = editData.customSplitMode !== "custom";
+
+    const update = (field) => (e) =>
+      setEditData((p) => ({
+        ...p,
+        customMeals: {
+          ...p.customMeals,
+          [mealKey]: { ...p.customMeals[mealKey], [field]: e.target.value },
+        },
+      }));
+
+    return (
+      <div className="meal-row">
+        <label className="meal-cell">
+          <input
+            type="text"
+            min="0"
+            inputMode="numeric"
+            value={value.protein}
+            onChange={update("protein")}
+            disabled={disabled}
+            className="meal-input"
+            placeholder="0"
+          />
+          <span className="meal-label">חלבון</span>
+        </label>
+
+        <label className="meal-cell">
+          <input
+            type="text"
+            min="0"
+            inputMode="numeric"
+            value={value.carbs}
+            onChange={update("carbs")}
+            disabled={disabled}
+            className="meal-input"
+            placeholder="0"
+          />
+          <span className="meal-label">פחמימה</span>
+        </label>
+
+        <label className="meal-cell">
+          <input
+            type="text"
+            min="0"
+            inputMode="numeric"
+            value={value.fat}
+            onChange={update("fat")}
+            disabled={disabled}
+            className="meal-input"
+            placeholder="0"
+          />
+          <span className="meal-label">שומן</span>
+        </label>
+
+        {/* כותרת הארוחה בצד ימין */}
+        <div className="meal-title">{title}:</div>
       </div>
-      <div className="field">
-        <label className="form-label">{title} — פחמימה (גרם)</label>
-        <input
-          type="number"
-          value={editData.customMeals[mealKey].carbs}
-          onChange={(e) =>
-            setEditData((p) => ({
-              ...p,
-              customMeals: {
-                ...p.customMeals,
-                [mealKey]: {
-                  ...p.customMeals[mealKey],
-                  carbs: e.target.value,
-                },
-              },
-            }))
-          }
-          disabled={editData.customSplitMode !== "custom"}
-        />
-      </div>
-      <div className="field">
-        <label className="form-label">{title} — שומן (גרם)</label>
-        <input
-          type="number"
-          value={editData.customMeals[mealKey].fat}
-          onChange={(e) =>
-            setEditData((p) => ({
-              ...p,
-              customMeals: {
-                ...p.customMeals,
-                [mealKey]: {
-                  ...p.customMeals[mealKey],
-                  fat: e.target.value,
-                },
-              },
-            }))
-          }
-          disabled={editData.customSplitMode !== "custom"}
-        />
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="coach-dashboard" dir="rtl">
@@ -460,6 +504,52 @@ export default function DashboardCoach() {
       <button className="add-btn" onClick={() => setShowModal(true)}>
         הוספת מתאמנת חדשה
       </button>
+
+      {showModal && (
+        <div className="modal-backdrop">
+          <div className="modal add-trainee-modal" dir="rtl">
+            <div className="modal-header">
+              <h2>הוספת מתאמנת חדשה</h2>
+              <button className="close-btn" onClick={() => setShowModal(false)}>
+                ←
+              </button>
+            </div>
+
+            <form onSubmit={createTrainee}>
+              <div className="form-row compact">
+                <div className="field">
+                  <label className="form-label">שם מלא</label>
+                  <input
+                    className="text-input input-sm"
+                    type="text"
+                    value={newFullName}
+                    onChange={(e) => setNewFullName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="field">
+                  <label className="form-label">טלפון</label>
+                  <input
+                    className="text-input input-sm"
+                    type="tel"
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="btn primary"
+                style={{ marginTop: 12 }}
+              >
+                יצירה
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {trainees.length === 0 ? (
         <p className="dashboard-message">אין מתאמנות במערכת כרגע</p>
@@ -484,7 +574,7 @@ export default function DashboardCoach() {
                     className="action-btn"
                     onClick={() => openTraineeModal(t)}
                   >
-                    הצג
+                    עריכה
                   </button>
                   <button
                     className="action-btn delete-btn"
@@ -723,36 +813,52 @@ export default function DashboardCoach() {
                 </div>
               </div>
 
+              {/* -------- חלוקת מאקרו לארוחות (UI חדש) -------- */}
               <h3 className="section-title">חלוקת מאקרו לארוחות</h3>
-              <div className="form-grid two tight">
-                <label className="check">
-                  <input
-                    type="radio"
-                    name="splitMode"
-                    checked={editData.customSplitMode === "auto"}
-                    onChange={() =>
-                      setEditData((p) => ({ ...p, customSplitMode: "auto" }))
-                    }
-                  />
-                  מצב אוטומטי (אלגוריתם)
-                </label>
-                <label className="check">
-                  <input
-                    type="radio"
-                    name="splitMode"
-                    checked={editData.customSplitMode === "custom"}
-                    onChange={() =>
-                      setEditData((p) => ({ ...p, customSplitMode: "custom" }))
-                    }
-                  />
-                  מצב ידני (גרמים לכל ארוחה)
-                </label>
-              </div>
 
-              <SplitGrid mealKey="breakfast" title="בוקר" />
-              <SplitGrid mealKey="lunch" title="צהריים" />
-              <SplitGrid mealKey="snack" title="ביניים" />
-              <SplitGrid mealKey="dinner" title="ערב" />
+              <div className="split-card">
+                <div className="split-header">
+                  <label className="check">
+                    <input
+                      type="radio"
+                      name="splitMode"
+                      checked={editData.customSplitMode === "auto"}
+                      onChange={() =>
+                        setEditData((p) => ({ ...p, customSplitMode: "auto" }))
+                      }
+                    />
+                    מצב אוטומטי (אלגוריתם)
+                  </label>
+                  <label className="check">
+                    <input
+                      type="radio"
+                      name="splitMode"
+                      checked={editData.customSplitMode === "custom"}
+                      onChange={() =>
+                        setEditData((p) => ({
+                          ...p,
+                          customSplitMode: "custom",
+                        }))
+                      }
+                    />
+                    מצב ידני (גרמים לכל ארוחה)
+                  </label>
+                </div>
+
+                {editData.customSplitMode === "auto" && (
+                  <p className="muted">
+                    במצב אוטומטי החלוקה תחושב לפי סה״כ המאקרו/קלוריות שהוזנו.
+                    כדי להזין ידנית בחרי “מצב ידני”.
+                  </p>
+                )}
+
+                <div className="meal-split">
+                  <MealRow mealKey="breakfast" title="בוקר" />
+                  <MealRow mealKey="lunch" title="צהריים" />
+                  <MealRow mealKey="snack" title="ביניים" />
+                  <MealRow mealKey="dinner" title="ערב" />
+                </div>
+              </div>
 
               <button
                 type="submit"
@@ -926,7 +1032,7 @@ export default function DashboardCoach() {
                       </tr>
                     </thead>
                     <tbody>
-                      {allFoodsArr
+                      {allFoods
                         .filter((food) =>
                           (food?.name || "")
                             .toLowerCase()
@@ -981,7 +1087,7 @@ export default function DashboardCoach() {
                     </thead>
                     <tbody>
                       {dislikedFoods.map((foodId) => {
-                        const food = allFoodsArr.find((f) => f._id === foodId);
+                        const food = allFoods.find((f) => f._id === foodId);
                         return (
                           <tr key={foodId}>
                             <td>{food?.name || "לא נמצא"}</td>

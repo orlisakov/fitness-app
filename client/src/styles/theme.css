@@ -1517,3 +1517,342 @@ button:hover {
   /* לא חובה, אבל עוזר ליישור מספרים */
   font-variant-numeric: tabular-nums;
 }
+
+/* יישר קו בין text/tel */
+.add-trainee-modal .field {
+  width: 260px; /* אותו רוחב לשני השדות */
+}
+
+.add-trainee-modal .text-input {
+  box-sizing: border-box;
+  width: 100%; /* ימלא את רוחב .field */
+  height: 40px; /* אותו גובה לשני השדות */
+  padding: 8px 12px;
+  border: 1px solid #d7d7e0;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.2;
+  appearance: none;
+  -webkit-appearance: none; /* מבטל סגנון דפדפן (בעיקר ב-tel) */
+}
+
+/* אם יש כללים גלובליים שמכוונים ל-type, נעקוף אותם */
+.add-trainee-modal input[type="text"].text-input,
+.add-trainee-modal input[type="tel"].text-input {
+  width: 100% !important;
+  height: 40px !important;
+  padding: 8px 12px !important;
+  border-radius: 10px !important;
+}
+
+/* גורם לכל האינפוטים בטופס ההרשמה להיות זהים בגודל */
+.auth2-card .same-size-input,
+.auth2-card .auth2-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 44px; /* גובה אחיד */
+  padding: 10px 12px;
+  font-size: 14px;
+  line-height: 1.2;
+  border: 1px solid #d7d7e0;
+  border-radius: 10px;
+  background: #fff;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* עקיפת חוקים גלובליים לפי type אם קיימים */
+.auth2-card input[type="text"].same-size-input,
+.auth2-card input[type="tel"].same-size-input,
+.auth2-card input[type="password"].same-size-input,
+.auth2-card select.same-size-input {
+  height: 44px !important;
+  padding: 10px 12px !important;
+  font-size: 14px !important;
+}
+
+/* ======= Macro Split (TraineeDetailsForm) ======= */
+.split-card {
+  border: 1px solid #e7e7e7;
+  border-radius: 12px;
+  padding: 14px;
+  margin: 12px 0 18px;
+  background: #fff;
+}
+
+.split-header {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.split-card .muted {
+  margin: 0 0 12px 0;
+  color: #6b7280; /* אפור עדין */
+  font-size: 0.95rem;
+}
+
+.meal-split {
+  display: grid;
+  gap: 10px;
+}
+
+.meal-row {
+  /* שלא יתהפך ב-RTL */
+  direction: ltr;
+}
+
+.meal-title,
+.meal-cell {
+  direction: rtl;
+  text-align: right;
+}
+
+/* בשני המסכים (הרשמה + מודאל עריכה) */
+.meal-cell {
+  display: grid;
+  grid-template-columns: auto max-content; /* תווית + קלט צר קבוע */
+  align-items: center;
+  gap: 8px;
+}
+
+/* גודל התיבה ~חצי מהיום (כ־90–100px) */
+.meal-input {
+  width: 96px; /* <<< זה הקסם – חצי בערך */
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+
+/* במודאל שלא יהיו עמודות רחבות מדי */
+.modal .meal-row {
+  grid-template-columns: 90px repeat(3, max-content) !important;
+}
+
+/* --- Add Trainee modal: make name & phone identical and compact --- */
+.add-trainee-modal .form-row.compact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.add-trainee-modal .field {
+  min-width: 0; /* שלא יישבר ב־RTL/מסכים צרים */
+}
+
+.add-trainee-modal .form-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  line-height: 1.2;
+  color: #374151;
+}
+
+/* בסיס אחיד לכל אינפוטים קטנים במודאל */
+.add-trainee-modal .text-input,
+.add-trainee-modal .text-input.input-sm,
+.add-trainee-modal input[type="text"],
+.add-trainee-modal input[type="tel"] {
+  width: 100%;
+  height: 36px; /* גובה זהה */
+  padding: 0 10px; /* ריווח פנימי */
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px; /* גודל טקסט זהה */
+  box-sizing: border-box; /* שלא יחרוג */
+  background: #fff;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.add-trainee-modal .text-input:focus,
+.add-trainee-modal input[type="text"]:focus,
+.add-trainee-modal input[type="tel"]:focus {
+  border-color: #60a5fa; /* פוקוס עדין */
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+
+/* ===== Macro Split – unified look (both pages) ===== */
+.meal-split {
+  display: grid;
+  gap: 12px;
+}
+
+/* 3 inputs + meal title on the right (RTL container, LTR row to keep order) */
+.meal-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(110px, 220px)) 120px;
+  gap: 10px;
+  align-items: center;
+  direction: ltr;
+}
+
+.meal-title {
+  text-align: right;
+  font-weight: 700;
+  color: #374151;
+}
+
+.meal-cell {
+  display: grid;
+  grid-template-columns: 1fr 96px;
+  align-items: center;
+  gap: 8px;
+  direction: rtl;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+/* compact inputs (~half size) */
+.meal-input {
+  width: 96px; /* <<< גודל התיבה */
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.meal-input:focus {
+  outline: none;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+
+.meal-input:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+}
+
+/* responsive */
+@media (max-width: 700px) {
+  .meal-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .meal-cell {
+    grid-template-columns: 120px 1fr;
+  }
+}
+/* --- קטנות משמעותית של תיבות המאקרו --- */
+:root {
+  --macro-input-w: 60px;
+  --macro-input-h: 32px;
+}
+
+.meal-cell {
+  /* תווית + תיבה קטנה */
+  grid-template-columns: 1fr var(--macro-input-w) !important;
+  gap: 8px;
+}
+.meal-input {
+  width: var(--macro-input-w) !important;
+  height: var(--macro-input-h) !important;
+  padding: 0 8px !important;
+  font-size: 0.9rem;
+  border-radius: 8px;
+}
+
+/* ===== יישור כל בלוק המאקרו לימין ===== */
+.meal-row {
+  display: flex;
+  justify-content: flex-end; /* 👈 כל התיבות יזוזו לצד ימין */
+  gap: 10px;
+  align-items: center;
+}
+.meal-title {
+  font-weight: 600;
+  white-space: nowrap;
+  margin-right: 5px;
+}
+.meal-input {
+  width: 100%; /* 👈 מתאים לגודל של העמודה */
+  height: 32px;
+  text-align: center;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.meal-cell span {
+  font-size: 0.8rem;
+  color: #4b5563;
+  line-height: 1.5;
+}
+.meal-row {
+  display: grid;
+  grid-template-columns: repeat(4, 90px) auto;
+  gap: 10px;
+  align-items: start;
+}
+
+/* שורה של ארוחה: 3 טורים קבועים + כותרת הארוחה */
+.meal-row {
+  display: grid;
+  grid-template-columns: 180px 180px 180px auto;
+  gap: 14px;
+  justify-content: end;
+  align-items: center;
+}
+
+/* תא קטגוריה = אינפוט + תווית */
+.meal-cell {
+  display: grid;
+  grid-template-columns: 84px 1fr; /* 👈 אינפוט ברוחב קבוע + טקסט */
+  align-items: center;
+  column-gap: 8px;
+}
+
+/* אינפוט קטן וקבוע (אפשר לשנות בקלות) */
+.meal-input {
+  width: 84px; /* 👈 גודל קבוע, קטן */
+  height: 32px;
+  text-align: center;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+/* טקסט הקטגוריה עם רוחב קבוע ואי-שבירה */
+.meal-label {
+  width: 80px; /* 👈 אותו רוחב בכל השורות */
+  white-space: nowrap;
+  text-align: right;
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+/* כותרת הארוחה בקצה הימני */
+.meal-title {
+  font-weight: 700;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* רוחב קבוע לעמודות הקלט כדי שיישארו באותו יישור בכל השורות */
+.meal-row {
+  display: grid;
+  grid-template-columns: repeat(3, 220px) 120px; /* שלוש עמודות קלט + כותרת ארוחה */
+  gap: 10px;
+  align-items: center;
+}
+.meal-cell {
+  display: grid;
+  grid-template-columns: 1fr 100px; /* תיאור + שדה */
+  align-items: center;
+  gap: 8px;
+}
+.meal-input {
+  width: 100px; /* או 90px לפי הגודל שרצית */
+}

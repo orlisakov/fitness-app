@@ -61,6 +61,7 @@ exports.register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const newUserData = {
       fullName,
       phone,
@@ -97,6 +98,7 @@ exports.register = async (req, res) => {
         customSplit: newUser.customSplit,
       },
       token,
+      initialPassword: password ? undefined : "123456",
     });
   } catch (err) {
     console.error("❌ Error in register:", err);
