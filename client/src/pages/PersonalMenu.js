@@ -1,4 +1,3 @@
-// src/pages/PersonalMenu.js
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import jsPDF from "jspdf";
@@ -71,7 +70,6 @@ export default function PersonalMenu({ traineeData }) {
           ),
         };
 
-        // ✅ קוראים את הטוקן מה-sessionStorage (וגיבוי ל-localStorage אם צריך)
         const token =
           sessionStorage.getItem("token") || localStorage.getItem("token");
 
@@ -101,7 +99,6 @@ export default function PersonalMenu({ traineeData }) {
         }
       } catch (e) {
         console.error("Meal plan error:", e);
-        // ✅ אם השרת החזיר הודעה – נציג אותה
         const serverMsg =
           e.response?.data?.message ||
           e.response?.data?.error ||
@@ -115,27 +112,23 @@ export default function PersonalMenu({ traineeData }) {
     run();
   }, [traineeData]);
 
-  // החלף/י את exportToPDF הקיים
   async function exportToPDF() {
     if (!pdfRef.current) return;
 
-    const A4_WIDTH = 210; // מ״מ
-    const A4_HEIGHT = 297; // מ״מ
-    const MARGIN = 10; // מ״מ
+    const A4_WIDTH = 210;
+    const A4_HEIGHT = 297;
+    const MARGIN = 10;
     const CONTENT_W = A4_WIDTH - MARGIN * 2;
 
     const pdf = new jsPDF("p", "mm", "a4");
-
-    // אוספים את כל הבלוקים של הארוחות
     const cards = pdfRef.current.querySelectorAll(
       ".instructions-card, .meal-card"
     );
-    // משתנה למעקב מיקום בעמוד
+
     let y = MARGIN;
     let isFirstImage = true;
 
     for (const card of cards) {
-      // הופכים כל כרטיס לתמונה חדה
       const canvas = await html2canvas(card, {
         backgroundColor: "#fff",
         scale: Math.min(2, window.devicePixelRatio || 2),
@@ -143,26 +136,25 @@ export default function PersonalMenu({ traineeData }) {
         allowTaint: true,
       });
 
-      // ממדים בפיקסלים → למ״מ, ואז מתאימים לרוחב העמוד
       const imgData = canvas.toDataURL("image/png");
-      const pxToMm = (px) => px * 0.264583; // 96dpi≈3.78px/mm → 1px≈0.264583mm
+      const pxToMm = (px) => px * 0.264583;
       const imgWmm = CONTENT_W;
       const imgHmm = (pxToMm(canvas.height) * imgWmm) / pxToMm(canvas.width);
 
-      // אם אין מקום בעמוד – עוברים לעמוד חדש
       if (!isFirstImage && y + imgHmm > A4_HEIGHT - MARGIN) {
         pdf.addPage();
         y = MARGIN;
       }
 
       pdf.addImage(imgData, "PNG", MARGIN, y, imgWmm, imgHmm);
-      y += imgHmm + 6; // רווח קטן בין כרטיסים
+      y += imgHmm + 6;
       isFirstImage = false;
     }
 
     pdf.save("תפריט-אישי.pdf");
   }
 
+  /* ---------- מצבים ---------- */
   if (error) {
     return (
       <div dir="rtl" className="menu-error" style={{ margin: 16 }}>
@@ -188,7 +180,7 @@ export default function PersonalMenu({ traineeData }) {
     );
   }
 
-  /* ---------- UI helpers ---------- */
+  /* ---------- קומפוננטות עזר ---------- */
   function SectionTitle({ children }) {
     return (
       <h3 className="meal-title" style={{ margin: "0 0 8px" }}>
@@ -206,69 +198,62 @@ export default function PersonalMenu({ traineeData }) {
       </div>
     );
   }
-  function Line({ label, value }) {
-    return (
-      <div className="meal-line">
-        <span className="meal-line-label">• {label} — כמות:</span>{" "}
-        <span className="meal-line-value">{value}</span>
-      </div>
-    );
-  }
-  function optionsToAmountList(items = []) {
-    return items
-      .map((it) => `${it.food?.name || "מוצר"} ${it.displayText}`)
-      .join(" · ");
-  }
-  function namesOnlyList(items = []) {
-    return items.map((it) => it.food?.name || "מוצר").join(" · ");
-  }
-  function EggsFixedLine(fixed) {
-    if (!fixed) return null;
-    const name = (fixed.food?.name || "").trim();
-    if (!/egg|ביצים/i.test(name)) return null;
-    const isPieces = /יח׳|יחידה/.test(fixed.displayText);
-    const clean = isPieces
-      ? fixed.displayText.replace(/[^0-9.]/g, "")
-      : fixed.displayText;
-    const val = isPieces ? clean : fixed.displayText;
-    return <Line label={name || "ביצים"} value={val || fixed.displayText} />;
-  }
 
-  /* ---------- Sections ---------- */
-  function InstructionsCard() {
-    const BULLETS = [
-      "חשוב לשתות לפחות 3 ליטר מים ביום.",
-      "משקל מזון – חובה.",
-      "להעדיף ספריי שמן.",
-      "חלב 0% (עד כוס חד־פעמי ביום).",
-      "מומלץ סויה ללא סוכר אם מתאים. משקאות זירו – מותר.",
-      "לא להעמיס סוכר/סילאן אלא אם מצוין.",
-      "ירקות – הרבה! (בצל מוגבל).",
-      "ארוחות מסודרות: לא לדלג. לא לנשנש בין הארוחות.",
-      "אורז לבן/בסמטי עד 400 גרם מבושל ביום (חלוקה לפי התפריט).",
-      "פסטה רק עם רוטב עגבניות – ללא שמנת.",
-      "לאכול עד שעתיים אחרי אימון; להימנע מאכילה מאוחרת (עד 21:00 אם אפשר).",
-      "אם מתחשק מתוק – אפשר להחליף למנה שמופיעה בתפריט (או פרי).",
-      "ירקות חופשיים: עגבניה, מלפפון, כרוב, פלפל, ברוקולי מבושל, גזר, שומר טרי, אספרגוס, סלק, בצל (מוגבל).",
-      "אם משהו לא בטוח – לשאול לפני שאוכלים 🙂",
-    ];
+  /** טבלת-אחת: חלבון מול פחמימה, שורה-שורה */
+  function DualGroupTable({
+    proteinTitle = "חלבון",
+    carbTitle = "פחמימה",
+    proteinOptions = [],
+    carbOptions = [],
+  }) {
+    const maxRows = Math.max(proteinOptions.length, carbOptions.length);
+    const get = (arr, i) => (i < arr.length ? arr[i] : null);
+
+    if (maxRows === 0) return null;
 
     return (
-      <div className="instructions-card meal-card">
-        <h2 className="menu-title highlight">דגשים חשובים!</h2>
-        <ol className="instructions-list">
-          {BULLETS.map((t, i) => (
-            <li key={i}>{t}</li>
-          ))}
-        </ol>
-      </div>
+      <table className="menu-table menu-table-dual" dir="rtl">
+        <thead>
+          <tr>
+            <th colSpan={2} className="grp">
+              {proteinTitle}
+            </th>
+            <th colSpan={2} className="grp">
+              {carbTitle}
+            </th>
+          </tr>
+          <tr>
+            <th style={{ width: 110 }}>כמות</th>
+            <th>מוצר</th>
+            <th style={{ width: 110 }}>כמות</th>
+            <th>מוצר</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: maxRows }).map((_, i) => {
+            const p = get(proteinOptions, i);
+            const c = get(carbOptions, i);
+            return (
+              <tr key={i}>
+                <td>{p?.displayText || ""}</td>
+                <td>{p?.food?.name || ""}</td>
+                <td>{c?.displayText || ""}</td>
+                <td>{c?.food?.name || ""}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     );
   }
 
+  /* ---------- סקשנים ---------- */
+
+  // בוקר/ערב-חלבית
   function BreakfastLike({ meal, title }) {
     const t = meal.targets;
     const eggs = meal.groups.find((g) => g.key === "eggs")?.fixed || null;
-    const prot =
+    let prot =
       meal.groups.find((g) => g.key === "prot_breakfast")?.options || [];
     const mayoAddon =
       meal.groups.find((g) => g.key === "prot_breakfast")?.addon?.options || [];
@@ -276,77 +261,71 @@ export default function PersonalMenu({ traineeData }) {
     const vegFree =
       meal.groups.find((g) => g.key === "veg_free")?.options || [];
 
+    if (eggs) {
+      prot = [
+        ...prot,
+        {
+          food: eggs.food,
+          displayText: eggs.displayText,
+          _isEggCombo: true, // אופציונלי — אם רוצים עיצוב שונה
+        },
+      ];
+    }
+
     return (
       <div className="meal-card stacked">
         <SectionTitle>{title}</SectionTitle>
         <TargetsRow t={t} />
-        {EggsFixedLine(eggs)}
-        {!!prot.length && (
-          <Line
-            label="חלבון לבוקר — גבינות/טונה/דגים (בחרי אחד)"
-            value={optionsToAmountList(prot)}
-          />
-        )}
-        {!!mayoAddon.length && (
-          <Line
-            label="טונה במים? הוסיפי כף מיונז"
-            value={optionsToAmountList(mayoAddon)}
-          />
-        )}
-        {!!carbs.length && (
-          <Line
-            label="פחמימות בוקר (בחרי אחד)"
-            value={optionsToAmountList(carbs)}
-          />
-        )}
-        {!!vegFree.length && (
-          <Line label="ירקות חופשיים לבוקר" value={namesOnlyList(vegFree)} />
-        )}
+
+        <DualGroupTable
+          proteinTitle="חלבון לבוקר — גבינות/טונה/דגים"
+          carbTitle="פחמימות בוקר"
+          proteinOptions={prot}
+          carbOptions={carbs}
+        />
       </div>
     );
   }
+
   function BreakfastBlock({ meal }) {
     return <BreakfastLike meal={meal} title="ארוחת בוקר" />;
   }
 
+  // צהריים
   function LunchBlock({ meal, title = "ארוחת צהריים" }) {
     const t = meal.targets;
 
-    // מאתרים קבוצות לפי ה-Key
     const proteinGroup = meal.groups.find((g) => g.key === "protein");
     const carbsGroup = meal.groups.find((g) => g.key === "carbs");
     const legumesGroup = meal.groups.find((g) => g.key === "legumes");
 
+    // אם יש גם קטניות וגם פחמימות — נחבר לאותה עמודה של "פחמימה"
     const protein = proteinGroup?.options || [];
-    const carbs = carbsGroup?.options || [];
-    const legumes = legumesGroup?.options || [];
+    const carbs = [
+      ...(carbsGroup?.options || []),
+      ...(legumesGroup?.options || []),
+    ];
 
-    // אם יש כותרת מהשרת – נשתמש בה. אחרת ברירת מחדל.
     const proteinLabel = proteinGroup?.title || "חלבון (בחרי אחד)";
-    const carbsLabel = carbsGroup?.title || "פחמימות (בחרי אחד)";
-    const legumesLabel = legumesGroup?.title || "קטניות (בחרי אחד)";
+    const carbsLabel =
+      carbsGroup?.title || legumesGroup?.title || "פחמימות / קטניות (בחרי אחד)";
 
     return (
       <div className="meal-card stacked">
         <SectionTitle>{title}</SectionTitle>
         <TargetsRow t={t} />
 
-        {!!protein.length && (
-          <Line label={proteinLabel} value={optionsToAmountList(protein)} />
-        )}
-
-        {!!carbs.length && (
-          <Line label={carbsLabel} value={optionsToAmountList(carbs)} />
-        )}
-
-        {/* תוצג רק אם קיימת בפועל קבוצת 'legumes' */}
-        {!!legumes.length && (
-          <Line label={legumesLabel} value={optionsToAmountList(legumes)} />
-        )}
+        <DualGroupTable
+          proteinTitle={proteinLabel}
+          carbTitle={carbsLabel}
+          proteinOptions={protein}
+          carbOptions={carbs}
+        />
       </div>
     );
   }
 
+  // ביניים — חלבון מול מתוקים; נציג גם טבלת חלופה עם פירות
   function SnackBlock({ meal }) {
     const t = meal.targets;
     const prot =
@@ -358,22 +337,30 @@ export default function PersonalMenu({ traineeData }) {
       <div className="meal-card stacked">
         <SectionTitle>ארוחת ביניים</SectionTitle>
         <TargetsRow t={t} />
-        {!!prot.length && (
-          <Line label="חלבון (בחרי אחד)" value={optionsToAmountList(prot)} />
-        )}
-        {!!sweets.length && (
-          <Line label="מתוקים / חטיפים" value={optionsToAmountList(sweets)} />
-        )}
-        {!!fruits.length && (
-          <Line
-            label="פירות (חלופה למתוקים)"
-            value={optionsToAmountList(fruits)}
-          />
-        )}
+        <DualGroupTable
+          proteinTitle="חלבון (בחרי אחד)"
+          carbTitle="מתוקים / חטיפים"
+          proteinOptions={prot}
+          carbOptions={sweets}
+        />
+        {fruits?.length ? (
+          <>
+            <div className="meal-note" style={{ marginTop: 6 }}>
+              או לבחור פירות במקום מתוקים:
+            </div>
+            <DualGroupTable
+              proteinTitle="חלבון (אותן אופציות)"
+              carbTitle="פירות (חלופה לפחמימות)"
+              proteinOptions={prot}
+              carbOptions={fruits}
+            />
+          </>
+        ) : null}
       </div>
     );
   }
 
+  // ערב — גם חלבית (כמו בוקר) וגם בשרית (כמו צהריים) עם טבלה-אחת לכל גרסה
   function DinnerBlock({ meal }) {
     const { dairyStyle, meatStyle } = meal;
     return (
@@ -391,8 +378,6 @@ export default function PersonalMenu({ traineeData }) {
   return (
     <div className="menu-container" dir="rtl">
       <div ref={pdfRef}>
-        {" "}
-        {/* <-- העטיפה החדשה כוללת הכל */}
         <InstructionsCard />
         {appliedPrefs && Object.values(appliedPrefs).some(Boolean) && (
           <p className="menu-subtitle" style={{ marginTop: 8 }}>
@@ -440,6 +425,37 @@ export default function PersonalMenu({ traineeData }) {
       >
         הכמויות נקבעות לפי אילוצי ההגשה...
       </div>
+    </div>
+  );
+}
+
+/* ===== דגשים ===== */
+function InstructionsCard() {
+  const BULLETS = [
+    "חשוב לשתות לפחות 3 ליטר מים ביום.",
+    "משקל מזון – חובה.",
+    "להעדיף ספריי שמן.",
+    "חלב 0% (עד כוס חד־פעמי ביום).",
+    "מומלץ סויה ללא סוכר אם מתאים. משקאות זירו – מותר.",
+    "לא להעמיס סוכר/סילאן אלא אם מצוין.",
+    "ירקות – הרבה! (בצל מוגבל).",
+    "ארוחות מסודרות: לא לדלג. לא לנשנש בין הארוחות.",
+    "אורז לבן/בסמטי עד 400 גרם מבושל ביום (חלוקה לפי התפריט).",
+    "פסטה רק עם רוטב עגבניות – ללא שמנת.",
+    "לאכול עד שעתיים אחרי אימון; להימנע מאכילה מאוחרת (עד 21:00 אם אפשר).",
+    "אם מתחשק מתוק – אפשר להחליף למנה שמופיעה בתפריט (או פרי).",
+    "ירקות חופשיים: עגבניה, מלפפון, כרוב, פלפל, ברוקולי מבושל, גזר, שומר טרי, אספרגוס, סלק, בצל (מוגבל).",
+    "אם משהו לא בטוח – לשאול לפני שאוכלים 🙂",
+  ];
+
+  return (
+    <div className="instructions-card meal-card">
+      <h2 className="menu-title highlight">דגשים חשובים!</h2>
+      <ol className="instructions-list">
+        {BULLETS.map((t, i) => (
+          <li key={i}>{t}</li>
+        ))}
+      </ol>
     </div>
   );
 }

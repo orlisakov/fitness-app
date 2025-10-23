@@ -1440,9 +1440,12 @@ button:hover {
   color: #e8eaf1;
   border-color: rgba(255, 255, 255, 0.08);
 }
-/* יצוא PDF נקי */
-.meal-card {
-  background: #fff;
+
+@media print {
+  .meal-card {
+    background: #fff !important;
+    color: #000 !important;
+  }
 }
 
 @media print {
@@ -1855,4 +1858,116 @@ button:hover {
 }
 .meal-input {
   width: 100px; /* או 90px לפי הגודל שרצית */
+}
+
+.meal-plan-wrapper {
+  direction: rtl;
+  font-family: "Rubik", sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.meal-header {
+  margin-top: 30px;
+  margin-bottom: 10px;
+  text-align: right;
+  font-size: 20px;
+  font-weight: 600;
+  color: #4e342e;
+}
+
+.meal-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  background: #fff;
+}
+
+.meal-table th {
+  background: #f5f5f5;
+  text-align: center;
+  padding: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  border-bottom: 2px solid #ddd;
+}
+
+.meal-table td {
+  text-align: center;
+  padding: 10px;
+  font-size: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.meal-table tbody tr:hover {
+  background-color: #fafafa;
+}
+/* כותרות מקובצות לטבלת-אחת (חלבון/פחמימה) */
+.menu-table-dual thead tr:first-child th.grp {
+  background: #eef2ff;
+  border-bottom: 0;
+  text-align: center;
+}
+.menu-table-dual thead tr:nth-child(2) th {
+  border-top: 0;
+}
+.menu-table-dual tbody td {
+  vertical-align: top;
+}
+
+/* בסיס לטבלאות (אם לא קיים) */
+.menu-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  border: 1px solid var(--border, #e5e7eb);
+}
+.menu-table th,
+.menu-table td {
+  padding: 8px 10px;
+  text-align: center;
+  border: 1px solid var(--border, #e5e7eb);
+}
+
+/* כותרות מקובצות לטבלת-זוגות במצב רגיל (לייט) */
+.menu-table-dual thead tr:first-child th.grp {
+  background: #eef2ff;
+  color: #111827;
+  border-bottom: 0;
+  text-align: center;
+}
+.menu-table-dual thead tr:nth-child(2) th {
+  background: #f9fafb;
+  color: #374151;
+  border-top: 0;
+}
+.menu-table-dual tbody td {
+  vertical-align: top;
+}
+
+/* מצב כרטיס כהה: טבלה בתוך .meal-card.stacked */
+.meal-card.stacked .menu-table-dual {
+  background: transparent;
+  color: #e5e7eb;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+.meal-card.stacked .menu-table-dual th,
+.meal-card.stacked .menu-table-dual td {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+.meal-card.stacked .menu-table-dual thead tr:first-child th.grp {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e5e7eb;
+}
+.meal-card.stacked .menu-table-dual thead tr:nth-child(2) th {
+  background: rgba(255, 255, 255, 0.04);
+  color: #cbd5e1;
+  border-top: 0;
+}
+.meal-card.stacked .menu-table-dual tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03);
+}
+.meal-card.stacked .menu-table-dual tbody td {
+  background: transparent;
 }
