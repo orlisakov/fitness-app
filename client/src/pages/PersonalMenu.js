@@ -247,6 +247,64 @@ export default function PersonalMenu({ traineeData }) {
     );
   }
 
+  function TripleGroupTable({
+    proteinOptions = [],
+    sweetsOptions = [],
+    fruitsOptions = [],
+  }) {
+    const maxRows = Math.max(
+      proteinOptions.length,
+      sweetsOptions.length,
+      fruitsOptions.length
+    );
+    const get = (arr, i) => (i < arr.length ? arr[i] : null);
+
+    if (maxRows === 0) return null;
+
+    return (
+      <table className="menu-table menu-table-dual" dir="rtl">
+        <thead>
+          <tr>
+            <th colSpan={2} className="grp">
+              חלבון
+            </th>
+            <th colSpan={2} className="grp">
+              מתוקים / חטיפים
+            </th>
+            <th colSpan={2} className="grp">
+              פירות
+            </th>
+          </tr>
+          <tr>
+            <th style={{ width: 110 }}>כמות</th>
+            <th>מוצר</th>
+            <th style={{ width: 110 }}>כמות</th>
+            <th>מוצר</th>
+            <th style={{ width: 110 }}>כמות</th>
+            <th>מוצר</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: maxRows }).map((_, i) => {
+            const p = get(proteinOptions, i);
+            const s = get(sweetsOptions, i);
+            const f = get(fruitsOptions, i);
+            return (
+              <tr key={i}>
+                <td>{p?.displayText || ""}</td>
+                <td>{p?.food?.name || ""}</td>
+                <td>{s?.displayText || ""}</td>
+                <td>{s?.food?.name || ""}</td>
+                <td>{f?.displayText || ""}</td>
+                <td>{f?.food?.name || ""}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    );
+  }
+
   /* ---------- סקשנים ---------- */
 
   // בוקר/ערב-חלבית
@@ -325,37 +383,24 @@ export default function PersonalMenu({ traineeData }) {
     );
   }
 
-  // ביניים — חלבון מול מתוקים; נציג גם טבלת חלופה עם פירות
   function SnackBlock({ meal }) {
     const t = meal.targets;
     const prot =
-      meal.groups.find((g) => g.key === "snack_protein")?.options || [];
-    const sweets = meal.groups.find((g) => g.key === "sweets")?.options || [];
-    const fruits = meal.groups.find((g) => g.key === "fruits")?.options || [];
+      meal.groups.find((g) => g.key === "protein_snack")?.options || [];
+    const sweets =
+      meal.groups.find((g) => g.key === "sweet_snack")?.options || [];
+    const fruits =
+      meal.groups.find((g) => g.key === "fruit_snack")?.options || [];
 
     return (
       <div className="meal-card stacked">
         <SectionTitle>ארוחת ביניים</SectionTitle>
         <TargetsRow t={t} />
-        <DualGroupTable
-          proteinTitle="חלבון (בחרי אחד)"
-          carbTitle="מתוקים / חטיפים"
+        <TripleGroupTable
           proteinOptions={prot}
-          carbOptions={sweets}
+          sweetsOptions={sweets}
+          fruitsOptions={fruits}
         />
-        {fruits?.length ? (
-          <>
-            <div className="meal-note" style={{ marginTop: 6 }}>
-              או לבחור פירות במקום מתוקים:
-            </div>
-            <DualGroupTable
-              proteinTitle="חלבון (אותן אופציות)"
-              carbTitle="פירות (חלופה לפחמימות)"
-              proteinOptions={prot}
-              carbOptions={fruits}
-            />
-          </>
-        ) : null}
       </div>
     );
   }

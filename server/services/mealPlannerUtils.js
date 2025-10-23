@@ -234,13 +234,19 @@ function hasFlag(food, flag) {
   const df = food?.dietaryFlags || {};
   return inCatsAsFlag || !!df[flag];
 }
+
 function inCats(food, cats = []) {
   const c = food?.categories || [];
   return cats.some((k) => c.includes(k));
 }
+
 function bySuitability(mealType, min = 5) {
-  return (f) => toNumber(f?.mealSuitability?.[mealType]) >= min;
+  return (f) => {
+    const v = Number(f?.mealSuitability?.[mealType]);
+    return Number.isFinite(v) ? v >= min : true;
+  };
 }
+
 function matchesPrefs(food, prefs) {
   if (food.dietaryFlags) {
     if (prefs.isVegan && !food.dietaryFlags.isVegan) return false;
@@ -1088,7 +1094,9 @@ class RuleBasedPlanner {
     return this.pool(
       (f) =>
         bySuitability("lunch", minSuit)(f) &&
-        (inCats(f, ["carbs_lunch"]) || inCats(f, ["legumes_lunch"]))
+        (inCats(f, ["carbs_lunch"]) ||
+          inCats(f, ["legumes_lunch"]) ||
+          inCats(f, ["carbs_bread"]))
     );
   }
 
@@ -1238,7 +1246,7 @@ class RuleBasedPlanner {
   }
 
   buildSnack(totalTargets) {
-    function buildSingleMacroOptions(pool, macroKey, targetVal, want = 40) {
+    function buildSingleMacroOptions(pool, macroKey, targetVal, want = 50) {
       const BIG = 1e9;
       const T = { protein: BIG, carbs: BIG, fat: BIG, calories: BIG };
       T[macroKey] = Math.max(0, Number(targetVal) || 0);
@@ -1303,19 +1311,19 @@ class RuleBasedPlanner {
       groups: [
         {
           title: "חלבון ביניים (בחרי אחד)",
-          key: "snack_protein",
+          key: "protein_snack",
           options: proteins,
           selected: proteins[0] || undefined,
         },
         {
           title: "פחמימות ביניים (בחרי אחד)",
-          key: "sweets",
+          key: "sweet_snack",
           options: sweetsAsCarb,
           selected: sweetsAsCarb[0] || undefined,
         },
         {
           title: "פירות (חלופה לפחמימות הביניים)",
-          key: "fruits",
+          key: "fruit_snack",
           options: fruitsAsAlt,
         },
       ],
@@ -1445,7 +1453,7 @@ class RuleBasedPlanner {
   }
 
   buildLunch(totalTargets) {
-    function buildSingleMacroOptions(pool, macroKey, targetVal, want = 40) {
+    function buildSingleMacroOptions(pool, macroKey, targetVal, want = 50) {
       const BIG = 1e9;
       const T = { protein: BIG, carbs: BIG, fat: BIG, calories: BIG };
       T[macroKey] = Math.max(0, Number(targetVal) || 0);
@@ -1527,7 +1535,7 @@ class RuleBasedPlanner {
     dairyStyle.header = "ערב — גרסה חלבית";
 
     // 2) גרסה בשרית — כמו אלגוריתם הצהריים (מאקרו בודד לכל קבוצה)
-    function buildSingleMacroOptions(pool, macroKey, targetVal, want = 40) {
+    function buildSingleMacroOptions(pool, macroKey, targetVal, want = 50) {
       const BIG = 1e9;
       const T = { protein: BIG, carbs: BIG, fat: BIG, calories: BIG };
       T[macroKey] = Math.max(0, Number(targetVal) || 0);

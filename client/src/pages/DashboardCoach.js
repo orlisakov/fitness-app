@@ -5,6 +5,7 @@ import config from "../config";
 
 export default function DashboardCoach() {
   const navigate = useNavigate();
+  const toStr = (v) => (v === 0 || Number.isFinite(Number(v)) ? String(v) : "");
 
   const [trainees, setTrainees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,6 +63,7 @@ export default function DashboardCoach() {
   const fillEditDataFromTrainee = (t) => {
     const split = t?.customSplit || { mode: "auto" };
     const meals = split?.meals || {};
+
     setEditData((prev) => ({
       ...prev,
       fullName: t.fullName || "",
@@ -81,24 +83,24 @@ export default function DashboardCoach() {
       customSplitMode: split.mode || "auto",
       customMeals: {
         breakfast: {
-          protein: meals?.breakfast?.protein ?? "",
-          carbs: meals?.breakfast?.carbs ?? "",
-          fat: meals?.breakfast?.fat ?? "",
+          protein: toStr(meals?.breakfast?.protein),
+          carbs: toStr(meals?.breakfast?.carbs),
+          fat: toStr(meals?.breakfast?.fat),
         },
         lunch: {
-          protein: meals?.lunch?.protein ?? "",
-          carbs: meals?.lunch?.carbs ?? "",
-          fat: meals?.lunch?.fat ?? "",
+          protein: toStr(meals?.lunch?.protein),
+          carbs: toStr(meals?.lunch?.carbs),
+          fat: toStr(meals?.lunch?.fat),
         },
         snack: {
-          protein: meals?.snack?.protein ?? "",
-          carbs: meals?.snack?.carbs ?? "",
-          fat: meals?.snack?.fat ?? "",
+          protein: toStr(meals?.snack?.protein),
+          carbs: toStr(meals?.snack?.carbs),
+          fat: toStr(meals?.snack?.fat),
         },
         dinner: {
-          protein: meals?.dinner?.protein ?? "",
-          carbs: meals?.dinner?.carbs ?? "",
-          fat: meals?.dinner?.fat ?? "",
+          protein: toStr(meals?.dinner?.protein),
+          carbs: toStr(meals?.dinner?.carbs),
+          fat: toStr(meals?.dinner?.fat),
         },
       },
     }));
@@ -432,66 +434,81 @@ export default function DashboardCoach() {
   if (loading) return <div className="dashboard-message">טוען נתונים...</div>;
   if (error) return <div className="dashboard-error">{error}</div>;
 
-  // בתוך DashboardCoach.jsx
-
   const MealRow = ({ mealKey, title }) => {
     const value = editData.customMeals[mealKey];
     const disabled = editData.customSplitMode !== "custom";
 
-    const update = (field) => (e) =>
+    // מנקה כל מה שלא ספרה יוניקודית ומגביל ל-3 ספרות
+    const onNumericChange = (field) => (e) => {
+      const cleaned = (e.target.value || "")
+        .replace(/\D/g, "") // מסיר כל מה שלא ספרה 0-9
+        .slice(0, 3);
+
       setEditData((p) => ({
         ...p,
         customMeals: {
           ...p.customMeals,
-          [mealKey]: { ...p.customMeals[mealKey], [field]: e.target.value },
+          [mealKey]: { ...p.customMeals[mealKey], [field]: cleaned },
         },
       }));
+    };
 
     return (
       <div className="meal-row">
-        <label className="meal-cell">
+        <div className="meal-cell">
           <input
+            id={`${mealKey}-protein`}
             type="text"
-            min="0"
             inputMode="numeric"
-            value={value.protein}
-            onChange={update("protein")}
+            pattern="[0-9]*"
+            dir="ltr"
+            autoComplete="off"
+            value={value.protein ?? ""}
+            onChange={onNumericChange("protein")}
             disabled={disabled}
             className="meal-input"
             placeholder="0"
+            style={{ direction: "ltr", textAlign: "left" }}
           />
           <span className="meal-label">חלבון</span>
-        </label>
+        </div>
 
-        <label className="meal-cell">
+        <div className="meal-cell">
           <input
+            id={`${mealKey}-carbs`}
             type="text"
-            min="0"
             inputMode="numeric"
-            value={value.carbs}
-            onChange={update("carbs")}
+            pattern="[0-9]*"
+            dir="ltr"
+            autoComplete="off"
+            value={value.carbs ?? ""}
+            onChange={onNumericChange("carbs")}
             disabled={disabled}
             className="meal-input"
             placeholder="0"
+            style={{ direction: "ltr", textAlign: "left" }}
           />
           <span className="meal-label">פחמימה</span>
-        </label>
+        </div>
 
-        <label className="meal-cell">
+        <div className="meal-cell">
           <input
+            id={`${mealKey}-fat`}
             type="text"
-            min="0"
             inputMode="numeric"
-            value={value.fat}
-            onChange={update("fat")}
+            pattern="[0-9]*"
+            dir="ltr"
+            autoComplete="off"
+            value={value.fat ?? ""}
+            onChange={onNumericChange("fat")}
             disabled={disabled}
             className="meal-input"
             placeholder="0"
+            style={{ direction: "ltr", textAlign: "left" }}
           />
           <span className="meal-label">שומן</span>
-        </label>
+        </div>
 
-        {/* כותרת הארוחה בצד ימין */}
         <div className="meal-title">{title}:</div>
       </div>
     );

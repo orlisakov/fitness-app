@@ -6,6 +6,8 @@ import logo from "../assets/logo.jpg";
 
 export default function DashboardLayout({ onLogout, user }) {
   const navigate = useNavigate();
+  const toStr = (v) => (v === 0 || Number.isFinite(Number(v)) ? String(v) : "");
+
   const role = user?.role || null;
 
   // התאימי לראוטים שהוגדרו ב-App.js

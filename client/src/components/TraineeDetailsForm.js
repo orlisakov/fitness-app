@@ -6,7 +6,9 @@ import config from "../config";
 
 export default function TraineeDetailsForm() {
   const { id } = useParams();
+
   const navigate = useNavigate();
+  const toStr = (v) => (v === 0 || Number.isFinite(Number(v)) ? String(v) : "");
 
   const [formData, setFormData] = useState({
     age: "",
@@ -126,24 +128,24 @@ export default function TraineeDetailsForm() {
           customSplitMode: split.mode || "auto",
           customMeals: {
             breakfast: {
-              protein: meals?.breakfast?.protein ?? "",
-              carbs: meals?.breakfast?.carbs ?? "",
-              fat: meals?.breakfast?.fat ?? "",
+              protein: toStr(meals?.breakfast?.protein),
+              carbs: toStr(meals?.breakfast?.carbs),
+              fat: toStr(meals?.breakfast?.fat),
             },
             lunch: {
-              protein: meals?.lunch?.protein ?? "",
-              carbs: meals?.lunch?.carbs ?? "",
-              fat: meals?.lunch?.fat ?? "",
+              protein: toStr(meals?.lunch?.protein),
+              carbs: toStr(meals?.lunch?.carbs),
+              fat: toStr(meals?.lunch?.fat),
             },
             snack: {
-              protein: meals?.snack?.protein ?? "",
-              carbs: meals?.snack?.carbs ?? "",
-              fat: meals?.snack?.fat ?? "",
+              protein: toStr(meals?.snack?.protein),
+              carbs: toStr(meals?.snack?.carbs),
+              fat: toStr(meals?.snack?.fat),
             },
             dinner: {
-              protein: meals?.dinner?.protein ?? "",
-              carbs: meals?.dinner?.carbs ?? "",
-              fat: meals?.dinner?.fat ?? "",
+              protein: toStr(meals?.dinner?.protein),
+              carbs: toStr(meals?.dinner?.carbs),
+              fat: toStr(meals?.dinner?.fat),
             },
           },
         }));
@@ -247,13 +249,14 @@ export default function TraineeDetailsForm() {
   if (loading) return <div>טוען נתונים...</div>;
   if (error) return <div className="error">{error}</div>;
 
-  // ——— שורה קומפקטית לכל ארוחה ———
   const MealRow = ({ mealKey, title, disabled }) => {
-    const value = formData.customMeals[mealKey];
+    const value = formData.customMeals[mealKey]; // או editData בהתאמה
 
-    // קלט טקסטי שמקבל רק ספרות
-    const numericChange = (field) => (e) => {
-      const cleaned = e.target.value.replace(/\D/g, ""); // רק ספרות
+    // מנקה כל מה שלא "ספרה יוניקודית" ומגביל ל-3 ספרות
+    const onNumericChange = (field) => (e) => {
+      const cleaned = (e.target.value || "")
+        .replace(/\D/g, "") // מסיר כל מה שלא ספרה 0-9
+        .slice(0, 3);
       setFormData((p) => ({
         ...p,
         customMeals: {
@@ -263,59 +266,73 @@ export default function TraineeDetailsForm() {
       }));
     };
 
-    const Unit = ({ titleText }) => (
-      <div style={styles.unitWrap}>
-        <div>{titleText}</div>
-        <div style={styles.unitSub}>(גרם)</div>
-      </div>
-    );
-
     return (
       <div className="meal-row" style={styles.mealRow}>
-        <label className="meal-cell" style={styles.mealCell}>
-          <Unit titleText="חלבון" />
+        <div className="meal-cell" style={styles.mealCell}>
+          <label htmlFor={`${mealKey}-protein`}>
+            חלבון
+            <br />
+            <span style={styles.unitSub}>(גרם)</span>
+          </label>
           <input
+            id={`${mealKey}-protein`}
             type="text"
             inputMode="numeric"
             pattern="[0-9]*"
+            dir="ltr"
+            autoComplete="off"
             value={value.protein ?? ""}
-            onChange={numericChange("protein")}
+            onChange={onNumericChange("protein")}
             disabled={disabled}
             className="meal-input"
-            style={styles.mealInput}
+            style={{ ...styles.mealInput, direction: "ltr", textAlign: "left" }}
             placeholder="0"
           />
-        </label>
+        </div>
 
-        <label className="meal-cell" style={styles.mealCell}>
-          <Unit titleText="פחמימה" />
+        <div className="meal-cell" style={styles.mealCell}>
+          <label htmlFor={`${mealKey}-carbs`}>
+            פחמימה
+            <br />
+            <span style={styles.unitSub}>(גרם)</span>
+          </label>
           <input
+            id={`${mealKey}-carbs`}
             type="text"
             inputMode="numeric"
             pattern="[0-9]*"
+            dir="ltr"
+            autoComplete="off"
             value={value.carbs ?? ""}
-            onChange={numericChange("carbs")}
+            onChange={onNumericChange("carbs")}
             disabled={disabled}
             className="meal-input"
-            style={styles.mealInput}
+            style={{ ...styles.mealInput, direction: "ltr", textAlign: "left" }}
             placeholder="0"
           />
-        </label>
+        </div>
 
-        <label className="meal-cell" style={styles.mealCell}>
-          <Unit titleText="שומן" />
+        <div className="meal-cell" style={styles.mealCell}>
+          <label htmlFor={`${mealKey}-fat`}>
+            שומן
+            <br />
+            <span style={styles.unitSub}>(גרם)</span>
+          </label>
           <input
+            id={`${mealKey}-fat`}
             type="text"
             inputMode="numeric"
             pattern="[0-9]*"
+            dir="ltr"
+            autoComplete="off"
             value={value.fat ?? ""}
-            onChange={numericChange("fat")}
+            onChange={onNumericChange("fat")}
             disabled={disabled}
             className="meal-input"
-            style={styles.mealInput}
+            style={{ ...styles.mealInput, direction: "ltr", textAlign: "left" }}
             placeholder="0"
           />
-        </label>
+        </div>
 
         <div className="meal-title" style={styles.mealTitle}>
           {title}:
