@@ -45,12 +45,27 @@ export default function DashboardCoach() {
   const [showMeasurementsModal, setShowMeasurementsModal] = useState(false);
   const [measurementData, setMeasurementData] = useState({
     date: "",
-    weight: "",
-    bodyFat: "",
-    waist: "",
-    hips: "",
-    chest: "",
+    AbdominalCircumference: "",
+    TopCircumference: "",
+    ButtockCircumference: "",
+    ThighCircumference: "",
+    ArmCircumference: "",
   });
+
+  const [toast, setToast] = useState({
+    visible: false,
+    text: "",
+    type: "success",
+  });
+
+  function showToast(text, type = "success", ms = 2500) {
+    setToast({ visible: true, text, type });
+    window.clearTimeout(showToast._t);
+    showToast._t = window.setTimeout(
+      () => setToast((p) => ({ ...p, visible: false })),
+      ms
+    );
+  }
 
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [measurements, setMeasurements] = useState([]);
@@ -294,11 +309,11 @@ export default function DashboardCoach() {
     setSelectedTrainee(trainee);
     setMeasurementData({
       date: "",
-      weight: "",
-      bodyFat: "",
-      waist: "",
-      hips: "",
-      chest: "",
+      AbdominalCircumference: "",
+      TopCircumference: "",
+      ButtockCircumference: "",
+      ThighCircumference: "",
+      ArmCircumference: "",
     });
     setShowMeasurementsModal(true);
   };
@@ -341,10 +356,10 @@ export default function DashboardCoach() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message || "שגיאה בשמירת המדידה");
       }
-      alert("המדידה נשמרה בהצלחה");
+      showToast("המדידה נשמרה בהצלחה", "success");
       setShowMeasurementsModal(false);
     } catch (err) {
-      alert(err.message || "שגיאה בשמירת המדידה");
+      showToast(err.message || "שגיאה בשמירת המדידה", "error");
     }
   };
 
@@ -890,6 +905,12 @@ export default function DashboardCoach() {
         </div>
       )}
 
+      {toast.visible && (
+        <div className={`toast ${toast.type}`} dir="rtl">
+          {toast.text}
+        </div>
+      )}
+
       {/* מודאלים נוספים (מדידות, היסטוריה, מזונות) נשארו */}
       {showMeasurementsModal && (
         <div className="modal-backdrop">
@@ -914,42 +935,57 @@ export default function DashboardCoach() {
               />
               <input
                 type="number"
-                placeholder='משקל (ק"ג)'
-                value={measurementData.weight}
+                placeholder="היקף בטן (טבור)"
+                value={measurementData.AbdominalCircumference}
                 onChange={(e) =>
-                  setMeasurementData((p) => ({ ...p, weight: e.target.value }))
+                  setMeasurementData((p) => ({
+                    ...p,
+                    AbdominalCircumference: e.target.value,
+                  }))
                 }
               />
               <input
                 type="number"
-                placeholder="אחוז שומן"
-                value={measurementData.bodyFat}
+                placeholder="היקף עליון"
+                value={measurementData.TopCircumference}
                 onChange={(e) =>
-                  setMeasurementData((p) => ({ ...p, bodyFat: e.target.value }))
+                  setMeasurementData((p) => ({
+                    ...p,
+                    TopCircumference: e.target.value,
+                  }))
                 }
               />
               <input
                 type="number"
-                placeholder='מותניים (ס"מ)'
-                value={measurementData.waist}
+                placeholder="היקף ישבן"
+                value={measurementData.ButtockCircumference}
                 onChange={(e) =>
-                  setMeasurementData((p) => ({ ...p, waist: e.target.value }))
+                  setMeasurementData((p) => ({
+                    ...p,
+                    ButtockCircumference: e.target.value,
+                  }))
                 }
               />
               <input
                 type="number"
-                placeholder='אגן (ס"מ)'
-                value={measurementData.hips}
+                placeholder="היקף ירכיים"
+                value={measurementData.ThighCircumference}
                 onChange={(e) =>
-                  setMeasurementData((p) => ({ ...p, hips: e.target.value }))
+                  setMeasurementData((p) => ({
+                    ...p,
+                    ThighCircumference: e.target.value,
+                  }))
                 }
               />
               <input
                 type="number"
-                placeholder='חזה (ס"מ)'
-                value={measurementData.chest}
+                placeholder="היקף זרוע"
+                value={measurementData.ArmCircumference}
                 onChange={(e) =>
-                  setMeasurementData((p) => ({ ...p, chest: e.target.value }))
+                  setMeasurementData((p) => ({
+                    ...p,
+                    ArmCircumference: e.target.value,
+                  }))
                 }
               />
               <button type="submit" className="update-btn">
@@ -991,11 +1027,11 @@ export default function DashboardCoach() {
                   {measurements.map((m, index) => (
                     <tr key={index}>
                       <td>{new Date(m.date).toLocaleDateString("he-IL")}</td>
-                      <td>{m.weight}</td>
-                      <td>{m.bodyFat}</td>
-                      <td>{m.waist}</td>
-                      <td>{m.hips}</td>
-                      <td>{m.chest}</td>
+                      <td>{m.AbdominalCircumference}</td>
+                      <td>{m.TopCircumference}</td>
+                      <td>{m.ButtockCircumference}</td>
+                      <td>{m.ThighCircumference}</td>
+                      <td>{m.ArmCircumference}</td>
                       <td>
                         <button
                           className="action-btn delete-btn"

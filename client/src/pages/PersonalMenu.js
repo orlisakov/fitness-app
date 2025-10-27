@@ -115,43 +115,100 @@ export default function PersonalMenu({ traineeData }) {
   async function exportToPDF() {
     if (!pdfRef.current) return;
 
-    const A4_WIDTH = 210;
-    const A4_HEIGHT = 297;
-    const MARGIN = 10;
-    const CONTENT_W = A4_WIDTH - MARGIN * 2;
-
+    // === הגדרות עמוד A4 במ"מ ===
     const pdf = new jsPDF("p", "mm", "a4");
-    const cards = pdfRef.current.querySelectorAll(
-      ".instructions-card, .meal-card"
-    );
+    const PAGE_W = pdf.internal.pageSize.getWidth(); // 210mm
+    const PAGE_H = pdf.internal.pageSize.getHeight(); // 297mm
+    const MARGIN = 10;
+    const CONTENT_W = PAGE_W - MARGIN * 2;
+    const CONTENT_H = PAGE_H - MARGIN * 2;
 
-    let y = MARGIN;
-    let isFirstImage = true;
+    // === נועל רוחב DOM קבוע כדי למנוע שבירת שורות/סקיילים שונים בין כרטיסים ===
+    // 794px ~ 210mm ב־96dpi; זה רוחב "בטוח" ל־A4. נעמיס לכאן גם scale בקנבס.
+    const container = pdfRef.current;
+    const prevWidth = container.style.width;
+    const prevBoxSizing = container.style.boxSizing;
+    container.style.boxSizing = "border-box";
+    container.style.width = "794px";
 
-    for (const card of cards) {
-      const canvas = await html2canvas(card, {
-        backgroundColor: "#fff",
-        scale: Math.min(2, window.devicePixelRatio || 2),
-        useCORS: true,
-        allowTaint: true,
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-      const pxToMm = (px) => px * 0.264583;
-      const imgWmm = CONTENT_W;
-      const imgHmm = (pxToMm(canvas.height) * imgWmm) / pxToMm(canvas.width);
-
-      if (!isFirstImage && y + imgHmm > A4_HEIGHT - MARGIN) {
-        pdf.addPage();
-        y = MARGIN;
+    try {
+      const cards = container.querySelectorAll(
+        ".instructions-card, .meal-card"
+      );
+      if (!cards.length) {
+        // fallback: אם אין כרטיסים ספציפיים, נייצא את כל ה־container כעמוד אחד
+        const fullCanvas = await html2canvas(container, {
+          backgroundColor: "#fff",
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          windowWidth: container.scrollWidth,
+        });
+        const imgData = fullCanvas.toDataURL("image/png");
+        const imgWmm = CONTENT_W;
+        const imgHmm = (imgWmm * fullCanvas.height) / fullCanvas.width;
+        const fitHmm = Math.min(imgHmm, CONTENT_H);
+        pdf.addImage(imgData, "PNG", MARGIN, MARGIN, imgWmm, fitHmm);
+        pdf.save("תפריט-אישי.pdf");
+        return;
       }
 
-      pdf.addImage(imgData, "PNG", MARGIN, y, imgWmm, imgHmm);
-      y += imgHmm + 6;
-      isFirstImage = false;
-    }
+      let y = MARGIN;
+      let first = true;
 
-    pdf.save("תפריט-אישי.pdf");
+      for (const card of cards) {
+        // מרנדרים כל "כרטיס" בקנבס איכותי
+        const canvas = await html2canvas(card, {
+          backgroundColor: "#fff",
+          scale: 2, // איכות גבוהה
+          useCORS: true,
+          allowTaint: true,
+          windowWidth: container.scrollWidth, // חשוב! כדי לשמר פריסה יציבה
+        });
+
+        // חישוב סקלת מעבר מפיקסלים למ"מ לפי יחס התמונה
+        const imgData = canvas.toDataURL("image/png");
+        const imgNaturalWpx = canvas.width;
+        const imgNaturalHpx = canvas.height;
+
+        // ממירים למ"מ בשמירה על יחס: נשתמש ברוחב התוכן (CONTENT_W)
+        let imgWmm = CONTENT_W;
+        let imgHmm = (imgNaturalHpx * imgWmm) / imgNaturalWpx;
+
+        // אם הכרטיס גבוה מדי לעמוד יחיד — נקטין פרופורציונלית כך שייכנס בעמוד אחד
+        if (imgHmm > CONTENT_H) {
+          const scale = CONTENT_H / imgHmm; // < 1
+          imgWmm = imgWmm * scale;
+          imgHmm = imgHmm * scale;
+        }
+
+        // אם אין מספיק מקום בעמוד הנוכחי — עוברים לעמוד חדש
+        if (!first && y + imgHmm > PAGE_H - MARGIN) {
+          pdf.addPage();
+          y = MARGIN;
+        }
+
+        pdf.addImage(
+          imgData,
+          "PNG",
+          MARGIN + (CONTENT_W - imgWmm) / 2,
+          y,
+          imgWmm,
+          imgHmm
+        );
+        y += imgHmm + 6; // רווח אנכי בין כרטיסים
+        first = false;
+      }
+
+      pdf.save("תפריט-אישי.pdf");
+    } catch (err) {
+      console.error("PDF export error:", err);
+      alert("אירעה שגיאה ביצוא ה-PDF. נסי שוב.");
+    } finally {
+      // מחזירים את הסטיילים כפי שהיו
+      container.style.width = prevWidth || "";
+      container.style.boxSizing = prevBoxSizing || "";
+    }
   }
 
   /* ---------- מצבים ---------- */
@@ -336,8 +393,8 @@ export default function PersonalMenu({ traineeData }) {
         <TargetsRow t={t} />
 
         <DualGroupTable
-          proteinTitle="חלבון לבוקר — גבינות/טונה/דגים"
-          carbTitle="פחמימות בוקר"
+          proteinTitle="חלבון (בחרי אחד)"
+          carbTitle="פחמימה (בחרי אחר)"
           proteinOptions={prot}
           carbOptions={carbs}
         />

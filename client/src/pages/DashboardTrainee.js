@@ -598,11 +598,11 @@ export default function DashboardTrainee() {
                           <td>
                             {new Date(m.date).toLocaleDateString("he-IL")}
                           </td>
-                          <td>{m.weight}</td>
-                          <td>{m.bodyFat}</td>
-                          <td>{m.waist}</td>
-                          <td>{m.hips}</td>
-                          <td>{m.chest}</td>
+                          <td>{m.AbdominalCircumference}</td>
+                          <td>{m.TopCircumference}</td>
+                          <td>{m.ButtockCircumference}</td>
+                          <td>{m.ThighCircumference}</td>
+                          <td>{m.ArmCircumference}</td>
                         </tr>
                       ))}
                     </tbody>

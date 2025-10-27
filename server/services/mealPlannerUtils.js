@@ -140,7 +140,7 @@ function withinTargetsByFlexMap(nut, T, flexMap) {
 /* ==== אילוצי הגשה ==== */
 function getInc(food) {
   const step = toNumber(food?.constraints?.increment, 0.01);
-  return step > 0 ? step : 0.01;
+  return step > 0 ? Math.max(step, 0.05) : 0.05;
 }
 function floorToIncrement(q, step) {
   return Math.floor(q / step) * step;
@@ -789,8 +789,8 @@ function gramsToSplitPct(mealGrams, totals) {
   return out;
 }
 
-/* ========= קומבואים עם כיבוד רגישויות ========= */
-function buildEggsWithWhiteCheeseCombo(foods, targetProtein, prefs = {}) {
+// מחליף את buildEggsWhiteCheeseCombo והופך אותו לגרסה מכבדת חלבון+שומן
+function buildEggsWithWhiteCheeseCombo(foods, protTarget, fatCeil, prefs = {}) {
   if (prefs?.isVegan) return null;
 
   const eggsPool = (foods || [])
@@ -802,49 +802,86 @@ function buildEggsWithWhiteCheeseCombo(foods, targetProtein, prefs = {}) {
     .filter((f) => safeMatches(f, prefs));
 
   const egg = eggsPool[0];
-  const cheese = cheesesPool.find((c) =>
-    prefs?.lactoseSensitive ? isLactoseFree(c) : true
-  );
+  const cheese = prefs?.lactoseSensitive
+    ? cheesesPool.find((c) => isLactoseFree(c)) || cheesesPool[0]
+    : cheesesPool[0];
 
   if (!egg || !cheese) return null;
 
-  const eggMacros = getEffectiveMacros(egg);
-  const eggInc = getInc(egg);
-  const eggMin = toNumber(egg?.constraints?.minServing, 1);
-  const eggMax = toNumber(egg?.constraints?.maxServing, 10);
-  const eggsQty = clamp(floorToIncrement(2, eggInc), eggMin, eggMax);
+  // --- 2 ביצים אבל רק חלמון אחד ---
+  // נתבסס על מאקרו ל"ביצה" אחת, ואז נבנה: 2*ביצה - חלמון אחד.
+  // היוריסטיקה לחלמון: כל השומן של ביצה אחת + ~45% מהחלבון ו~90% מהפחמימות של הביצה.
+  const eM_one = getEffectiveMacros(egg);
+  const twoEggs = multiplyMacros(eM_one, 2);
 
-  const totalEggMacros = multiplyMacros(eggMacros, eggsQty);
-  const eggProtein = totalEggMacros.protein;
+  const yolkP = Math.min(twoEggs.protein, eM_one.protein * 0.45);
+  const yolkC = Math.min(twoEggs.carbs, eM_one.carbs * 0.9);
+  const yolkF = Math.min(twoEggs.fat, eM_one.fat); // רוב השומן בחלמון
 
-  if (eggProtein >= targetProtein * 0.98) return null;
+  const eggsAdj = {
+    protein: Math.max(0, twoEggs.protein - yolkP),
+    carbs: Math.max(0, twoEggs.carbs - yolkC),
+    fat: Math.max(0, twoEggs.fat - yolkF),
+  };
+  eggsAdj.calories = kcalFrom(eggsAdj.protein, eggsAdj.carbs, eggsAdj.fat);
 
-  const cheeseMacros = getEffectiveMacros(cheese);
-  const cheeseInc = getInc(cheese);
-  const cheeseMin = toNumber(cheese?.constraints?.minServing, 0.1);
-  const cheeseMax = toNumber(cheese?.constraints?.maxServing, 10);
+  // אם כבר רכיב הביצים לבדו שובר את היעדים – אין קומבו
+  if (eggsAdj.protein > protTarget + 1e-9 || eggsAdj.fat > fatCeil + 1e-9) {
+    return null;
+  }
 
-  if (cheeseMacros.protein <= 0) return null;
+  // מחשבים כמה חלבון נשאר להשלים מהגבינה
+  const cM = getEffectiveMacros(cheese);
+  const cInc = getInc(cheese);
+  const cMin = toNumber(cheese?.constraints?.minServing, 0.1);
+  const cMax = Math.min(10, toNumber(cheese?.constraints?.maxServing, 10));
 
-  const remainingProtein = Math.max(0, targetProtein - eggProtein);
-  const cheeseQtyRaw = remainingProtein / cheeseMacros.protein;
-  const cheeseQty = clamp(
-    floorToIncrement(cheeseQtyRaw, cheeseInc),
-    cheeseMin,
-    cheeseMax
+  if (cM.protein <= 0) return null;
+
+  const remainingP = Math.max(0, protTarget - eggsAdj.protein);
+  let qCraw = remainingP / cM.protein;
+  let qC = clamp(floorToIncrement(qCraw, cInc), cMin, cMax);
+
+  // נרד בכמויות עד שהחבילה לא שוברת חלבון/שומן
+  let best = null;
+  let guard = 0;
+  while (guard++ < 120 && qC >= cMin - 1e-12) {
+    const nutC = multiplyMacros(cM, qC);
+
+    const total = addTargets(eggsAdj, nutC);
+    const ok =
+      total.protein <= protTarget + 1e-9 && total.fat <= fatCeil + 1e-9;
+
+    if (ok) {
+      // ניקוד: פער חלבון קטן יותר ואז קלוריות נמוכות
+      const proteinGap = protTarget - total.protein;
+      const s = proteinGap * 1000 + (total.calories || 0);
+      if (!best || s < best.s) best = { s, total, qC };
+      // ננסה עוד צעד למטה כדי לבדוק אם יש גרסה "רזה" יותר שגם עומדת
+    }
+
+    const next = floorToIncrement(qC - cInc, cInc);
+    if (next >= cMin && next < qC) qC = next;
+    else break;
+  }
+
+  if (!best) return null;
+
+  const eggsQty = clamp(
+    floorToIncrement(2, getInc(egg)),
+    Math.max(1, toNumber(egg?.constraints?.minServing, 1)),
+    toNumber(egg?.constraints?.maxServing, 10)
   );
-
-  const totalCheeseMacros = multiplyMacros(cheeseMacros, cheeseQty);
-  const totalMacros = addTargets(totalEggMacros, totalCheeseMacros);
-
-  const eggDisplay = getDisplayText(egg, eggsQty);
-  const cheeseDisplay = getDisplayText(cheese, cheeseQty);
+  const cheeseQty = best.qC;
 
   return {
-    food: { name: `${eggsQty} יח' ${egg.name} + ${cheese.name}` },
-    displayText: `${eggDisplay} + ${cheeseDisplay}`,
+    food: { name: `${egg.name} + ${cheese.name}` },
+    displayText: `${getDisplayText(
+      egg,
+      eggsQty
+    )} (חלמון אחד) + ${getDisplayText(cheese, cheeseQty)}`,
     quantity: null,
-    nutrition: totalMacros,
+    nutrition: best.total,
     _composite: "eggs_plus_white_cheese",
     meta: {
       eggId: String(egg?._id || egg?.id || egg?.name),
@@ -853,7 +890,108 @@ function buildEggsWithWhiteCheeseCombo(foods, targetProtein, prefs = {}) {
   };
 }
 
-function buildTunaMayoCombo(foods, prefs = {}) {
+function buildEggsWhiteCheeseStrictCombo(
+  foods,
+  protTarget,
+  fatCeil,
+  prefs = {}
+) {
+  if (prefs?.isVegan) return null;
+
+  const eggsPool = (foods || [])
+    .filter((f) => hasFlag(f, "flag_egg") || looksLikeEgg(f))
+    .filter((f) => safeMatches(f, prefs));
+  const cheesesPool = (foods || [])
+    .filter((f) => /גבינה\s*לבנה/i.test(f?.name || ""))
+    .filter((f) => safeMatches(f, prefs));
+
+  if (!eggsPool.length || !cheesesPool.length) return null;
+
+  const cheese = prefs?.lactoseSensitive
+    ? cheesesPool.find((c) => isLactoseFree(c)) || cheesesPool[0]
+    : cheesesPool[0];
+  const egg = eggsPool[0];
+
+  const eM = getEffectiveMacros(egg);
+  const cM = getEffectiveMacros(cheese);
+
+  const eInc = getInc(egg);
+  const eMin = Math.max(1, toNumber(egg?.constraints?.minServing, 1));
+  const eMax = Math.min(10, toNumber(egg?.constraints?.maxServing, 10)); // ברקס קשיח
+
+  const cInc = getInc(cheese);
+  const cMin = toNumber(cheese?.constraints?.minServing, 0.1);
+  const cMax = Math.min(10, toNumber(cheese?.constraints?.maxServing, 10)); // ברקס קשיח
+
+  // נבדוק מספר קטן והגיוני של כמויות ביצה (1–4 כבר מכסה 99% מהמצבים)
+  const eggCandidates = [];
+  for (
+    let qE = Math.max(eMin, 1);
+    qE <= Math.min(eMax, 4) + 1e-12;
+    qE += eInc
+  ) {
+    const qSnap = clamp(floorToIncrement(qE, eInc), eMin, eMax);
+    if (!eggCandidates.includes(qSnap)) eggCandidates.push(qSnap);
+  }
+  if (!eggCandidates.length)
+    eggCandidates.push(clamp(floorToIncrement(2, eInc), eMin, eMax));
+
+  let best = null;
+  const asDisplayId = (f) => String(f?._id || f?.id || f?.name);
+
+  for (const qE of eggCandidates) {
+    const nutE = multiplyMacros(eM, qE);
+
+    // אם כבר הביצים לבד שוברות תקרת שומן/חלבון — אין טעם להמשיך
+    if (nutE.protein > protTarget + 1e-9 || nutE.fat > fatCeil + 1e-9) continue;
+
+    // חישוב אנליטי לכמות גבינה אידיאלית לפי חלבון חסר
+    const missingP = Math.max(0, protTarget - nutE.protein);
+    let qCraw = cM.protein > 0 ? missingP / cM.protein : 0;
+    // הצמדה לאינקרמנט ולמגבלות
+    let qC = clamp(floorToIncrement(qCraw, cInc), cMin, cMax);
+
+    // ייתכן שמינימום הגבינה גבוה מדי — נרד עד שנעמוד בתנאים
+    let guard = 0;
+    while (guard++ < 120) {
+      const nutC = multiplyMacros(cM, qC);
+      const total = addTargets(nutE, nutC);
+
+      if (total.protein <= protTarget + 1e-9 && total.fat <= fatCeil + 1e-9) {
+        // ניקוד: קודם כל פער חלבון קטן יותר, ואז קלוריות נמוכות
+        const proteinGap = protTarget - total.protein;
+        const s = proteinGap * 1000 + (total.calories || 0);
+        if (!best || s < best.s) {
+          best = {
+            s,
+            pack: {
+              food: { name: `${egg.name} + ${cheese.name}` },
+              displayText: `${getDisplayText(egg, qE)} + ${getDisplayText(
+                cheese,
+                qC
+              )}`,
+              quantity: null,
+              nutrition: total,
+              _composite: "eggs_plus_white_cheese",
+              meta: { eggId: asDisplayId(egg), cheeseId: asDisplayId(cheese) },
+            },
+          };
+        }
+        break;
+      }
+
+      // אם לא תקין (עודף חלבון/שומן) — נקטין גבינה בצעד אחד
+      const next = floorToIncrement(qC - cInc, cInc);
+      if (next < cMin || next === qC) break;
+      qC = next;
+    }
+  }
+
+  return best ? best.pack : null;
+}
+
+// פונקציה מעודכנת
+function buildTunaMayoCombo(foods, protTarget, fatCeil, prefs = {}) {
   if (prefs?.isVegan || prefs?.isVegetarian) return null;
 
   const tuna = (foods || [])
@@ -865,7 +1003,6 @@ function buildTunaMayoCombo(foods, prefs = {}) {
       return isTuna && water;
     })
     .find((f) => safeMatches(f, prefs));
-
   if (!tuna) return null;
 
   const mayo = (foods || [])
@@ -873,27 +1010,69 @@ function buildTunaMayoCombo(foods, prefs = {}) {
     .find((f) => safeMatches(f, prefs));
   if (!mayo) return null;
 
-  const tunaMacros = getEffectiveMacros(tuna);
-  const mayoMacros = getEffectiveMacros(mayo);
+  const tM = getEffectiveMacros(tuna);
+  const mM = getEffectiveMacros(mayo);
 
-  const si = mayo.servingInfo || { baseQuantity: 100 };
-  const factor = 15 / (si.baseQuantity || 100);
-  const mayoNutrition = multiplyMacros(mayoMacros, factor);
+  // כף מיונז ≈ 15 גר'
+  const si = mayo.servingInfo || { baseQuantity: 100, baseUnit: "gram" };
+  let qM = (() => {
+    const cs = Array.isArray(si.commonServings)
+      ? si.commonServings.find((s) => /כף|tbsp/i.test(s?.name || ""))
+      : null;
+    if (cs?.quantity) return cs.quantity;
+    if (si.baseUnit === "gram" || si.baseUnit === "ml")
+      return 15 / (si.baseQuantity || 100);
+    if (si.baseUnit === "piece")
+      return Math.max(1, Number(mayo?.constraints?.minServing ?? 1));
+    return 15 / (si.baseQuantity || 100);
+  })();
 
-  const tunaDisplay = getDisplayText(tuna, 1);
-  const mayoDisplay = getDisplayText(mayo, factor);
-  const comboName = `${tuna.name} + ${mayo.name}`;
-
-  const totalNutrition = addTargets(
-    multiplyMacros(tunaMacros, 1),
-    mayoNutrition
+  qM = clamp(
+    floorToIncrement(qM, getInc(mayo)),
+    Number(mayo?.constraints?.minServing ?? 0.1),
+    Number(mayo?.constraints?.maxServing ?? 10)
   );
+  const mayoNut = multiplyMacros(mM, qM);
+  if (mayoNut.fat > fatCeil + 1e-9) return null;
+
+  // כמות טונה לפי חלבון חסר, עם ירידה עד עמידה ב־fatCeil
+  if (tM.protein <= 0) return null;
+  const tInc = getInc(tuna);
+  const tMin = toNumber(tuna?.constraints?.minServing, 0.1);
+  const tMax = toNumber(tuna?.constraints?.maxServing, 10);
+
+  let qT = clamp(
+    floorToIncrement((protTarget - mayoNut.protein) / tM.protein, tInc),
+    tMin,
+    tMax
+  );
+
+  let best = null,
+    guard = 0;
+  while (guard++ < 200 && qT >= tMin - 1e-12) {
+    const tNut = multiplyMacros(tM, qT);
+    const total = addTargets(tNut, mayoNut);
+    const ok =
+      total.protein <= protTarget + 1e-9 && total.fat <= fatCeil + 1e-9;
+    if (ok) {
+      const proteinGap = protTarget - total.protein;
+      const s = proteinGap * 1000 + (total.calories || 0);
+      if (!best || s < best.s) best = { s, total, qT };
+    }
+    const next = floorToIncrement(qT - tInc, tInc);
+    if (next < tMin || next === qT) break;
+    qT = next;
+  }
+  if (!best) return null;
 
   return {
     food: { name: `${tuna.name} + ${mayo.name}` },
-    displayText: `${tunaDisplay} + 🥄 ${mayoDisplay}`,
+    displayText: `${getDisplayText(tuna, best.qT)} + 🥄 ${getDisplayText(
+      mayo,
+      qM
+    )}`,
     quantity: null,
-    nutrition: totalNutrition,
+    nutrition: best.total,
     _composite: "tuna_plus_mayo",
     meta: {
       tunaId: String(tuna?._id || tuna?.id || tuna?.name),
@@ -968,7 +1147,7 @@ class RuleBasedPlanner {
 
   /* ======== POOLS ======== */
 
-  // ביצים: דגל בלבד
+  // ביצים: דגל בלבד — לא משתמשים בהן לבד בבוקר/ערב, רק בקומבו
   getEggsPool(meal, minSuit = 0) {
     return this.pool(
       (f) =>
@@ -977,7 +1156,7 @@ class RuleBasedPlanner {
     );
   }
 
-  // חלבון לבוקר: מוצרי חלב או דגים/טונה
+  // חלבון לבוקר: מוצרי חלב או דגים/טונה (בלי ביצים לבד)
   getBreakfastProteinPool(minSuit = 4) {
     return this.pool(
       (f) =>
@@ -1133,7 +1312,9 @@ class RuleBasedPlanner {
   }
   getSweetSnack(minSuit = 4) {
     return this.pool(
-      (f) => bySuitability("snack", minSuit)(f) && inCats(f, ["sweet_snack"])
+      (f) =>
+        bySuitability("snack", minSuit)(f) &&
+        inCats(f, ["sweet_snack", "carbs_snack"])
     );
   }
   getFruitSnack(minSuit = 3) {
@@ -1330,101 +1511,234 @@ class RuleBasedPlanner {
     };
   }
 
+  // === dominant-macro with fat ceiling (step-up until any constraint breaks) ===
+  computeQuantityDominantWithFatCeil(food, dominantKey, domTarget, fatCeil) {
+    const EPS = 1e-9;
+
+    const m = getEffectiveMacros(food);
+    const minQ = toNumber(food?.constraints?.minServing, 0.1);
+    const maxQ = toNumber(food?.constraints?.maxServing, 10);
+    const inc = getInc(food);
+
+    // דומיננטי ליחידה הבסיסית (חלבון/פחמימה)
+    const unitDom = dominantKey === "protein" ? m.protein : m.carbs;
+
+    // חישוב תקרה אנליטית לפי הדומיננטי ולפי שומן
+    const qMaxByDom = unitDom > 0 ? domTarget / unitDom : Infinity;
+    const qMaxByFat = m.fat > 0 ? fatCeil / m.fat : fatCeil <= 0 ? 0 : Infinity;
+
+    // התקרה המחמירה + הצמדה לאינקרמנט וגבולות הפריט
+    let qMax = Math.min(qMaxByDom, qMaxByFat);
+    qMax = clamp(floorToIncrement(qMax, inc), minQ, maxQ);
+
+    // אם אין טווח ישים בכלל — אין התאמה
+    if (qMax < minQ - EPS || !Number.isFinite(qMax)) return null;
+
+    // מתחילים מהמינימום, מוצמד לאינקרמנט ולתקרה
+    let q = clamp(floorToIncrement(minQ, inc), minQ, qMax);
+
+    // בדיקת ישימות לנקודת ההתחלה
+    let nut = multiplyMacros(m, q);
+    let domVal = dominantKey === "protein" ? nut.protein : nut.carbs;
+    if (domVal > domTarget + EPS || nut.fat > fatCeil + EPS) return null;
+
+    // נשמור את הפתרון התקין האחרון
+    let lastOk = { q, nut };
+
+    // נעלה צעד־צעד עד שמגיעים לתקרה או נשברת אחת המגבלות
+    let guard = 0;
+    while (guard++ < 1000) {
+      const qNext = clamp(floorToIncrement(q + inc, inc), minQ, qMax);
+      if (qNext <= q + EPS) break; // אין לאן לעלות
+
+      const nutNext = multiplyMacros(m, qNext);
+      const domNext =
+        dominantKey === "protein" ? nutNext.protein : nutNext.carbs;
+
+      if (domNext <= domTarget + EPS && nutNext.fat <= fatCeil + EPS) {
+        lastOk = { q: qNext, nut: nutNext };
+        q = qNext;
+        continue;
+      }
+      // ברגע שאחת התקרות נשברת — עוצרים על הערך האחרון התקין
+      break;
+    }
+
+    // בדיקת בטיחות סופית: לא לחזור תוצאה שחורגת בשוגג (לכידת נתונים לא עקביים)
+    if (lastOk) {
+      const t = lastOk.nut;
+      const domOk =
+        (dominantKey === "protein" ? t.protein : t.carbs) <= domTarget + EPS;
+      const fatOk = t.fat <= fatCeil + EPS;
+      if (!domOk || !fatOk) return null;
+    }
+
+    return lastOk;
+  }
+
+  buildGroupOptionsDominantWithFatCeil(
+    pool,
+    dominantKey,
+    domTarget,
+    fatCeil,
+    want = 30
+  ) {
+    const candidates = [];
+    for (const food of pool) {
+      const pack = this.computeQuantityDominantWithFatCeil(
+        food,
+        dominantKey,
+        domTarget,
+        fatCeil
+      );
+      if (!pack) continue;
+      const s = Math.abs(
+        domTarget -
+          (dominantKey === "protein" ? pack.nut.protein : pack.nut.carbs)
+      );
+      candidates.push({
+        food,
+        quantity: pack.q,
+        displayText: getDisplayText(food, pack.q),
+        nutrition: pack.nut,
+        _score: s,
+      });
+    }
+    candidates.sort(
+      (a, b) =>
+        a._score - b._score ||
+        (a.nutrition?.calories || 0) - (b.nutrition?.calories || 0)
+    );
+    return candidates.slice(0, want);
+  }
+
+  // ===== BREAKFAST (dominant+fat ceiling) =====
   buildBreakfastTemplate(mealType, totalTargets) {
-    let eggsFixed = null;
-
-    const eggsProt = eggsFixed?.nutrition?.protein || 0;
-    const proteinTargetAfterEggs = Math.max(0, totalTargets.protein - eggsProt);
-
-    const BIG = 1e9;
-
-    const protT = {
-      protein: proteinTargetAfterEggs,
-      carbs: BIG,
-      fat: BIG,
-      calories: BIG,
-    };
-
-    const carbsT = {
-      protein: BIG,
-      carbs: Math.max(0, totalTargets.carbs),
-      fat: BIG,
-      calories: BIG,
-    };
-
-    const checkProteinOnly = (nut, T) =>
-      nut.protein <=
-      T.protein * (typeof FLEX === "number" ? FLEX : 1.005) + 1e-9;
-    const checkCarbsOnly = (nut, T) =>
-      nut.carbs <= T.carbs * (typeof FLEX === "number" ? FLEX : 1.005) + 1e-9;
+    const fatCeil = Math.max(0, toNumber(totalTargets.fat, 0));
 
     const protPool = this.getBreakfastProteinPool();
     const carbsPool = this.getBreakfastCarbsPool();
 
-    // חלבון
-    const proteinOptions = this.buildGroupOptions(
+    // חלבון: עוצרים כשחלבון עובר את היעד או כשהשומן עובר את תקרת השומן של הארוחה
+    const proteinOptions = this.buildGroupOptionsDominantWithFatCeil(
       protPool,
-      protT,
-      30,
-      null,
-      checkProteinOnly
+      "protein",
+      totalTargets.protein,
+      fatCeil,
+      30
     );
 
-    // --- קומבואים שמדכאים אופציות בודדות ---
-    const asId = (f) =>
-      String(
-        f?._id ||
-          f?.id ||
-          f?.food?._id ||
-          f?.food?.id ||
-          f?.food?.name ||
-          f?.name
-      );
+    // פחמימה: עוצרים כשפחמימה עוברת את היעד או כשהשומן עובר את התקרה
+    const carbsOptions = this.buildGroupOptionsDominantWithFatCeil(
+      carbsPool,
+      "carbs",
+      totalTargets.carbs,
+      fatCeil,
+      30
+    );
 
-    // 🥚 2 ביצים + גבינה לבנה — מסיר את הגבינה הבודדת
-    let eggsCheeseCombo = buildEggsWithWhiteCheeseCombo(
+    // --- Eggs + White Cheese: choose a single combo (prefer strict) ---
+    const eggsCheeseCombo = buildEggsWhiteCheeseStrictCombo(
       this.foods,
       totalTargets.protein,
+      fatCeil,
       this.prefs
     );
-    if (eggsCheeseCombo) {
-      const cheeseId = eggsCheeseCombo?.meta?.cheeseId;
-      if (cheeseId) {
-        for (let i = proteinOptions.length - 1; i >= 0; i--) {
-          const fid = asId(proteinOptions[i]?.food || proteinOptions[i]);
-          if (fid === cheeseId) proteinOptions.splice(i, 1);
-        }
-      }
-      proteinOptions.push(eggsCheeseCombo);
-    }
 
-    // 🐟 טונה במים + מיונז — מסיר את הטונה הבודדת
-    let tunaMayoCombo = buildTunaMayoCombo(this.foods, this.prefs);
-    if (tunaMayoCombo) {
-      const tunaId = tunaMayoCombo?.meta?.tunaId;
-      if (tunaId) {
-        for (let i = proteinOptions.length - 1; i >= 0; i--) {
-          const fid = asId(proteinOptions[i]?.food || proteinOptions[i]);
-          if (fid === tunaId) proteinOptions.splice(i, 1);
-        }
-      }
-      proteinOptions.push(tunaMayoCombo);
-    }
-
-    // פחמימות
-    const carbsOptions = this.buildGroupOptions(
-      carbsPool,
-      carbsT,
-      30,
-      null,
-      checkCarbsOnly
+    // גמישה (נשקול רק אם אין קשוחה)
+    const eggsCheeseFlex = buildEggsWithWhiteCheeseCombo(
+      this.foods,
+      totalTargets.protein,
+      fatCeil,
+      this.prefs
     );
 
-    // בחירות ברירת מחדל
+    let eggsComboToUse = null;
+    if (eggsCheeseCombo) {
+      eggsComboToUse = eggsCheeseCombo;
+    } else if (
+      eggsCheeseFlex &&
+      eggsCheeseFlex.nutrition?.protein <= totalTargets.protein + 1e-9 &&
+      eggsCheeseFlex.nutrition?.fat <= fatCeil + 1e-9
+    ) {
+      eggsComboToUse = eggsCheeseFlex;
+    }
+
+    if (eggsComboToUse) {
+      const cheeseId = eggsComboToUse?.meta?.cheeseId;
+      const eggId = eggsComboToUse?.meta?.eggId;
+
+      // 1) הסרת קומבו זהה אם כבר קיים (מניעת כפילויות)
+      for (let i = proteinOptions.length - 1; i >= 0; i--) {
+        const opt = proteinOptions[i];
+        const isSameCombo =
+          opt?._composite === "eggs_plus_white_cheese" &&
+          String(opt?.meta?.eggId) === String(eggId) &&
+          String(opt?.meta?.cheeseId) === String(cheeseId);
+        if (isSameCombo) proteinOptions.splice(i, 1);
+      }
+
+      // 2) הסרת גבינה בודדת מתחרה, אם קיימת
+      if (cheeseId) {
+        for (let i = proteinOptions.length - 1; i >= 0; i--) {
+          const f = proteinOptions[i]?.food || proteinOptions[i];
+          const fid = String(f?._id || f?.id || f?.name || "");
+          if (fid === String(cheeseId)) proteinOptions.splice(i, 1);
+        }
+      }
+
+      // 3) הוספת הקומבו שבחרנו – פעם אחת בלבד
+      proteinOptions.unshift({
+        food: eggsComboToUse.food,
+        quantity: eggsComboToUse.quantity,
+        displayText: eggsComboToUse.displayText,
+        nutrition: eggsComboToUse.nutrition,
+        _composite: eggsComboToUse._composite,
+        meta: eggsComboToUse.meta,
+      });
+    }
+
+    // ➜ טונה במים + כף מיונז
+    const tunaMayo = buildTunaMayoCombo(
+      this.foods,
+      totalTargets.protein,
+      fatCeil,
+      this.prefs
+    );
+    if (
+      tunaMayo &&
+      tunaMayo.nutrition?.protein <= totalTargets.protein + 1e-9 &&
+      tunaMayo.nutrition?.fat <= fatCeil + 1e-9
+    ) {
+      const tunaId = tunaMayo?.meta?.tunaId;
+      if (tunaId) {
+        for (let i = proteinOptions.length - 1; i >= 0; i--) {
+          const opt = proteinOptions[i];
+          const fid = String(
+            opt?.food?._id ||
+              opt?.food?.id ||
+              opt?.food?.name ||
+              opt?._id ||
+              opt?.id ||
+              opt?.name ||
+              ""
+          );
+          if (fid === String(tunaId)) proteinOptions.splice(i, 1);
+        }
+      }
+      proteinOptions.push({
+        food: tunaMayo.food,
+        quantity: tunaMayo.quantity,
+        displayText: tunaMayo.displayText,
+        nutrition: tunaMayo.nutrition,
+        _composite: tunaMayo._composite,
+      });
+    }
+
     const finalProtein = proteinOptions[0] || null;
     const finalCarbs = carbsOptions[0] || null;
 
-    // ירקות חופשי
+    // (אופציונלי) ירקות חופשי
     const vegFree = this.buildFreeList(
       this.getBreakfastVeggiesPool(mealType),
       12,
@@ -1448,57 +1762,30 @@ class RuleBasedPlanner {
           options: carbsOptions,
           selected: finalCarbs || undefined,
         },
+        // { title: "ירקות (חופשי)", key: "veg_free", options: vegFree },
       ],
     };
   }
 
   buildLunch(totalTargets) {
-    function buildSingleMacroOptions(pool, macroKey, targetVal, want = 50) {
-      const BIG = 1e9;
-      const T = { protein: BIG, carbs: BIG, fat: BIG, calories: BIG };
-      T[macroKey] = Math.max(0, Number(targetVal) || 0);
-
-      // נבדוק רק את המאקרו הרלוונטי (להתעלם משאר המקרו/קל׳)
-      const customCheck = (nut) =>
-        nut[macroKey] <=
-        T[macroKey] * (typeof FLEX === "number" ? FLEX : 1.005) + 1e-9;
-
-      const candidates = [];
-      for (const food of pool) {
-        const pack = computeQuantityForTargets(food, T, null, customCheck);
-        if (!pack) continue;
-        const s = Math.abs(T[macroKey] - pack.nut[macroKey]);
-        candidates.push({
-          food,
-          quantity: pack.q,
-          displayText: getDisplayText(food, pack.q),
-          nutrition: pack.nut,
-          _score: s,
-        });
-      }
-
-      candidates.sort(
-        (a, b) =>
-          a._score - b._score ||
-          (a.nutrition?.calories || 0) - (b.nutrition?.calories || 0)
-      );
-
-      return candidates.slice(0, want);
-    }
-
+    // בדיוק כמו בבוקר: מעלים בכפולות אינקרמנט עד שאו הדומיננטי עובר יעד
+    // או שהשומן של הפריט עובר את תקרת השומן של כל ארוחת הצהריים.
+    const fatCeil = Math.max(0, toNumber(totalTargets.fat, 0));
     const proteinPool = this.getProteinLunch(); // חלבון לצהריים
     const carbsLegumesPool = this.getCarbsOrLegumesLunch(); // פחמימות/קטניות
 
-    const proteins = buildSingleMacroOptions(
+    const proteins = this.buildGroupOptionsDominantWithFatCeil(
       proteinPool,
       "protein",
       totalTargets.protein,
+      fatCeil,
       60
     );
-    const carbsLegumes = buildSingleMacroOptions(
+    const carbsLegumes = this.buildGroupOptionsDominantWithFatCeil(
       carbsLegumesPool,
       "carbs",
       totalTargets.carbs,
+      fatCeil,
       80
     );
 
@@ -1530,47 +1817,18 @@ class RuleBasedPlanner {
   }
 
   buildDinner(totalTargets) {
-    // 1) גרסה חלבית — בדיוק כמו אלגוריתם הבוקר
+    // 1) גרסה חלבית — כמו בוקר
     const dairyStyle = this.buildBreakfastTemplate("dinner", totalTargets);
     dairyStyle.header = "ערב — גרסה חלבית";
 
-    // 2) גרסה בשרית — כמו אלגוריתם הצהריים (מאקרו בודד לכל קבוצה)
-    function buildSingleMacroOptions(pool, macroKey, targetVal, want = 50) {
-      const BIG = 1e9;
-      const T = { protein: BIG, carbs: BIG, fat: BIG, calories: BIG };
-      T[macroKey] = Math.max(0, Number(targetVal) || 0);
-
-      const customCheck = (nut) =>
-        nut[macroKey] <=
-        T[macroKey] * (typeof FLEX === "number" ? FLEX : 1.005) + 1e-9;
-
-      const candidates = [];
-      for (const food of pool) {
-        const pack = computeQuantityForTargets(food, T, null, customCheck);
-        if (!pack) continue;
-        const s = Math.abs(T[macroKey] - pack.nut[macroKey]);
-        candidates.push({
-          food,
-          quantity: pack.q,
-          displayText: getDisplayText(food, pack.q),
-          nutrition: pack.nut,
-          _score: s,
-        });
-      }
-
-      candidates.sort(
-        (a, b) =>
-          a._score - b._score ||
-          (a.nutrition?.calories || 0) - (b.nutrition?.calories || 0)
-      );
-
-      return candidates.slice(0, want);
-    }
+    // 2) גרסה בשרית — עכשיו גם עם תקרת שומן
+    const fatCeil = Math.max(0, toNumber(totalTargets.fat, 0));
 
     const proteinMeatyPool = this.getProteinDinnerMeaty(); // חלבון בשרי לערב
     const carbsDinnerPool = this.getCarbsDinner();
     const legumesDinnerPool = this.getLegumesDinner();
-    // איחוד + דה-דופ לפי id/name
+
+    // איחוד + דה-דופ לפחמימות/קטניות
     const seen = new Set();
     const carbsLegumesPool = [...carbsDinnerPool, ...legumesDinnerPool].filter(
       (f) => {
@@ -1581,16 +1839,20 @@ class RuleBasedPlanner {
       }
     );
 
-    const proteinsMeaty = buildSingleMacroOptions(
+    // ❗עברנו לשיטה עם תקרת שומן (dominant + fat ceiling), כמו בצהריים/בוקר
+    const proteinsMeaty = this.buildGroupOptionsDominantWithFatCeil(
       proteinMeatyPool,
       "protein",
       totalTargets.protein,
+      fatCeil,
       60
     );
-    const carbsOrLegumes = buildSingleMacroOptions(
+
+    const carbsOrLegumes = this.buildGroupOptionsDominantWithFatCeil(
       carbsLegumesPool,
       "carbs",
       totalTargets.carbs,
+      fatCeil,
       80
     );
 
@@ -1687,6 +1949,8 @@ module.exports = {
 
   // quantity & scoring
   computeQuantityForTargets,
+  computeQuantityDominantWithFatCeil:
+    RuleBasedPlanner.prototype.computeQuantityDominantWithFatCeil,
   withinTargets,
   withinTargetsByFlexMap,
   getEffectiveMacros,
