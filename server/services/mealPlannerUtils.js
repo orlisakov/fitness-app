@@ -40,6 +40,18 @@ function toNumber(n, def = 0) {
 
 // ========= Fixed-Unit helpers (למוצרים שהם "יחידה שלמה") =========
 
+function normalizePrefs(p = {}) {
+  const b = (v) => v === true || v === "true" || v === 1 || v === "1";
+  return {
+    isVegetarian: b(p.isVegetarian) || b(p.vegetarian),
+    isVegan: b(p.isVegan) || b(p.vegan),
+    glutenSensitive:
+      b(p.glutenSensitive) || b(p.isGlutenFree) || b(p.glutenFree),
+    lactoseSensitive:
+      b(p.lactoseSensitive) || b(p.isLactoseFree) || b(p.lactoseFree),
+  };
+}
+
 // מזהה פריט שמוגדר כיחידה בדידה שלא רוצים לחתוך (למשל גביע שלם)
 function isFixedUnit(food) {
   const si = food?.servingInfo || {};
@@ -2132,6 +2144,9 @@ module.exports = {
   tunePairToTargets,
   refineAndTunePair,
 
+  normalizePrefs,
+  matchesPrefs,
+
   // misc
   fmt,
   n,
@@ -2139,7 +2154,6 @@ module.exports = {
   hasFlag,
   inCats,
   bySuitability,
-  matchesPrefs,
   getDisplayText,
   looksLikeEgg,
   allocateRemainBetweenProtAndCarbs,

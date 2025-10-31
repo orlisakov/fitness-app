@@ -1,64 +1,132 @@
+// server/routes/generateMealPlan.js  (או כל שם קיים אצלך)
+
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
 const Food = require("../models/food");
 const Trainee = require("../models/trainee");
+const mongoose = require("mongoose");
+
+const mealUtils = require("../services/mealPlannerUtils");
+
 const {
   RuleBasedPlanner,
   kcalFrom,
   gramsToSplitPct,
-  normalizePrefs,
   coalesce,
-} = require("../services/mealPlannerUtils");
+  matchesPrefs,
+  // ננסה לשלוף גם את normalizePrefs אם קיים
+  normalizePrefs: normalizePrefsFromUtils,
+} = mealUtils;
+
+// פולבאק בטוח: אם normalizePrefs לא יובא כפונקציה (גרסה ישנה בשרת), נשתמש בזו
+const normalizePrefs =
+  typeof normalizePrefsFromUtils === "function"
+    ? normalizePrefsFromUtils
+    : function (p = {}) {
+        const b = (v) => v === true || v === "true" || v === 1 || v === "1";
+        return {
+          isVegetarian: b(p.isVegetarian) || b(p.vegetarian),
+          isVegan: b(p.isVegan) || b(p.vegan),
+          glutenSensitive:
+            b(p.glutenSensitive) || b(p.isGlutenFree) || b(p.glutenFree),
+          lactoseSensitive:
+            b(p.lactoseSensitive) || b(p.isLactoseFree) || b(p.lactoseFree),
+        };
+      };
 
 /* ===================== ROUTE ===================== */
 router.post("/generate-meal-plan", authMiddleware, async (req, res) => {
+  const startedAt = Date.now();
   try {
+    // 🟢 דיאגנוסטיקה בסיסית
+    console.log("== GENERATE MEAL PLAN REQUEST ==", new Date().toISOString());
+    console.log("BODY keys:", Object.keys(req.body || {}));
+
+    // בדיקה שהמודלים טעונים
+    if (!Food || typeof Food.find !== "function") {
+      return res
+        .status(500)
+        .json({ stage: "model-load", message: "Food model not loaded" });
+    }
+    if (!Trainee || typeof Trainee.findById !== "function") {
+      return res
+        .status(500)
+        .json({ stage: "model-load", message: "Trainee model not loaded" });
+    }
+
+    // בדיקת חיבור למסד
+    if (mongoose.connection.readyState !== 1) {
+      return res
+        .status(500)
+        .json({ stage: "db", message: "Database not connected" });
+    }
+
+    // אימות משתמש מה־JWT
+    const userId = req.user?.id || req.user?._id;
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ stage: "auth", message: "User not authorized" });
+    }
+    console.log("User ID:", userId);
+
+    // ---- קלטים (המרה ל־Number כדי למנוע NaN ממחרוזות) ----
     const {
-      totalProtein,
-      totalCarbs,
-      totalFat,
-      totalCalories,
+      totalProtein: totalProteinRaw,
+      totalCarbs: totalCarbsRaw,
+      totalFat: totalFatRaw,
+      totalCalories: totalCaloriesRaw,
       prefs: prefsRaw,
       preferences: preferencesRaw,
       dislikedFoods,
-    } = req.body;
+      ctx: ctxRaw,
+    } = req.body || {};
 
-    // ================== בדיקות סף ==================
-    if (
-      [totalProtein, totalCarbs, totalFat].some(
-        (x) => typeof x !== "number" || Number.isNaN(x)
-      )
-    ) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing or invalid macro values" });
+    const totalProtein = Number(totalProteinRaw);
+    const totalCarbs = Number(totalCarbsRaw);
+    const totalFat = Number(totalFatRaw);
+    const totalCaloriesNum = Number(totalCaloriesRaw);
+
+    if ([totalProtein, totalCarbs, totalFat].some((x) => !Number.isFinite(x))) {
+      return res.status(400).json({
+        success: false,
+        stage: "input",
+        message: "Missing or invalid macro values",
+      });
     }
 
     // ✅ אם לא נשלחו קלוריות — מחשבים מהמאקרו
     const calculatedCalories =
-      totalCalories || kcalFrom(totalProtein, totalCarbs, totalFat);
+      Number.isFinite(totalCaloriesNum) && totalCaloriesNum > 0
+        ? totalCaloriesNum
+        : kcalFrom(totalProtein, totalCarbs, totalFat);
 
     // ================== הקשר (ctx) ==================
     const ctx = {
-      isTrainingDay: !!req.body?.ctx?.isTrainingDay,
-      workoutTime: req.body?.ctx?.workoutTime || null, // 'morning' | 'noon' | 'evening' | null
-      preferLowCarbDinner: !!req.body?.ctx?.preferLowCarbDinner,
-      higherBreakfastProtein: !!req.body?.ctx?.higherBreakfastProtein,
-      meals: Array.isArray(req.body?.ctx?.meals)
-        ? req.body.ctx.meals
-        : ["breakfast", "lunch", "snack", "dinner"],
+      isTrainingDay: !!ctxRaw?.isTrainingDay,
+      workoutTime: ctxRaw?.workoutTime || null, // 'morning' | 'noon' | 'evening' | null
+      preferLowCarbDinner: !!ctxRaw?.preferLowCarbDinner,
+      higherBreakfastProtein: !!ctxRaw?.higherBreakfastProtein,
+      meals:
+        Array.isArray(ctxRaw?.meals) && ctxRaw.meals.length
+          ? ctxRaw.meals
+          : ["breakfast", "lunch", "snack", "dinner"],
     };
 
-    // ================== משיכת פרטי מתאמן ==================
-    const userId = req.user?.id || req.user?._id;
-    const trainee = userId
-      ? await Trainee.findById(userId)
-          .select(
-            "isVegetarian isVegan glutenSensitive lactoseSensitive dislikedFoods customSplit"
-          )
-          .lean()
-      : null;
+    // ================== משיכת פרטי מתאמנת ==================
+    let trainee = null;
+    try {
+      trainee = await Trainee.findById(userId)
+        .select(
+          "isVegetarian isVegan glutenSensitive lactoseSensitive dislikedFoods customSplit"
+        )
+        .lean();
+    } catch (e) {
+      return res
+        .status(500)
+        .json({ stage: "db:Trainee.findById", message: e.message });
+    }
 
     // ================== רגישויות ==================
     const clientPrefs = normalizePrefs(prefsRaw || preferencesRaw || {});
@@ -75,7 +143,6 @@ router.post("/generate-meal-plan", authMiddleware, async (req, res) => {
       ),
     };
 
-    // ✅ בדיקת לוג לפענוח בעיות העדפות
     console.log("💡 PREFS CHECK:", {
       traineeDB: {
         isVegetarian: trainee?.isVegetarian,
@@ -94,14 +161,22 @@ router.post("/generate-meal-plan", authMiddleware, async (req, res) => {
       ? dislikedFoods
       : [];
 
-    const allFoods = await Food.find({ isActive: { $ne: false } }).lean();
+    // ================== משיכת מזונות ==================
+    let allFoods = [];
+    try {
+      allFoods = await Food.find({ isActive: { $ne: false } }).lean();
+    } catch (e) {
+      return res
+        .status(500)
+        .json({ stage: "db:Food.find", message: e.message });
+    }
+
+    // סינון לפי מאכלים שלא אוהבים
     const filteredFoods = allFoods.filter(
       (food) => !dislikedIds.some((id) => String(id) === String(food._id))
     );
 
-    const { matchesPrefs } = require("../services/mealPlannerUtils");
-
-    // סינון נוסף לפי העדפות תזונתיות
+    // סינון לפי העדפות תזונתיות
     const prefFilteredFoods = filteredFoods.filter((food) =>
       matchesPrefs(food, prefs)
     );
@@ -123,7 +198,6 @@ router.post("/generate-meal-plan", authMiddleware, async (req, res) => {
       trainee?.customSplit?.meals
     ) {
       const mealGrams = {};
-
       ["breakfast", "lunch", "snack", "dinner"].forEach((meal) => {
         const m = trainee.customSplit.meals[meal];
         if (!m) return;
@@ -147,28 +221,35 @@ router.post("/generate-meal-plan", authMiddleware, async (req, res) => {
     }
 
     // ================== בניית תפריט ==================
-    const planner = new RuleBasedPlanner(
-      filteredFoods,
-      targets,
-      prefs,
-      ctx,
-      splitOverridePct
-    );
+    let mealPlan = null;
+    try {
+      const planner = new RuleBasedPlanner(
+        prefFilteredFoods, // חשוב: אחרי סינון העדפות
+        targets,
+        prefs,
+        ctx,
+        splitOverridePct
+      );
+      mealPlan = planner.buildAll();
+    } catch (e) {
+      return res.status(500).json({ stage: "planner", message: e.message });
+    }
 
-    const mealPlan = planner.buildAll();
-
+    // תשובה סופית
+    console.log("✅ meal plan built in", Date.now() - startedAt, "ms");
     return res.json({
       success: true,
       appliedPrefs: prefs,
       usedSplitMode, // "custom" | "auto"
-      usedSplitPct: planner.split,
+      usedSplitPct: mealPlan ? undefined : undefined, // אפשר להשאיר planner.split אם צריך
       mealPlan,
     });
   } catch (err) {
     console.error("❌ Error generating meal plan:", err);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "אירעה שגיאה בעת יצירת התפריט. אנא נסי שוב.",
+      stage: "catch-all",
       error: String(err?.message || err),
     });
   }
