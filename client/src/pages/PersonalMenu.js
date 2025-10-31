@@ -429,7 +429,7 @@ export default function PersonalMenu({ traineeData }) {
 
     return (
       <div className="meal-card stacked">
-        <SectionTitle>ארוחת צהריים — קטניות</SectionTitle>
+        <SectionTitle>או ארוחת צהריים — מקטניות</SectionTitle>
         <TargetsRow t={t} />
         <table className="menu-table" dir="rtl">
           <thead>
@@ -474,7 +474,7 @@ export default function PersonalMenu({ traineeData }) {
 
     const proteinGroup = findGroup(meal, ["protein"]);
     const carbsGroup = findGroup(meal, ["carbs"]);
-    const legumesGroup = findGroup(meal, ["legumes_lunch", "legumes"]);
+    const legumesGroup = findGroup(meal, ["legumes_lunch"]);
 
     const protein = proteinGroup?.options || [];
     const allCarbs = carbsGroup?.options || [];
@@ -486,7 +486,7 @@ export default function PersonalMenu({ traineeData }) {
     const isLegume = (opt) => {
       const cats = opt?.food?.categories || [];
       const name = (opt?.food?.name || "").toLowerCase();
-      return cats.includes("legumes_lunch") || cats.includes("legumes_lunch");
+      return cats.includes("legumes_lunch");
     };
 
     // פירוק מהפחמימות
@@ -508,19 +508,22 @@ export default function PersonalMenu({ traineeData }) {
       );
 
     if (isVeg) {
+      const showDual =
+        (protein?.length || 0) > 0 || (carbsNoLegumes?.length || 0) > 0;
       return (
         <>
-          <div className="meal-card stacked">
-            <SectionTitle>{title} — גרסת צמחונים</SectionTitle>
-            <TargetsRow t={t} />
-            <DualGroupTable
-              proteinTitle={proteinLabel}
-              carbTitle={carbsLabel}
-              proteinOptions={protein}
-              carbOptions={carbsNoLegumes}
-            />
-          </div>
-
+          {showDual && (
+            <div className="meal-card stacked">
+              <SectionTitle>{title} — גרסת צמחונים</SectionTitle>
+              <TargetsRow t={t} />
+              <DualGroupTable
+                proteinTitle={proteinLabel}
+                carbTitle={carbsLabel}
+                proteinOptions={protein}
+                carbOptions={carbsNoLegumes}
+              />
+            </div>
+          )}
           <LegumeBlock meal={meal} legumesOptions={legumesMerged} />
         </>
       );

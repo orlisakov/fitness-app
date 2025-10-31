@@ -1946,20 +1946,61 @@ class RuleBasedPlanner {
       60
     );
 
-    // אופציונלי: ירק חופשי
+    // --- 2) "חלבון + פחמימה" לצמחוניות ---
+    // חלבון לצהריים (מסומן כ-protein_lunch) עם מסנני צמחוני כבר דרך matchesPrefs
+    const proteinPoolVeg = this.getProteinLunch(); // meats ייפסלו ע"י matchesPrefs כיוון שאין להם safe_vegetarian/vegan
+    // פחמימות לצהריים שאינן קטניות
+    const carbsOrLegumesPool = this.getCarbsOrLegumesLunch();
+    const carbsNoLegumes = carbsOrLegumesPool.filter(
+      (f) => !inCats(f, ["legumes_lunch"])
+    );
+
+    const proteinOptions = this.buildGroupOptionsDominantWithFatCeil(
+      proteinPoolVeg,
+      "protein",
+      protTarget,
+      fatCeil,
+      60
+    );
+
+    const carbsOptions = this.buildGroupOptionsDominantWithFatCeil(
+      carbsNoLegumes,
+      "carbs",
+      carbTarget,
+      fatCeil,
+      80
+    );
+
+    // ירקות חופשי
     const vegFree = this.buildFreeList(this.getVegDinner(3), 12, "חופשי");
 
     return {
       mode: "variety",
-      header: "צהריים — גרסה צמחונית (מנה אחת מקטניות)",
+      header: "צהריים — גרסה צמחונית",
       targets: totalTargets,
       groups: [
+        // אופציה #1: חלבון + פחמימה
+        {
+          title: "חלבון לצהריים (בחרי אחד)",
+          key: "protein",
+          options: proteinOptions,
+          selected: proteinOptions[0] || undefined,
+        },
+        {
+          title: "פחמימות (בחרי אחד)",
+          key: "carbs",
+          options: carbsOptions,
+          selected: carbsOptions[0] || undefined,
+        },
+
+        // אופציה #2: קטניות (מנה עיקרית)
         {
           title: "קטניות (מנה עיקרית — בחרי אחת)",
-          key: "legumes_main",
+          key: "legumes_lunch",
           options: legumesOptions,
           selected: legumesOptions[0] || undefined,
         },
+
         { title: "ירקות (חופשי)", key: "veg_free", options: vegFree },
       ],
     };
@@ -1988,7 +2029,7 @@ class RuleBasedPlanner {
       groups: [
         {
           title: "קטניות (מנה עיקרית — בחרי אחת)",
-          key: "legumes_main",
+          key: "legumes_lunch",
           options: legumesOptions,
           selected: legumesOptions[0] || undefined,
         },
