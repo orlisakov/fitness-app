@@ -248,29 +248,22 @@ function bySuitability(mealType, min = 5) {
 }
 
 function matchesPrefs(food, prefs) {
-  if (food.dietaryFlags) {
-    if (prefs.isVegan && !food.dietaryFlags.isVegan) return false;
-    if (
-      prefs.isVegetarian &&
-      !(food.dietaryFlags.isVegetarian || food.dietaryFlags.isVegan)
-    )
-      return false;
-    if (prefs.glutenSensitive && !food.dietaryFlags.isGlutenFree) return false;
-    if (prefs.lactoseSensitive && !food.dietaryFlags.isLactoseFree)
-      return false;
-  } else {
-    const cats = food.categories || [];
-    if (prefs.isVegan && !cats.includes("safe_vegan")) return false;
-    if (
-      prefs.isVegetarian &&
-      !(cats.includes("safe_vegetarian") || cats.includes("safe_vegan"))
-    )
-      return false;
-    if (prefs.glutenSensitive && !cats.includes("safe_gluten_free"))
-      return false;
-    if (prefs.lactoseSensitive && !cats.includes("safe_lactose_free"))
-      return false;
-  }
+  const cats = Array.isArray(food?.categories) ? food.categories : [];
+
+  if (prefs?.isVegan && !cats.includes("safe_vegan")) return false;
+
+  if (
+    prefs?.isVegetarian &&
+    !(cats.includes("safe_vegetarian") || cats.includes("safe_vegan"))
+  )
+    return false;
+
+  if (prefs?.glutenSensitive && !cats.includes("safe_gluten_free"))
+    return false;
+
+  if (prefs?.lactoseSensitive && !cats.includes("safe_lactose_free"))
+    return false;
+
   return true;
 }
 
@@ -284,11 +277,7 @@ function isLactoseFree(food) {
   return /ללא\s*לקטוז|lactose\s*free/.test(name);
 }
 function safeMatches(food, prefs) {
-  if (!matchesPrefs(food, prefs)) return false;
-  if (prefs?.lactoseSensitive && isDairy(food) && !isLactoseFree(food)) {
-    return false;
-  }
-  return true;
+  return matchesPrefs(food, prefs);
 }
 
 /** טקסט תצוגה לפי servingInfo */
@@ -992,8 +981,6 @@ function buildEggsWhiteCheeseStrictCombo(
 
 // פונקציה מעודכנת
 function buildTunaMayoCombo(foods, protTarget, fatCeil, prefs = {}) {
-  if (prefs?.isVegan || prefs?.isVegetarian) return null;
-
   const tuna = (foods || [])
     .filter((f) => {
       const name = (f.name || "").toLowerCase();
@@ -1086,10 +1073,12 @@ class RuleBasedPlanner {
   constructor(foods, targets, prefs, ctx = {}, splitOverridePct = null) {
     this.foods = foods;
     this.targets = targets;
-    this.prefs = prefs;
+
+    this.prefsRaw = prefs || {};
+    this.prefs = normalizePrefs(this.prefsRaw);
 
     if (splitOverridePct && Object.keys(splitOverridePct).length) {
-      this.split = splitOverridePct; // ❗ משתמשים בחלוקה ידנית
+      this.split = splitOverridePct;
       return;
     }
 
@@ -1131,12 +1120,13 @@ class RuleBasedPlanner {
   }
 
   getProteinDinnerMeaty(minSuit = 5) {
-    return this.pool(
+    const base = this.pool(
       (f) =>
         bySuitability("dinner", minSuit)(f) &&
         inCats(f, ["protein_dinner"]) &&
         !isDairy(f)
     );
+    return this.prefs?.isVegetarian ? [] : base;
   }
 
   pool(filterFn) {
@@ -1281,11 +1271,13 @@ class RuleBasedPlanner {
 
   // ערב
   getProteinDinner(minSuit = 5) {
+    if (this.prefs?.isVegetarian) return []; // חגורת בטיחות
     return this.pool(
       (f) =>
         bySuitability("dinner", minSuit)(f) && inCats(f, ["protein_dinner"])
     );
   }
+
   getCarbsDinner(minSuit = 5) {
     return this.pool(
       (f) => bySuitability("dinner", minSuit)(f) && inCats(f, ["carbs_dinner"])
@@ -1321,6 +1313,56 @@ class RuleBasedPlanner {
     return this.pool(
       (f) => bySuitability("snack", minSuit)(f) && inCats(f, ["fruit_snack"])
     );
+  }
+
+  buildLunch(totalTargets) {
+    // אם צמחונית — נשתמש בגרסה הצמחונית הקיימת
+    if (this.prefs?.isVegetarian) {
+      return this.buildLunchVegetarian(totalTargets);
+    }
+
+    // --- גרסת צהריים הרגילה (לא צמחונית) ---
+    const fatCeil = Math.max(0, toNumber(totalTargets.fat, 0));
+    const proteinPool = this.getProteinLunch();
+    const carbsPool = this.getCarbsOrLegumesLunch();
+
+    const proteins = this.buildGroupOptionsDominantWithFatCeil(
+      proteinPool,
+      "protein",
+      totalTargets.protein,
+      fatCeil,
+      60
+    );
+    const carbs = this.buildGroupOptionsDominantWithFatCeil(
+      carbsPool,
+      "carbs",
+      totalTargets.carbs,
+      fatCeil,
+      80
+    );
+
+    const vegFree = this.buildFreeList(this.getVegDinner(3), 12, "חופשי");
+
+    return {
+      mode: "variety",
+      header: "צהריים",
+      targets: totalTargets,
+      groups: [
+        {
+          title: "חלבון לצהריים (בחרי אחד)",
+          key: "protein",
+          options: proteins,
+          selected: proteins[0],
+        },
+        {
+          title: "פחמימות / קטניות (בחרי אחד)",
+          key: "carbs",
+          options: carbs,
+          selected: carbs[0],
+        },
+        { title: "ירקות (חופשי)", key: "veg_free", options: vegFree },
+      ],
+    };
   }
 
   // בונה רשימת פריטים “חופשי”
@@ -1511,6 +1553,76 @@ class RuleBasedPlanner {
     };
   }
 
+  // === bi-dominant (protein+carbs) with fat ceiling ===
+  // מעלה כמות בצעדי אינקרמנט כל עוד: protein ≤ protTarget && carbs ≤ carbTarget && fat ≤ fatCeil
+  computeQuantityBiDominantWithFatCeil(food, protTarget, carbTarget, fatCeil) {
+    const EPS = 1e-9;
+
+    const m = getEffectiveMacros(food);
+    const minQ = toNumber(food?.constraints?.minServing, 0.1);
+    const maxQ = toNumber(food?.constraints?.maxServing, 10);
+    const inc = getInc(food);
+
+    // תקרות אנליטיות (ליחידה)
+    const qMaxByP =
+      m.protein > 0 ? protTarget / m.protein : protTarget <= 0 ? 0 : Infinity;
+    const qMaxByC =
+      m.carbs > 0 ? carbTarget / m.carbs : carbTarget <= 0 ? 0 : Infinity;
+    const qMaxByFat = m.fat > 0 ? fatCeil / m.fat : fatCeil <= 0 ? 0 : Infinity;
+
+    // תקרה מחמירה + הצמדה לאינקרמנט ולגבולות
+    let qMax = Math.min(qMaxByP, qMaxByC, qMaxByFat);
+    qMax = clamp(floorToIncrement(qMax, inc), minQ, maxQ);
+
+    if (qMax < minQ - EPS || !Number.isFinite(qMax)) return null;
+
+    // נקודת התחלה מוצמדת
+    let q = clamp(floorToIncrement(minQ, inc), minQ, qMax);
+
+    let nut = multiplyMacros(m, q);
+    if (
+      nut.protein > protTarget + EPS ||
+      nut.carbs > carbTarget + EPS ||
+      nut.fat > fatCeil + EPS
+    ) {
+      return null;
+    }
+
+    let lastOk = { q, nut };
+
+    // step-up עד שתקרה נשברת
+    let guard = 0;
+    while (guard++ < 1000) {
+      const qNext = clamp(floorToIncrement(q + inc, inc), minQ, qMax);
+      if (qNext <= q + EPS) break;
+
+      const nutNext = multiplyMacros(m, qNext);
+      if (
+        nutNext.protein <= protTarget + EPS &&
+        nutNext.carbs <= carbTarget + EPS &&
+        nutNext.fat <= fatCeil + EPS
+      ) {
+        lastOk = { q: qNext, nut: nutNext };
+        q = qNext;
+        continue;
+      }
+      break; // נשברה תקרה → עוצרים על האחרון התקין
+    }
+
+    // בדיקת בטיחות
+    if (lastOk) {
+      const t = lastOk.nut;
+      if (
+        t.protein > protTarget + EPS ||
+        t.carbs > carbTarget + EPS ||
+        t.fat > fatCeil + EPS
+      ) {
+        return null;
+      }
+    }
+    return lastOk;
+  }
+
   // === dominant-macro with fat ceiling (step-up until any constraint breaks) ===
   computeQuantityDominantWithFatCeil(food, dominantKey, domTarget, fatCeil) {
     const EPS = 1e-9;
@@ -1574,6 +1686,42 @@ class RuleBasedPlanner {
     }
 
     return lastOk;
+  }
+
+  buildGroupOptionsLegumesBiDominant(
+    pool,
+    protTarget,
+    carbTarget,
+    fatCeil,
+    want = 40
+  ) {
+    const out = [];
+    for (const food of pool) {
+      const pack = this.computeQuantityBiDominantWithFatCeil(
+        food,
+        protTarget,
+        carbTarget,
+        fatCeil
+      );
+      if (!pack) continue;
+      // ניקוד: כמה קרובים ליעדים (עדיין לא עוברים תקרות)
+      const dp = protTarget - pack.nut.protein; // תמיד ≥ 0
+      const dc = carbTarget - pack.nut.carbs; // תמיד ≥ 0
+      const s = dp * 1000 + dc * 500 + (pack.nut.calories || 0);
+      out.push({
+        food,
+        quantity: pack.q,
+        displayText: getDisplayText(food, pack.q),
+        nutrition: pack.nut,
+        _score: s,
+      });
+    }
+    out.sort(
+      (a, b) =>
+        a._score - b._score ||
+        (a.nutrition?.protein || 0) - (b.nutrition?.protein || 0) // טיפה מעדיף יותר חלבון כשיש תיקו
+    );
+    return out.slice(0, want);
   }
 
   buildGroupOptionsDominantWithFatCeil(
@@ -1767,47 +1915,72 @@ class RuleBasedPlanner {
     };
   }
 
-  buildLunch(totalTargets) {
-    // בדיוק כמו בבוקר: מעלים בכפולות אינקרמנט עד שאו הדומיננטי עובר יעד
-    // או שהשומן של הפריט עובר את תקרת השומן של כל ארוחת הצהריים.
+  buildLunchVegetarian(totalTargets) {
+    // תקרות לצהריים
+    const protTarget = Math.max(0, toNumber(totalTargets.protein, 0));
+    const carbTarget = Math.max(0, toNumber(totalTargets.carbs, 0));
     const fatCeil = Math.max(0, toNumber(totalTargets.fat, 0));
-    const proteinPool = this.getProteinLunch(); // חלבון לצהריים
-    const carbsLegumesPool = this.getCarbsOrLegumesLunch(); // פחמימות/קטניות
 
-    const proteins = this.buildGroupOptionsDominantWithFatCeil(
-      proteinPool,
-      "protein",
-      totalTargets.protein,
+    // מאגר קטניות לצהריים (כבר קיים לך)
+    const legumesPool = this.getCarbsOrLegumesLunch(); // כולל קטניות ולחמים — נצמצם לקטניות
+    const legumesOnly = legumesPool.filter((f) => inCats(f, ["legumes_lunch"]));
+
+    // אופציות של קטניות שמכבדות שתי תקרות (חלבון+פחמ׳) + תקרת שומן
+    const legumesOptions = this.buildGroupOptionsLegumesBiDominant(
+      legumesOnly.length ? legumesOnly : legumesPool, // fallback אם אין תיוג
+      protTarget,
+      carbTarget,
       fatCeil,
       60
     );
-    const carbsLegumes = this.buildGroupOptionsDominantWithFatCeil(
-      carbsLegumesPool,
-      "carbs",
-      totalTargets.carbs,
-      fatCeil,
-      80
-    );
 
-    const selectedProtein = proteins[0] || null;
-    const selectedCarbLeg = carbsLegumes[0] || null;
+    // אופציונלי: ירק חופשי
+    const vegFree = this.buildFreeList(this.getVegDinner(3), 12, "חופשי");
 
     return {
       mode: "variety",
+      header: "צהריים — גרסה צמחונית (מנה אחת מקטניות)",
       targets: totalTargets,
       groups: [
         {
-          title: "חלבון לצהריים (בחרי אחד)",
-          key: "protein",
-          options: proteins,
-          selected: selectedProtein || undefined,
+          title: "קטניות (מנה עיקרית — בחרי אחת)",
+          key: "legumes_main",
+          options: legumesOptions,
+          selected: legumesOptions[0] || undefined,
         },
+        { title: "ירקות (חופשי)", key: "veg_free", options: vegFree },
+      ],
+    };
+  }
+
+  buildDinnerVegetarian(totalTargets) {
+    const protTarget = Math.max(0, toNumber(totalTargets.protein, 0));
+    const carbTarget = Math.max(0, toNumber(totalTargets.carbs, 0));
+    const fatCeil = Math.max(0, toNumber(totalTargets.fat, 0));
+
+    const legumesPool = this.getLegumesDinner(); // הקיים אצלך לערב
+    const legumesOptions = this.buildGroupOptionsLegumesBiDominant(
+      legumesPool,
+      protTarget,
+      carbTarget,
+      fatCeil,
+      60
+    );
+
+    const vegFree = this.buildFreeList(this.getVegDinner(), 12, "חופשי");
+
+    return {
+      mode: "variety",
+      header: "ערב — גרסה צמחונית (מנה אחת מקטניות)",
+      targets: totalTargets,
+      groups: [
         {
-          title: "פחמימות / קטניות (בחרי אחד)",
-          key: "carbs",
-          options: carbsLegumes,
-          selected: selectedCarbLeg || undefined,
+          title: "קטניות (מנה עיקרית — בחרי אחת)",
+          key: "legumes_main",
+          options: legumesOptions,
+          selected: legumesOptions[0] || undefined,
         },
+        { title: "ירקות לערב (חופשי)", key: "veg_free", options: vegFree },
       ],
     };
   }
@@ -1817,29 +1990,33 @@ class RuleBasedPlanner {
   }
 
   buildDinner(totalTargets) {
-    // 1) גרסה חלבית — כמו בוקר
+    const fatCeil = Math.max(0, toNumber(totalTargets.fat, 0));
+    // גרסה חלבית (מבוסס בוקר)
     const dairyStyle = this.buildBreakfastTemplate("dinner", totalTargets);
     dairyStyle.header = "ערב — גרסה חלבית";
 
-    // 2) גרסה בשרית — עכשיו גם עם תקרת שומן
-    const fatCeil = Math.max(0, toNumber(totalTargets.fat, 0));
+    // ✅ אם צמחונית — לא בונים meatStyle בכלל
+    if (this.prefs?.isVegetarian) {
+      // אפשר גם להחזיר גרסת קטניות לערב אם תרצי:
+      const veggieStyle = this.buildDinnerVegetarian(totalTargets);
+      return veggieStyle ? { dairyStyle, veggieStyle } : { dairyStyle };
+    }
 
-    const proteinMeatyPool = this.getProteinDinnerMeaty(); // חלבון בשרי לערב
+    // לא צמחונית → יש גם בשרית
+    const proteinMeatyPool = this.getProteinDinnerMeaty();
     const carbsDinnerPool = this.getCarbsDinner();
     const legumesDinnerPool = this.getLegumesDinner();
 
-    // איחוד + דה-דופ לפחמימות/קטניות
     const seen = new Set();
     const carbsLegumesPool = [...carbsDinnerPool, ...legumesDinnerPool].filter(
       (f) => {
-        const id = String(f?._id || f?.id || f?.name || Math.random());
+        const id = String(f?._id || f?.id || f?.name);
         if (seen.has(id)) return false;
         seen.add(id);
         return true;
       }
     );
 
-    // ❗עברנו לשיטה עם תקרת שומן (dominant + fat ceiling), כמו בצהריים/בוקר
     const proteinsMeaty = this.buildGroupOptionsDominantWithFatCeil(
       proteinMeatyPool,
       "protein",
@@ -1847,7 +2024,6 @@ class RuleBasedPlanner {
       fatCeil,
       60
     );
-
     const carbsOrLegumes = this.buildGroupOptionsDominantWithFatCeil(
       carbsLegumesPool,
       "carbs",
@@ -1855,7 +2031,6 @@ class RuleBasedPlanner {
       fatCeil,
       80
     );
-
     const vegFree = this.buildFreeList(this.getVegDinner(), 12, "חופשי");
 
     const meatStyle = {
@@ -1867,13 +2042,13 @@ class RuleBasedPlanner {
           title: "חלבון לערב (בחרי אחד)",
           key: "protein",
           options: proteinsMeaty,
-          selected: proteinsMeaty[0] || undefined,
+          selected: proteinsMeaty[0],
         },
         {
           title: "פחמימות / קטניות (בחרי אחד)",
           key: "carbs",
           options: carbsOrLegumes,
-          selected: carbsOrLegumes[0] || undefined,
+          selected: carbsOrLegumes[0],
         },
         { title: "ירקות לערב (חופשי)", key: "veg_free", options: vegFree },
       ],
@@ -1910,25 +2085,11 @@ const toBool = (x) =>
     ? ["true", "1", "yes", "on"].includes(x.toLowerCase())
     : false;
 
-function normalizePrefs(input = {}) {
-  const p = input || {};
-  return {
-    isVegetarian: toBool(p.isVegetarian) || toBool(p.vegetarian),
-    isVegan: toBool(p.isVegan) || toBool(p.vegan),
-    glutenSensitive:
-      toBool(p.glutenSensitive) ||
-      toBool(p.isGlutenFree) ||
-      toBool(p.glutenFree),
-    lactoseSensitive:
-      toBool(p.lactoseSensitive) ||
-      toBool(p.isLactoseFree) ||
-      toBool(p.lactoseFree),
-  };
-}
 const coalesce = (dbVal, clientVal) =>
   typeof dbVal === "boolean" ? dbVal : !!clientVal;
 
 /* ===================== Exports ===================== */
+
 module.exports = {
   // core
   RuleBasedPlanner,
@@ -1942,7 +2103,7 @@ module.exports = {
   allocateMacro,
   normalizeWeights,
 
-  // selection / pools helpers (used internally but nice to export)
+  // selection / pools helpers
   isDairy,
   isFixedUnit,
   packAsFixedIfClose,
@@ -1951,6 +2112,10 @@ module.exports = {
   computeQuantityForTargets,
   computeQuantityDominantWithFatCeil:
     RuleBasedPlanner.prototype.computeQuantityDominantWithFatCeil,
+  computeQuantityBiDominantWithFatCeil:
+    RuleBasedPlanner.prototype.computeQuantityBiDominantWithFatCeil,
+  buildGroupOptionsLegumesBiDominant:
+    RuleBasedPlanner.prototype.buildGroupOptionsLegumesBiDominant,
   withinTargets,
   withinTargetsByFlexMap,
   getEffectiveMacros,
@@ -1990,8 +2155,6 @@ module.exports = {
   SNACK_FLEXS,
   FIXED_UNIT_FLEX,
 
-  // legacy
-  normalizePrefs,
   coalesce,
   toBool,
 };

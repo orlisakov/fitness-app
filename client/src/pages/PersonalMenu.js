@@ -21,6 +21,12 @@ export default function PersonalMenu({ traineeData }) {
   }
 
   useEffect(() => {
+    if (mealPlan?.meals?.dinner) {
+      console.log("DINNER KEYS:", Object.keys(mealPlan.meals.dinner));
+    }
+  }, [mealPlan]);
+
+  useEffect(() => {
     const run = async () => {
       if (!traineeData) return;
 
@@ -406,35 +412,133 @@ export default function PersonalMenu({ traineeData }) {
     return <BreakfastLike meal={meal} title="ארוחת בוקר" />;
   }
 
+  function findGroup(meal, keys = []) {
+    if (!meal?.groups) return null;
+    return meal.groups.find((g) => keys.includes(g.key)) || null;
+  }
+
+  function LegumeBlock({ meal, legumesOptions }) {
+    const t = meal.targets;
+    const vegFree = findGroup(meal, ["veg_free"])?.options || [];
+
+    const legumes =
+      legumesOptions ??
+      (findGroup(meal, ["legumes_lunch", "legumes"])?.options || []);
+
+    if (!legumes || legumes.length === 0) return null;
+
+    return (
+      <div className="meal-card stacked">
+        <SectionTitle>ארוחת צהריים — קטניות</SectionTitle>
+        <TargetsRow t={t} />
+        <table className="menu-table" dir="rtl">
+          <thead>
+            <tr>
+              <th style={{ width: 110 }}>כמות</th>
+              <th>קטניה</th>
+            </tr>
+          </thead>
+          <tbody>
+            {legumes.map((opt, i) => (
+              <tr key={i}>
+                <td>{opt?.displayText || ""}</td>
+                <td>{opt?.food?.name || ""}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {vegFree.length > 0 && (
+          <div style={{ marginTop: 8 }}>
+            <div className="chip chip-strong" style={{ marginBottom: 6 }}>
+              אפשר להוסיף ירקות חופשי:
+            </div>
+            <ul style={{ margin: 0, paddingInlineStart: 18 }}>
+              {vegFree.map((v, i) => (
+                <li key={i}>{v?.food?.name || ""}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // צהריים
   function LunchBlock({ meal, title = "ארוחת צהריים" }) {
     const t = meal.targets;
 
-    const proteinGroup = meal.groups.find((g) => g.key === "protein");
-    const carbsGroup = meal.groups.find((g) => g.key === "carbs");
-    const legumesGroup = meal.groups.find((g) => g.key === "legumes");
+    const isVegan = !!appliedPrefs?.isVegan;
+    const isVegetarian = !!appliedPrefs?.isVegetarian;
+    const isVeg = isVegan || isVegetarian;
 
-    // אם יש גם קטניות וגם פחמימות — נחבר לאותה עמודה של "פחמימה"
+    const proteinGroup = findGroup(meal, ["protein"]);
+    const carbsGroup = findGroup(meal, ["carbs"]);
+    const legumesGroup = findGroup(meal, ["legumes_lunch", "legumes"]);
+
     const protein = proteinGroup?.options || [];
-    const carbs = [
-      ...(carbsGroup?.options || []),
-      ...(legumesGroup?.options || []),
-    ];
+    const allCarbs = carbsGroup?.options || [];
 
     const proteinLabel = proteinGroup?.title || "חלבון (בחרי אחד)";
-    const carbsLabel =
+    const carbsLabel = carbsGroup?.title || "פחמימות (בחרי אחד)";
+
+    // מזהה קטניה לפי קטגוריות/שם
+    const isLegume = (opt) => {
+      const cats = opt?.food?.categories || [];
+      const name = (opt?.food?.name || "").toLowerCase();
+      return cats.includes("legumes_lunch") || cats.includes("legumes_lunch");
+    };
+
+    // פירוק מהפחמימות
+    const legumesFromCarbs = allCarbs.filter(isLegume);
+    const carbsNoLegumes = allCarbs.filter((o) => !isLegume(o));
+
+    // איחוד קטניות משתי הקבוצות והסרת כפילויות לפי food._id
+    const byId = (o) =>
+      String(o?.food?._id || o?.food?.id || o?.food?.name || "");
+    const legumesMerged = [
+      ...(legumesGroup?.options || []),
+      ...legumesFromCarbs,
+    ]
+      .filter(Boolean)
+      .reduce(
+        (acc, x) =>
+          acc.some((y) => byId(y) === byId(x)) ? acc : acc.concat(x),
+        []
+      );
+
+    if (isVeg) {
+      return (
+        <>
+          <div className="meal-card stacked">
+            <SectionTitle>{title} — גרסת צמחונים</SectionTitle>
+            <TargetsRow t={t} />
+            <DualGroupTable
+              proteinTitle={proteinLabel}
+              carbTitle={carbsLabel}
+              proteinOptions={protein}
+              carbOptions={carbsNoLegumes}
+            />
+          </div>
+
+          <LegumeBlock meal={meal} legumesOptions={legumesMerged} />
+        </>
+      );
+    }
+
+    const carbsMergedLabel =
       carbsGroup?.title || legumesGroup?.title || "פחמימות / קטניות (בחרי אחד)";
+    const carbsMerged = [...carbsNoLegumes, ...legumesMerged];
 
     return (
       <div className="meal-card stacked">
         <SectionTitle>{title}</SectionTitle>
         <TargetsRow t={t} />
-
         <DualGroupTable
           proteinTitle={proteinLabel}
-          carbTitle={carbsLabel}
+          carbTitle={carbsMergedLabel}
           proteinOptions={protein}
-          carbOptions={carbs}
+          carbOptions={carbsMerged}
         />
       </div>
     );
@@ -462,16 +566,39 @@ export default function PersonalMenu({ traineeData }) {
     );
   }
 
-  // ערב — גם חלבית (כמו בוקר) וגם בשרית (כמו צהריים) עם טבלה-אחת לכל גרסה
   function DinnerBlock({ meal }) {
-    const { dairyStyle, meatStyle } = meal;
+    const { dairyStyle, meatStyle, veggieStyle } = meal;
+    const isVegan = !!appliedPrefs?.isVegan;
+    const isVegetarian = !!appliedPrefs?.isVegetarian;
+    const isVeg = isVegan || isVegetarian;
+
+    const showDairy = !!dairyStyle && !isVegan;
+    const showVeggie = !!veggieStyle;
+    const showMeat = !!meatStyle && !isVeg;
+
     return (
       <>
-        {dairyStyle && (
+        {showDairy && (
           <BreakfastLike meal={dairyStyle} title="ארוחת ערב — גרסה חלבית" />
         )}
-        {meatStyle && (
+
+        {showVeggie && (
+          <LunchBlock meal={veggieStyle} title="ארוחת ערב — גרסה צמחונית" />
+        )}
+
+        {showMeat && (
           <LunchBlock meal={meatStyle} title="ארוחת ערב — גרסה בשרית" />
+        )}
+
+        {isVeg && !showVeggie && !showDairy && (
+          <div className="meal-card stacked">
+            <SectionTitle>ארוחת ערב</SectionTitle>
+            <div style={{ padding: 8, opacity: 0.8 }}>
+              לא נמצאה גרסת ערב מתאימה להעדפות (צמחונית/טבעונית). בדקי שהמאכלים
+              במסד מסומנים בקטגוריות <code>safe_vegetarian</code> /{" "}
+              <code>safe_vegan</code>.
+            </div>
+          </div>
         )}
       </>
     );

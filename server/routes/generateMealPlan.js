@@ -75,6 +75,18 @@ router.post("/generate-meal-plan", authMiddleware, async (req, res) => {
       ),
     };
 
+    // ✅ בדיקת לוג לפענוח בעיות העדפות
+    console.log("💡 PREFS CHECK:", {
+      traineeDB: {
+        isVegetarian: trainee?.isVegetarian,
+        isVegan: trainee?.isVegan,
+        glutenSensitive: trainee?.glutenSensitive,
+        lactoseSensitive: trainee?.lactoseSensitive,
+      },
+      clientPrefs,
+      finalPrefs: prefs,
+    });
+
     // ================== מזונות שלא אוהבים ==================
     const dislikedIds = Array.isArray(trainee?.dislikedFoods)
       ? trainee.dislikedFoods
@@ -85,6 +97,13 @@ router.post("/generate-meal-plan", authMiddleware, async (req, res) => {
     const allFoods = await Food.find({ isActive: { $ne: false } }).lean();
     const filteredFoods = allFoods.filter(
       (food) => !dislikedIds.some((id) => String(id) === String(food._id))
+    );
+
+    const { matchesPrefs } = require("../services/mealPlannerUtils");
+
+    // סינון נוסף לפי העדפות תזונתיות
+    const prefFilteredFoods = filteredFoods.filter((food) =>
+      matchesPrefs(food, prefs)
     );
 
     // ================== יעדים כוללים ==================
