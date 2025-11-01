@@ -160,6 +160,40 @@ router.post("/generate-meal-plan", authMiddleware, async (req, res) => {
       }
     }
 
+    // ================== Rules Split (אם אין custom) ==================
+    if (!splitOverridePct) {
+      try {
+        const { splitWithRules } = require("../services/splitMacros");
+
+        // בונים totals תואם לפונקציה, מבוסס על ה-targets שכבר חושבו למעלה
+        const totalsForRules = {
+          protein: targets.totalProtein,
+          carbs: targets.totalCarbs,
+          fat: targets.totalFat,
+          calories: targets.totalCalories,
+        };
+
+        const ruleRes = splitWithRules(totalsForRules);
+
+        if (ruleRes && ruleRes.ok && ruleRes.split) {
+          // ruleRes.split הוא בגרמים לכל ארוחה -> ממירים לאחוזים ל-planner
+          splitOverridePct = gramsToSplitPct(ruleRes.split, {
+            totalProtein: targets.totalProtein,
+            totalCarbs: targets.totalCarbs,
+            totalFat: targets.totalFat,
+            totalCalories: targets.totalCalories,
+          });
+          usedSplitMode = "rules";
+          // אופציונלי: console.log("🍽️ rules split grams:", ruleRes.split);
+          // אופציונלי: console.log("🍽️ rules split pct:", splitOverridePct);
+        } else if (ruleRes && ruleRes.error) {
+          console.warn("splitWithRules error:", ruleRes.error);
+        }
+      } catch (e) {
+        console.warn("splitWithRules missing/failed:", e?.message || e);
+      }
+    }
+
     // ==== בניית תפריט ====
     const planner = new RuleBasedPlanner(
       prefFilteredFoods,
@@ -173,7 +207,7 @@ router.post("/generate-meal-plan", authMiddleware, async (req, res) => {
     return res.json({
       success: true,
       appliedPrefs: prefs,
-      usedSplitMode, // "custom" | "auto"
+      usedSplitMode,
       mealPlan,
     });
   } catch (err) {
