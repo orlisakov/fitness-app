@@ -27,7 +27,7 @@ function splitWithRules(totals, opts = {}) {
 
   // 🆕 צעד מיוחד לחלבון בבוקר
   const mealSteps = {
-    bf: { p: 15, c: steps.c, f: steps.f },
+    bf: { p: steps.p, c: steps.c, f: steps.f },
     lu: { p: steps.p, c: steps.c, f: steps.f },
     sn: { p: steps.p, c: steps.c, f: steps.f },
     di: { p: steps.p, c: steps.c, f: steps.f },
@@ -39,10 +39,10 @@ function splitWithRules(totals, opts = {}) {
 
   // מינימום ברירת מחדל
   const mins = {
-    bf: { p: 20, c: 15, f: 10 },
+    bf: { p: 20, c: 15, f: 5 },
     lu: { p: 25, c: 30, f: 5 },
-    sn: { p: 20, c: 20, f: 10 },
-    di: { p: 25, c: 30, f: 10 },
+    sn: { p: 20, c: 5, f: 5 },
+    di: { p: 25, c: 30, f: 5 },
     ...(opts.mins || {}),
   };
 

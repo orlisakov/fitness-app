@@ -254,7 +254,6 @@ export default function PersonalMenu({ traineeData }) {
   function TargetsRow({ t }) {
     return (
       <div className="targets-row" style={{ margin: "4px 0 10px" }}>
-        <span className="chip chip-strong">קל׳: {fmt(t.calories, 0)}</span>
         <span className="chip">חלבון: {fmt(t.protein, 1)}ג׳</span>
         <span className="chip">פחמ׳: {fmt(t.carbs, 1)}ג׳</span>
         <span className="chip">שומן: {fmt(t.fat, 1)}ג׳</span>
