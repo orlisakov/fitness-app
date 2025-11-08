@@ -375,11 +375,7 @@ export default function PersonalMenu({ traineeData }) {
     const eggs = meal.groups.find((g) => g.key === "eggs")?.fixed || null;
     let prot =
       meal.groups.find((g) => g.key === "prot_breakfast")?.options || [];
-    const mayoAddon =
-      meal.groups.find((g) => g.key === "prot_breakfast")?.addon?.options || [];
     const carbs = meal.groups.find((g) => g.key === "breads")?.options || [];
-    const vegFree =
-      meal.groups.find((g) => g.key === "veg_free")?.options || [];
 
     if (eggs) {
       prot = [
@@ -484,7 +480,6 @@ export default function PersonalMenu({ traineeData }) {
     // מזהה קטניה לפי קטגוריות/שם
     const isLegume = (opt) => {
       const cats = opt?.food?.categories || [];
-      const name = (opt?.food?.name || "").toLowerCase();
       return cats.includes("legumes_lunch");
     };
 

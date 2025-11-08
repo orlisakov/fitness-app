@@ -10,26 +10,6 @@ const toNumber = (v, def = 0) => {
   return Number.isFinite(n) ? n : def;
 };
 
-const defaultServingInfo = {
-  baseUnit: "gram",
-  baseQuantity: 100,
-  displayName: "100 גרם",
-  commonServings: [], // {name, quantity, displayText}
-};
-
-const defaultConstraints = {
-  minServing: 0.5,
-  maxServing: 5,
-  increment: 0.5,
-};
-
-const defaultMealSuitability = {
-  breakfast: 5,
-  lunch: 5,
-  dinner: 5,
-  snack: 5,
-};
-
 const dietaryFlagsList = [
   { label: "טבעוני", value: "isVegan" },
   { label: "צמחוני", value: "isVegetarian" },

@@ -104,12 +104,6 @@ export default function Login({ onLogin }) {
           </button>
 
           <div className="auth2-divider" />
-
-          {/* 
-<p className="auth2-bottom-text">
-  אין לך חשבון? <Link to="/register">להרשמה</Link>
-</p>
-*/}
         </form>
       </main>
     </div>
