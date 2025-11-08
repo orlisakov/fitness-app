@@ -1,6 +1,5 @@
 // src/Login.jsx
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import "./styles/auth.css"; // ← קובץ סגנונות חדש ומבודד
 import logo from "./assets/logo.jpg";
 import config from "./config";
