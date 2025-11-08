@@ -128,7 +128,7 @@ export default function TraineeWorkouts() {
 
   return (
     <div dir="rtl" style={{ maxWidth: 900, margin: "0 auto" }}>
-      <h2 style={{ marginBottom: 8 }}>תוכנית האימונים שלך</h2>
+      <h1 style={{ marginBottom: 8 }}>תוכנית האימונים שלך</h1>
 
       {user && (
         <div

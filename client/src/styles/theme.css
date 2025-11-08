@@ -2186,3 +2186,362 @@ button:hover {
     page-break-inside: avoid;
   }
 }
+/* הכרטיס */
+.resource-card {
+  background: #fde7ef;
+  border: 1px solid #f3c0d3;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 4px 12px rgba(136, 14, 79, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.resource-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(136, 14, 79, 0.22);
+}
+
+.resource-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* כפתורים לצד ימין של הכותרת */
+  gap: 12px;
+}
+
+/* כותרת */
+.resource-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--deep-rose);
+}
+
+/* פעולות (צפייה/הורדה) */
+.resource-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.resource-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 8px 14px;
+  background: #ff6daf; /* כמו .btn */
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+.resource-btn:hover {
+  opacity: 0.9;
+}
+
+.resource-desc {
+  margin-top: 6px;
+  color: #7a4860;
+}
+.resource-tags {
+  margin-top: 8px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.resource-tag {
+  background: #ffd2e6;
+  border: 1px solid #f3c0d3;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: #7a4860;
+}
+/* כרטיס ורוד */
+.card-pink {
+  background: #fde7ef;
+  border: 1px solid #f3c0d3;
+  border-radius: 16px;
+  padding: 16px;
+}
+
+/* כל שדות הטופס באותו גובה ובתוך המסגרת הורודה */
+.ui-input,
+.ui-select,
+.ui-file {
+  height: 42px;
+  line-height: 42px;
+  padding: 0 12px;
+  border: 1px solid #f3c0d3;
+  border-radius: 10px;
+  background: #fff; /* לבן עדין בתוך המסגרת */
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* טקסט־אריה בגובה קבוע, עם אותו גבול */
+.ui-textarea {
+  padding: 10px 12px;
+  border: 1px solid #f3c0d3;
+  border-radius: 10px;
+  background: #fff;
+  width: 100%;
+  min-height: 100px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+/* שורת חיפוש + קטגוריות בגבהים זהים */
+.filter-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.filter-row .ui-input,
+.filter-row .ui-select {
+  height: 42px;
+}
+
+/* כפתורי פעולה (צפייה / הורדה / מחיקה) – זהים, ללא קו תחתון */
+.btn-link {
+  display: inline-block;
+  padding: 8px 14px;
+  border: 1px solid #f3c0d3;
+  border-radius: 10px;
+  background: #fff;
+  text-decoration: none; /* בלי קו תחתון */
+  color: #7a4860;
+  cursor: pointer;
+}
+
+.btn-link.danger {
+  background: #ffafc1 !important; /* ורוד עדין */
+  color: #6b2143 !important; /* טקסט כהה */
+  border: 1px solid #f28aa5 !important;
+}
+
+.btn-link.danger:hover {
+  background: #ffafc1 !important; /* לא משתנה */
+  color: #6b2143 !important;
+  box-shadow: 0 0 6px rgba(255, 150, 170, 0.4); /* רק הילה קטנה נוחה */
+  transform: none !important; /* אין קפיצה */
+}
+
+/* טבלת רשומות */
+.table-wrap {
+  overflow-x: auto;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table thead tr {
+  background: #ffd2e6;
+}
+.table td,
+.table th {
+  text-align: right;
+  padding: 10px 8px;
+}
+.table tbody tr {
+  background: #fde7ef;
+  border-bottom: 1px solid #f3c0d3;
+}
+/* רשת כרטיסים: 1 בעמודה במובייל, 2 בעמודות במסכים רחבים */
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+  margin-top: 10px;
+}
+
+@media (min-width: 860px) {
+  .resources-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* כפתורי צפייה/הורדה ורודים, זהים וללא קו תחתון */
+.btn-link {
+  display: inline-block;
+  padding: 8px 14px;
+  border: 1px solid #f3c0d3;
+  border-radius: 12px;
+  background: #ff6daf;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+/* הכפתורים ורודים ויפים */
+.btn-link,
+.btn-link.secondary {
+  border: none;
+  border-radius: 12px;
+  padding: 8px 14px;
+  background: var(--secondary-pink);
+  color: var(--text-light);
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-link:hover,
+.btn-link.secondary:hover {
+  background: var(--primary-pink);
+  box-shadow: 0 2px 8px rgba(233, 30, 99, 0.3);
+}
+/* ===== רספונסיבי כללי ===== */
+:root {
+  --container-pad: 2.5rem;
+}
+@media (max-width: 900px) {
+  :root {
+    --container-pad: 1.25rem;
+  }
+}
+@media (max-width: 560px) {
+  :root {
+    --container-pad: 0.75rem;
+  }
+}
+
+.dashboard-main {
+  padding: var(--container-pad);
+}
+
+/* כותרות וגודל טקסט נעים בין מובייל לדסקטופ */
+h1 {
+  font-size: clamp(20px, 3.5vw, 32px);
+}
+h2 {
+  font-size: clamp(18px, 3vw, 26px);
+}
+.resource-title {
+  font-size: clamp(16px, 2.6vw, 18px);
+}
+
+/* ===== כותרת עליונה ===== */
+.dashboard-header {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  padding: 0.75rem var(--container-pad);
+}
+.nav-links {
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+@media (max-width: 720px) {
+  .nav-left {
+    gap: 10px;
+  }
+  .nav-links {
+    gap: 0.75rem;
+  }
+  .logout-button {
+    padding: 8px 14px;
+  }
+}
+
+/* ===== שורת סינון (ניהול + ספרייה) ===== */
+.filter-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.filter-row .ui-input,
+.filter-row .ui-select,
+.filter-row .btn,
+.filter-row .btn-link {
+  height: 42px;
+}
+
+/* בכותרת ספרייה: הכותרת תגלוש לשורה מתחת במסכים צרים */
+@media (max-width: 700px) {
+  .filter-row {
+    row-gap: 8px;
+  }
+  .filter-row h1 {
+    order: 2;
+    width: 100%;
+    text-align: right;
+    margin-top: 4px;
+  }
+}
+
+/* ===== גריד כרטיסי משאבים (ספרייה) ===== */
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+@media (min-width: 860px) {
+  /* על דסקטופ – שני טורים מינימום, כרטיסים “גדולים ויפים” */
+  .resources-grid {
+    grid-template-columns: repeat(2, minmax(320px, 1fr));
+  }
+}
+@media (max-width: 520px) {
+  .resources-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* כרטיס המשאב – ריווח פנימי נוח לטלפון */
+.resource-card {
+  padding: 14px;
+}
+.resource-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.resource-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.resource-btn,
+.btn-link {
+  padding: 10px 14px;
+  border-radius: 12px;
+  /* שטח מגע גדול יותר למובייל */
+}
+
+/* כפתור מחיקה – אותו סטייל כמו צפייה/הורדה (ללא קו תחתון) */
+.btn-link.danger {
+  background: #ffe5ea;
+  border-color: #f2a0b0;
+  color: #7a4860;
+}
+.btn-link.danger:hover {
+  filter: brightness(0.97);
+}
+
+/* ===== טופס העלאה (ניהול) – שובר לעמודה אחת בנייד ===== */
+@media (max-width: 820px) {
+  .card-pink > div[style*="grid"] {
+    grid-template-columns: 1fr !important;
+  }
+  .card-pink label {
+    margin-top: 6px;
+  }
+}
+
+/* ===== טבלת ניהול ===== */
+/* כבר יש .table-wrap {overflow-x:auto}. נשאיר גלילה אופקית (פשוט ויציב).
+   נצמצם פדינג וגופנים במסכים צרים כדי שתיראה טוב יותר. */
+@media (max-width: 720px) {
+  .table td,
+  .table th {
+    padding: 8px 6px;
+    font-size: 14px;
+  }
+  .table a.btn-link,
+  .table .btn-link {
+    padding: 8px 10px;
+  }
+}
+
+/* תמונות/וידאו מוטמעים (אם יש) יהיו רספונסיביים */
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}

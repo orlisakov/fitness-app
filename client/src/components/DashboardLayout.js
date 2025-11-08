@@ -30,7 +30,7 @@ export default function DashboardLayout({ onLogout, user }) {
             onClick={() => navigate("/")}
             aria-label="חזרה לדשבורד"
           >
-            Eve's Studio
+            Eiv's Studio
           </button>
         </div>
 
@@ -56,9 +56,19 @@ export default function DashboardLayout({ onLogout, user }) {
           {/* ניהול מזונות למאמנת בלבד */}
           {role === "coach" && (
             <NavLink to={MANAGE_FOODS_PATH} className={linkCls}>
-              מזונות
+              ניהול מאגר
             </NavLink>
           )}
+
+          {/* אופציונלי: למאמנת כפתור נוסף לניהול */}
+          {role === "coach" && (
+            <NavLink to="/resources-manage" className={linkCls}>
+              קבצים להעלאה
+            </NavLink>
+          )}
+          <NavLink to="/resources" className={linkCls}>
+            קבצים להורדה
+          </NavLink>
 
           {/* התנתקות */}
           <button type="button" className="logout-button" onClick={onLogout}>

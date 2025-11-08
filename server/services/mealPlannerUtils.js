@@ -810,14 +810,12 @@ function buildEggsWithWhiteCheeseCombo(foods, protTarget, fatCeil, prefs = {}) {
   if (!egg || !cheese) return null;
 
   // --- 2 ביצים אבל רק חלמון אחד ---
-  // נתבסס על מאקרו ל"ביצה" אחת, ואז נבנה: 2*ביצה - חלמון אחד.
-  // היוריסטיקה לחלמון: כל השומן של ביצה אחת + ~45% מהחלבון ו~90% מהפחמימות של הביצה.
   const eM_one = getEffectiveMacros(egg);
   const twoEggs = multiplyMacros(eM_one, 2);
 
   const yolkP = Math.min(twoEggs.protein, eM_one.protein * 0.45);
   const yolkC = Math.min(twoEggs.carbs, eM_one.carbs * 0.9);
-  const yolkF = Math.min(twoEggs.fat, eM_one.fat); // רוב השומן בחלמון
+  const yolkF = Math.min(twoEggs.fat, eM_one.fat);
 
   const eggsAdj = {
     protein: Math.max(0, twoEggs.protein - yolkP),
@@ -826,12 +824,10 @@ function buildEggsWithWhiteCheeseCombo(foods, protTarget, fatCeil, prefs = {}) {
   };
   eggsAdj.calories = kcalFrom(eggsAdj.protein, eggsAdj.carbs, eggsAdj.fat);
 
-  // אם כבר רכיב הביצים לבדו שובר את היעדים – אין קומבו
   if (eggsAdj.protein > protTarget + 1e-9 || eggsAdj.fat > fatCeil + 1e-9) {
     return null;
   }
 
-  // מחשבים כמה חלבון נשאר להשלים מהגבינה
   const cM = getEffectiveMacros(cheese);
   const cInc = getInc(cheese);
   const cMin = toNumber(cheese?.constraints?.minServing, 0.1);
@@ -843,22 +839,18 @@ function buildEggsWithWhiteCheeseCombo(foods, protTarget, fatCeil, prefs = {}) {
   let qCraw = remainingP / cM.protein;
   let qC = clamp(floorToIncrement(qCraw, cInc), cMin, cMax);
 
-  // נרד בכמויות עד שהחבילה לא שוברת חלבון/שומן
   let best = null;
   let guard = 0;
   while (guard++ < 120 && qC >= cMin - 1e-12) {
     const nutC = multiplyMacros(cM, qC);
-
     const total = addTargets(eggsAdj, nutC);
     const ok =
       total.protein <= protTarget + 1e-9 && total.fat <= fatCeil + 1e-9;
 
     if (ok) {
-      // ניקוד: פער חלבון קטן יותר ואז קלוריות נמוכות
       const proteinGap = protTarget - total.protein;
       const s = proteinGap * 1000 + (total.calories || 0);
       if (!best || s < best.s) best = { s, total, qC };
-      // ננסה עוד צעד למטה כדי לבדוק אם יש גרסה "רזה" יותר שגם עומדת
     }
 
     const next = floorToIncrement(qC - cInc, cInc);
@@ -918,13 +910,12 @@ function buildEggsWhiteCheeseStrictCombo(
 
   const eInc = getInc(egg);
   const eMin = Math.max(1, toNumber(egg?.constraints?.minServing, 1));
-  const eMax = Math.min(10, toNumber(egg?.constraints?.maxServing, 10)); // ברקס קשיח
+  const eMax = Math.min(10, toNumber(egg?.constraints?.maxServing, 10));
 
   const cInc = getInc(cheese);
   const cMin = toNumber(cheese?.constraints?.minServing, 0.1);
-  const cMax = Math.min(10, toNumber(cheese?.constraints?.maxServing, 10)); // ברקס קשיח
+  const cMax = Math.min(10, toNumber(cheese?.constraints?.maxServing, 10));
 
-  // נבדוק מספר קטן והגיוני של כמויות ביצה (1–4 כבר מכסה 99% מהמצבים)
   const eggCandidates = [];
   for (
     let qE = Math.max(eMin, 1);
@@ -943,23 +934,18 @@ function buildEggsWhiteCheeseStrictCombo(
   for (const qE of eggCandidates) {
     const nutE = multiplyMacros(eM, qE);
 
-    // אם כבר הביצים לבד שוברות תקרת שומן/חלבון — אין טעם להמשיך
     if (nutE.protein > protTarget + 1e-9 || nutE.fat > fatCeil + 1e-9) continue;
 
-    // חישוב אנליטי לכמות גבינה אידיאלית לפי חלבון חסר
     const missingP = Math.max(0, protTarget - nutE.protein);
     let qCraw = cM.protein > 0 ? missingP / cM.protein : 0;
-    // הצמדה לאינקרמנט ולמגבלות
     let qC = clamp(floorToIncrement(qCraw, cInc), cMin, cMax);
 
-    // ייתכן שמינימום הגבינה גבוה מדי — נרד עד שנעמוד בתנאים
     let guard = 0;
     while (guard++ < 120) {
       const nutC = multiplyMacros(cM, qC);
       const total = addTargets(nutE, nutC);
 
       if (total.protein <= protTarget + 1e-9 && total.fat <= fatCeil + 1e-9) {
-        // ניקוד: קודם כל פער חלבון קטן יותר, ואז קלוריות נמוכות
         const proteinGap = protTarget - total.protein;
         const s = proteinGap * 1000 + (total.calories || 0);
         if (!best || s < best.s) {
@@ -981,7 +967,6 @@ function buildEggsWhiteCheeseStrictCombo(
         break;
       }
 
-      // אם לא תקין (עודף חלבון/שומן) — נקטין גבינה בצעד אחד
       const next = floorToIncrement(qC - cInc, cInc);
       if (next < cMin || next === qC) break;
       qC = next;
@@ -1034,7 +1019,6 @@ function buildTunaMayoCombo(foods, protTarget, fatCeil, prefs = {}) {
   const mayoNut = multiplyMacros(mM, qM);
   if (mayoNut.fat > fatCeil + 1e-9) return null;
 
-  // כמות טונה לפי חלבון חסר, עם ירידה עד עמידה ב־fatCeil
   if (tM.protein <= 0) return null;
   const tInc = getInc(tuna);
   const tMin = toNumber(tuna?.constraints?.minServing, 0.1);
@@ -1158,11 +1142,17 @@ class RuleBasedPlanner {
     );
   }
 
+  // זיהוי מיונז (כשם מוצר)
+  isMayo(food) {
+    return /מיונז|mayo/i.test(food?.name || "");
+  }
+
   // חלבון לבוקר: מוצרי חלב או דגים/טונה (בלי ביצים לבד)
   getBreakfastProteinPool(minSuit = 4) {
     return this.pool(
       (f) =>
         bySuitability("breakfast", minSuit)(f) &&
+        !this.isMayo(f) && // FIX: מניעת מיונז בפול החלבון
         ((hasFlag(f, "flag_dairy") &&
           inCats(f, ["protein_breakfast", "protein_any", "protein_main"])) ||
           hasFlag(f, "flag_fish"))
@@ -1204,7 +1194,6 @@ class RuleBasedPlanner {
     }
 
     if (q == null) {
-      // אם אין יחידות נוחות — נבנה יעד שומן קטן וניתן לאלגוריתם לחשב
       const tinyFat = {
         protein: 0,
         carbs: 0,
@@ -1265,10 +1254,20 @@ class RuleBasedPlanner {
     );
   }
 
+  getProteinLunchVeg(minSuit = 5) {
+    return this.pool(
+      (f) =>
+        bySuitability("lunch", minSuit)(f) &&
+        (inCats(f, ["protein_lunch"]) || inCats(f, ["veges_Protein"]))
+    );
+  }
+
   // צהריים
   getProteinLunch(minSuit = 5) {
     return this.pool(
-      (f) => bySuitability("lunch", minSuit)(f) && inCats(f, ["protein_lunch"])
+      (f) =>
+        bySuitability("lunch", minSuit)(f) &&
+        (inCats(f, ["protein_lunch"]) || inCats(f, ["veges_Protein"]))
     );
   }
   getCarbsOrLegumesLunch(minSuit = 5) {
@@ -1566,7 +1565,6 @@ class RuleBasedPlanner {
   }
 
   // === bi-dominant (protein+carbs) with fat ceiling ===
-  // מעלה כמות בצעדי אינקרמנט כל עוד: protein ≤ protTarget && carbs ≤ carbTarget && fat ≤ fatCeil
   computeQuantityBiDominantWithFatCeil(food, protTarget, carbTarget, fatCeil) {
     const EPS = 1e-9;
 
@@ -1575,20 +1573,17 @@ class RuleBasedPlanner {
     const maxQ = toNumber(food?.constraints?.maxServing, 10);
     const inc = getInc(food);
 
-    // תקרות אנליטיות (ליחידה)
     const qMaxByP =
       m.protein > 0 ? protTarget / m.protein : protTarget <= 0 ? 0 : Infinity;
     const qMaxByC =
       m.carbs > 0 ? carbTarget / m.carbs : carbTarget <= 0 ? 0 : Infinity;
     const qMaxByFat = m.fat > 0 ? fatCeil / m.fat : fatCeil <= 0 ? 0 : Infinity;
 
-    // תקרה מחמירה + הצמדה לאינקרמנט ולגבולות
     let qMax = Math.min(qMaxByP, qMaxByC, qMaxByFat);
     qMax = clamp(floorToIncrement(qMax, inc), minQ, maxQ);
 
     if (qMax < minQ - EPS || !Number.isFinite(qMax)) return null;
 
-    // נקודת התחלה מוצמדת
     let q = clamp(floorToIncrement(minQ, inc), minQ, qMax);
 
     let nut = multiplyMacros(m, q);
@@ -1602,7 +1597,6 @@ class RuleBasedPlanner {
 
     let lastOk = { q, nut };
 
-    // step-up עד שתקרה נשברת
     let guard = 0;
     while (guard++ < 1000) {
       const qNext = clamp(floorToIncrement(q + inc, inc), minQ, qMax);
@@ -1618,10 +1612,9 @@ class RuleBasedPlanner {
         q = qNext;
         continue;
       }
-      break; // נשברה תקרה → עוצרים על האחרון התקין
+      break;
     }
 
-    // בדיקת בטיחות
     if (lastOk) {
       const t = lastOk.nut;
       if (
@@ -1644,36 +1637,28 @@ class RuleBasedPlanner {
     const maxQ = toNumber(food?.constraints?.maxServing, 10);
     const inc = getInc(food);
 
-    // דומיננטי ליחידה הבסיסית (חלבון/פחמימה)
     const unitDom = dominantKey === "protein" ? m.protein : m.carbs;
 
-    // חישוב תקרה אנליטית לפי הדומיננטי ולפי שומן
     const qMaxByDom = unitDom > 0 ? domTarget / unitDom : Infinity;
     const qMaxByFat = m.fat > 0 ? fatCeil / m.fat : fatCeil <= 0 ? 0 : Infinity;
 
-    // התקרה המחמירה + הצמדה לאינקרמנט וגבולות הפריט
     let qMax = Math.min(qMaxByDom, qMaxByFat);
     qMax = clamp(floorToIncrement(qMax, inc), minQ, maxQ);
 
-    // אם אין טווח ישים בכלל — אין התאמה
     if (qMax < minQ - EPS || !Number.isFinite(qMax)) return null;
 
-    // מתחילים מהמינימום, מוצמד לאינקרמנט ולתקרה
     let q = clamp(floorToIncrement(minQ, inc), minQ, qMax);
 
-    // בדיקת ישימות לנקודת ההתחלה
     let nut = multiplyMacros(m, q);
     let domVal = dominantKey === "protein" ? nut.protein : nut.carbs;
     if (domVal > domTarget + EPS || nut.fat > fatCeil + EPS) return null;
 
-    // נשמור את הפתרון התקין האחרון
     let lastOk = { q, nut };
 
-    // נעלה צעד־צעד עד שמגיעים לתקרה או נשברת אחת המגבלות
     let guard = 0;
     while (guard++ < 1000) {
       const qNext = clamp(floorToIncrement(q + inc, inc), minQ, qMax);
-      if (qNext <= q + EPS) break; // אין לאן לעלות
+      if (qNext <= q + EPS) break;
 
       const nutNext = multiplyMacros(m, qNext);
       const domNext =
@@ -1684,11 +1669,9 @@ class RuleBasedPlanner {
         q = qNext;
         continue;
       }
-      // ברגע שאחת התקרות נשברת — עוצרים על הערך האחרון התקין
       break;
     }
 
-    // בדיקת בטיחות סופית: לא לחזור תוצאה שחורגת בשוגג (לכידת נתונים לא עקביים)
     if (lastOk) {
       const t = lastOk.nut;
       const domOk =
@@ -1716,9 +1699,8 @@ class RuleBasedPlanner {
         fatCeil
       );
       if (!pack) continue;
-      // ניקוד: כמה קרובים ליעדים (עדיין לא עוברים תקרות)
-      const dp = protTarget - pack.nut.protein; // תמיד ≥ 0
-      const dc = carbTarget - pack.nut.carbs; // תמיד ≥ 0
+      const dp = protTarget - pack.nut.protein;
+      const dc = carbTarget - pack.nut.carbs;
       const s = dp * 1000 + dc * 500 + (pack.nut.calories || 0);
       out.push({
         food,
@@ -1731,7 +1713,7 @@ class RuleBasedPlanner {
     out.sort(
       (a, b) =>
         a._score - b._score ||
-        (a.nutrition?.protein || 0) - (b.nutrition?.protein || 0) // טיפה מעדיף יותר חלבון כשיש תיקו
+        (a.nutrition?.protein || 0) - (b.nutrition?.protein || 0)
     );
     return out.slice(0, want);
   }
@@ -1779,7 +1761,6 @@ class RuleBasedPlanner {
     const protPool = this.getBreakfastProteinPool();
     const carbsPool = this.getBreakfastCarbsPool();
 
-    // חלבון: עוצרים כשחלבון עובר את היעד או כשהשומן עובר את תקרת השומן של הארוחה
     const proteinOptions = this.buildGroupOptionsDominantWithFatCeil(
       protPool,
       "protein",
@@ -1788,7 +1769,6 @@ class RuleBasedPlanner {
       30
     );
 
-    // פחמימה: עוצרים כשפחמימה עוברת את היעד או כשהשומן עובר את התקרה
     const carbsOptions = this.buildGroupOptionsDominantWithFatCeil(
       carbsPool,
       "carbs",
@@ -1804,31 +1784,28 @@ class RuleBasedPlanner {
       fatCeil,
       this.prefs
     );
-
-    // גמישה (נשקול רק אם אין קשוחה)
     const eggsCheeseFlex = buildEggsWithWhiteCheeseCombo(
       this.foods,
       totalTargets.protein,
       fatCeil,
       this.prefs
     );
+    let eggsComboToUse = eggsCheeseCombo || eggsCheeseFlex || null;
 
-    let eggsComboToUse = null;
-    if (eggsCheeseCombo) {
-      eggsComboToUse = eggsCheeseCombo;
-    } else if (
-      eggsCheeseFlex &&
-      eggsCheeseFlex.nutrition?.protein <= totalTargets.protein + 1e-9 &&
-      eggsCheeseFlex.nutrition?.fat <= fatCeil + 1e-9
-    ) {
-      eggsComboToUse = eggsCheeseFlex;
-    }
+    // ➜ טונה במים + כף מיונז
+    const tunaMayo = buildTunaMayoCombo(
+      this.foods,
+      totalTargets.protein,
+      fatCeil,
+      this.prefs
+    );
 
+    // ---- דה-דופליקציה והזרקה מסודרת של הקומבואים ----
     if (eggsComboToUse) {
       const cheeseId = eggsComboToUse?.meta?.cheeseId;
       const eggId = eggsComboToUse?.meta?.eggId;
 
-      // 1) הסרת קומבו זהה אם כבר קיים (מניעת כפילויות)
+      // הסרת קומבו זהה אם קיים
       for (let i = proteinOptions.length - 1; i >= 0; i--) {
         const opt = proteinOptions[i];
         const isSameCombo =
@@ -1837,8 +1814,7 @@ class RuleBasedPlanner {
           String(opt?.meta?.cheeseId) === String(cheeseId);
         if (isSameCombo) proteinOptions.splice(i, 1);
       }
-
-      // 2) הסרת גבינה בודדת מתחרה, אם קיימת
+      // הסרת גבינה בודדת מתחרה
       if (cheeseId) {
         for (let i = proteinOptions.length - 1; i >= 0; i--) {
           const f = proteinOptions[i]?.food || proteinOptions[i];
@@ -1846,8 +1822,7 @@ class RuleBasedPlanner {
           if (fid === String(cheeseId)) proteinOptions.splice(i, 1);
         }
       }
-
-      // 3) הוספת הקומבו שבחרנו – פעם אחת בלבד
+      // הזרקה פעם אחת בלבד
       proteinOptions.unshift({
         food: eggsComboToUse.food,
         quantity: eggsComboToUse.quantity,
@@ -1858,13 +1833,6 @@ class RuleBasedPlanner {
       });
     }
 
-    // ➜ טונה במים + כף מיונז
-    const tunaMayo = buildTunaMayoCombo(
-      this.foods,
-      totalTargets.protein,
-      fatCeil,
-      this.prefs
-    );
     if (
       tunaMayo &&
       tunaMayo.nutrition?.protein <= totalTargets.protein + 1e-9 &&
@@ -1892,18 +1860,23 @@ class RuleBasedPlanner {
         displayText: tunaMayo.displayText,
         nutrition: tunaMayo.nutrition,
         _composite: tunaMayo._composite,
+        meta: tunaMayo.meta,
       });
     }
 
+    /* FIX: סינון קשיח – אל תשאיר מיונז בקבוצת "חלבון" אלא אם זו אופציית קומבו טונה+מיונז */
+    for (let i = proteinOptions.length - 1; i >= 0; i--) {
+      const opt = proteinOptions[i];
+      const name = (opt?.food?.name || opt?.name || "").toLowerCase();
+      const isCompositeTunaMayo = opt?._composite === "tuna_plus_mayo";
+      if (!isCompositeTunaMayo && /mayo|מיונז/.test(name)) {
+        proteinOptions.splice(i, 1);
+      }
+    }
+    /* END FIX */
+
     const finalProtein = proteinOptions[0] || null;
     const finalCarbs = carbsOptions[0] || null;
-
-    // (אופציונלי) ירקות חופשי
-    const vegFree = this.buildFreeList(
-      this.getBreakfastVeggiesPool(mealType),
-      12,
-      "חופשי"
-    );
 
     return {
       mode: "variety",
@@ -1922,34 +1895,27 @@ class RuleBasedPlanner {
           options: carbsOptions,
           selected: finalCarbs || undefined,
         },
-        // { title: "ירקות (חופשי)", key: "veg_free", options: vegFree },
       ],
     };
   }
 
   buildLunchVegetarian(totalTargets) {
-    // תקרות לצהריים
     const protTarget = Math.max(0, toNumber(totalTargets.protein, 0));
     const carbTarget = Math.max(0, toNumber(totalTargets.carbs, 0));
     const fatCeil = Math.max(0, toNumber(totalTargets.fat, 0));
 
-    // מאגר קטניות לצהריים (כבר קיים לך)
-    const legumesPool = this.getCarbsOrLegumesLunch(); // כולל קטניות ולחמים — נצמצם לקטניות
+    const legumesPool = this.getCarbsOrLegumesLunch();
     const legumesOnly = legumesPool.filter((f) => inCats(f, ["legumes_lunch"]));
 
-    // אופציות של קטניות שמכבדות שתי תקרות (חלבון+פחמ׳) + תקרת שומן
     const legumesOptions = this.buildGroupOptionsLegumesBiDominant(
-      legumesOnly.length ? legumesOnly : legumesPool, // fallback אם אין תיוג
+      legumesOnly.length ? legumesOnly : legumesPool,
       protTarget,
       carbTarget,
       fatCeil,
       60
     );
 
-    // --- 2) "חלבון + פחמימה" לצמחוניות ---
-    // חלבון לצהריים (מסומן כ-protein_lunch) עם מסנני צמחוני כבר דרך matchesPrefs
-    const proteinPoolVeg = this.getProteinLunch(); // meats ייפסלו ע"י matchesPrefs כיוון שאין להם safe_vegetarian/vegan
-    // פחמימות לצהריים שאינן קטניות
+    const proteinPoolVeg = this.getProteinLunchVeg();
     const carbsOrLegumesPool = this.getCarbsOrLegumesLunch();
     const carbsNoLegumes = carbsOrLegumesPool.filter(
       (f) => !inCats(f, ["legumes_lunch"])
@@ -1971,7 +1937,6 @@ class RuleBasedPlanner {
       80
     );
 
-    // ירקות חופשי
     const vegFree = this.buildFreeList(this.getVegDinner(3), 12, "חופשי");
 
     return {
@@ -1979,7 +1944,6 @@ class RuleBasedPlanner {
       header: "צהריים — גרסה צמחונית",
       targets: totalTargets,
       groups: [
-        // אופציה #1: חלבון + פחמימה
         {
           title: "חלבון לצהריים (בחרי אחד)",
           key: "protein",
@@ -1992,18 +1956,21 @@ class RuleBasedPlanner {
           options: carbsOptions,
           selected: carbsOptions[0] || undefined,
         },
-
-        // אופציה #2: קטניות (מנה עיקרית)
         {
           title: "קטניות (מנה עיקרית — בחרי אחת)",
           key: "legumes_lunch",
           options: legumesOptions,
           selected: legumesOptions[0] || undefined,
         },
-
         { title: "ירקות (חופשי)", key: "veg_free", options: vegFree },
       ],
     };
+  }
+
+  getProteinDinnerVeg(minSuit = 5) {
+    return this.pool(
+      (f) => bySuitability("dinner", minSuit)(f) && inCats(f, ["veges_Protein"])
+    );
   }
 
   buildDinnerVegetarian(totalTargets) {
@@ -2011,7 +1978,7 @@ class RuleBasedPlanner {
     const carbTarget = Math.max(0, toNumber(totalTargets.carbs, 0));
     const fatCeil = Math.max(0, toNumber(totalTargets.fat, 0));
 
-    const legumesPool = this.getLegumesDinner(); // הקיים אצלך לערב
+    const legumesPool = this.getLegumesDinner();
     const legumesOptions = this.buildGroupOptionsLegumesBiDominant(
       legumesPool,
       protTarget,
@@ -2020,16 +1987,31 @@ class RuleBasedPlanner {
       60
     );
 
+    const vegProtPool = this.getProteinDinnerVeg();
+    const vegProtOptions = this.buildGroupOptionsDominantWithFatCeil(
+      vegProtPool,
+      "protein",
+      protTarget,
+      fatCeil,
+      60
+    );
+
     const vegFree = this.buildFreeList(this.getVegDinner(), 12, "חופשי");
 
     return {
       mode: "variety",
-      header: "ערב — גרסה צמחונית (מנה אחת מקטניות)",
+      header: "ערב — גרסה צמחונית",
       targets: totalTargets,
       groups: [
         {
+          title: "חלבון צמחוני (בחרי אחד)",
+          key: "veges_Protein",
+          options: vegProtOptions,
+          selected: vegProtOptions[0] || undefined,
+        },
+        {
           title: "קטניות (מנה עיקרית — בחרי אחת)",
-          key: "legumes_lunch",
+          key: "legumes_dinner",
           options: legumesOptions,
           selected: legumesOptions[0] || undefined,
         },
@@ -2050,7 +2032,6 @@ class RuleBasedPlanner {
 
     // ✅ אם צמחונית — לא בונים meatStyle בכלל
     if (this.prefs?.isVegetarian) {
-      // אפשר גם להחזיר גרסת קטניות לערב אם תרצי:
       const veggieStyle = this.buildDinnerVegetarian(totalTargets);
       return veggieStyle ? { dairyStyle, veggieStyle } : { dairyStyle };
     }

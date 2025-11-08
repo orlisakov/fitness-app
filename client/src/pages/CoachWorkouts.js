@@ -136,7 +136,7 @@ export default function CoachWorkouts() {
       className="container"
       style={{ maxWidth: 900, margin: "24px auto" }}
     >
-      <h2>תכניות אימונים שלי</h2>
+      <h1>תכניות אימונים שלי</h1>
 
       {/* כפתורי דרגות עם הדגשה ל-active */}
       <div

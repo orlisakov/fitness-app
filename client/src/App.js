@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 
+import ResourcesLibrary from "./pages/ResourcesLibrary";
+import ResourcesManage from "./pages/ResourcesManage";
 import DashboardLayout from "./components/DashboardLayout";
 import DashboardCoach from "./pages/DashboardCoach";
 import DashboardTrainee from "./pages/DashboardTrainee";
@@ -83,6 +85,7 @@ export default function App() {
         path="/"
         element={<DashboardLayout onLogout={handleLogout} user={user} />}
       >
+        {/* דף הבית בתוך הדשבורד */}
         <Route
           index
           element={
@@ -128,8 +131,28 @@ export default function App() {
           path="manage-foods"
           element={<RequireRole allow={["coach"]} element={<ManageFoods />} />}
         />
+
+        <Route
+          path="resources-manage"
+          element={
+            <RequireRole allow={["coach"]} element={<ResourcesManage />} />
+          }
+        />
+        <Route
+          path="resources"
+          element={
+            <RequireRole
+              allow={["trainee", "coach"]}
+              element={<ResourcesLibrary />}
+            />
+          }
+        />
+
+        {/* 404 בתוך הדשבורד */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
 
+      {/* 404 גלובלי (ליתר ביטחון) */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

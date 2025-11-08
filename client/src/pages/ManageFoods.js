@@ -48,6 +48,7 @@ const categoryMap = {
   vegetables_breakfast: "ירקות חופשיים לבוקר",
 
   // --- צהריים ---
+  veges_Protein: "חלבון לצמחונים",
   protein_lunch: "חלבון לצהריים",
   carbs_lunch: "פחמימות לצהריים (כללי)",
   fat_lunch: "שומנים לצהריים",
