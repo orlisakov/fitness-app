@@ -1,15 +1,15 @@
 // src/components/DashboardLayout.jsx
-import React from "react";
+import React, { useState } from "react";
 import { NavLink, useNavigate, Outlet } from "react-router-dom";
 import "../styles/theme.css";
 import logo from "../assets/logo.jpg";
 
 export default function DashboardLayout({ onLogout, user }) {
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+
   const role = user?.role || null;
 
-  // התאימי לראוטים שהוגדרו ב-App.js
-  // אם הראוט אצלך הוא "/trainee-workouts" — החליפי כאן.
   const TRAINEE_WORKOUTS_PATH = "/workouts";
   const COACH_WORKOUTS_PATH = "/coach-workouts";
   const MANAGE_FOODS_PATH = "/manage-foods";
@@ -24,6 +24,12 @@ export default function DashboardLayout({ onLogout, user }) {
     } else {
       navigate("/");
     }
+    setMenuOpen(false);
+  }
+
+  function handleNavClick() {
+    // כשנלחץ לינק בנייד – נסגור את התפריט
+    setMenuOpen(false);
   }
 
   const userId = user?._id || user?.id || "";
@@ -39,6 +45,7 @@ export default function DashboardLayout({ onLogout, user }) {
             style={{ cursor: "pointer" }}
             onClick={onLogoClick}
           />
+
           <button
             type="button"
             className="site-title-btn"
@@ -47,17 +54,28 @@ export default function DashboardLayout({ onLogout, user }) {
           >
             Eiv's Studio
           </button>
+
+          {/* כפתור תפריט – מוצג רק בנייד דרך CSS */}
+          <button
+            type="button"
+            className="nav-toggle"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            aria-label="פתיחת תפריט"
+          >
+            ☰
+          </button>
         </div>
 
-        <nav className="nav-links">
-          {/* פרטים אישיים — רק למתאמנת */}
+        <nav
+          className={`nav-links ${menuOpen ? "nav-links-open" : ""}`}
+          onClick={handleNavClick}
+        >
           {role === "trainee" && (
             <NavLink to="/trainee-dashboard" className={linkCls}>
               פרטים אישיים
             </NavLink>
           )}
 
-          {/* קישור לאימונים – לפי תפקיד */}
           {role === "coach" ? (
             <NavLink to={COACH_WORKOUTS_PATH} className={linkCls}>
               תכניות אימון שלי
@@ -68,31 +86,28 @@ export default function DashboardLayout({ onLogout, user }) {
             </NavLink>
           )}
 
-          {/* תפריט אישי למתאמנת בלבד */}
           {role === "trainee" && (
             <NavLink to={PERSONAL_MENU_PATH} className={linkCls}>
               תפריט אישי
             </NavLink>
           )}
 
-          {/* ניהול מזונות למאמנת בלבד */}
           {role === "coach" && (
             <NavLink to={MANAGE_FOODS_PATH} className={linkCls}>
               ניהול מאגר
             </NavLink>
           )}
 
-          {/* אופציונלי: למאמנת כפתור נוסף לניהול */}
           {role === "coach" && (
             <NavLink to="/resources-manage" className={linkCls}>
               קבצים להעלאה
             </NavLink>
           )}
+
           <NavLink to="/resources" className={linkCls}>
             קבצים להורדה
           </NavLink>
 
-          {/* התנתקות */}
           <button type="button" className="logout-button" onClick={onLogout}>
             התנתקות
           </button>
