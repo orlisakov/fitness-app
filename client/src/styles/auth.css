@@ -1,41 +1,70 @@
-/* src/styles/auth.css */
+/* ============================
+   AUTH PAGE – DARK GLAM THEME
+   מתואם לעיצוב הכללי של האתר
+   ============================ */
 
-/* צבעי בסיס */
 :root {
-  --auth-bg: #0b0b0b; /* רקע כללי */
-  --auth-card: #121212; /* כרטיס */
-  --auth-text: #eaeaea; /* טקסט */
-  --auth-muted: #a8a8a8; /* טקסט משני */
-  --auth-border: #222; /* גבולות */
-  --auth-accent: #ff4081; /* ורוד */
-  --auth-accent-2: #ff6a00; /* כתום */
+  --auth-bg: #050008; /* רקע ראשי כמו האתר */
+  --auth-card: #0b0615; /* פאנל כהה כמו כרטיסי האתר */
+  --auth-card-soft: #130a22;
+
+  --auth-text: #f7f5ff; /* טקסט ראשי */
+  --auth-muted: #a8a2c0; /* טקסט משני */
+
+  --auth-border: rgba(255, 79, 155, 0.4); /* ורוד עדין */
+
+  --auth-accent: #ff477e; /* כפתור ורוד חדש */
+  --auth-accent-2: #b023ff; /* סגלגל — שילוב יפה */
+
+  --auth-shadow: 0 18px 45px rgba(0, 0, 0, 0.85);
 }
 
-/* פריסה כללית */
+/* ============================
+   LAYOUT
+   ============================ */
+
 .auth2-container {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
   min-height: 100vh;
-  background: var(--auth-bg);
+  background: radial-gradient(
+      circle at top left,
+      rgba(176, 35, 255, 0.4),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      rgba(255, 0, 92, 0.45),
+      transparent 55%
+    ),
+    var(--auth-bg);
   color: var(--auth-text);
-  font-family: "Alef", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family: "Alef", system-ui, sans-serif;
 }
 
-/* צד תמונה */
+/* ============================
+   HERO SIDE
+   ============================ */
+
 .auth2-hero {
   position: relative;
-  background-image: url("../assets/couch.jpg"); /* אפשר להחליף */
+  background-image: url("../assets/couch.jpg");
   background-size: cover;
   background-position: center;
   filter: saturate(1.05);
 }
+
 .auth2-hero::after {
-  /* גרדיאנט כהה קל לקריאות */
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.7));
+  background: linear-gradient(
+    180deg,
+    rgba(37, 0, 83, 0.25),
+    rgba(0, 0, 0, 0.75)
+  );
 }
+
 .auth2-hero-overlay {
   position: relative;
   z-index: 1;
@@ -45,18 +74,25 @@
   padding: clamp(24px, 6vw, 64px);
   text-align: center;
 }
+
 .auth2-hero-title {
   font-size: clamp(28px, 4vw, 44px);
   margin: 0 0 10px;
   letter-spacing: 0.3px;
+  color: #ffffff;
+  text-shadow: 0 0 14px rgba(255, 71, 126, 0.4);
 }
+
 .auth2-hero-subtitle {
   margin: 0;
   color: var(--auth-muted);
   font-size: clamp(14px, 1.8vw, 18px);
 }
 
-/* צד טופס */
+/* ============================
+   FORM PANEL
+   ============================ */
+
 .auth2-panel {
   display: grid;
   place-items: center;
@@ -69,59 +105,64 @@
   border: 1px solid var(--auth-border);
   border-radius: 18px;
   padding: clamp(20px, 4vw, 28px);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--auth-shadow);
 }
 
+/* לוגו */
 .auth2-logo {
   display: block;
   width: 120px;
   height: 120px;
   object-fit: cover;
-  border-radius: 16px;
-  margin: 0 auto 10px;
-  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  margin: 0 auto 14px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
+/* טקסטים */
 .auth2-title {
   text-align: center;
   margin: 6px 0 20px;
   font-size: 22px;
+  color: #ffffff;
 }
 
-/* שדות */
+/* ============================
+   INPUTS
+   ============================ */
+
 .auth2-label {
   display: block;
   font-size: 13px;
   color: var(--auth-muted);
   margin: 10px 4px 6px;
 }
-.auth2-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
 
 .auth2-input {
   width: 100%;
   height: 44px;
-  background: #0f0f0f;
+  background: var(--auth-card-soft);
   color: var(--auth-text);
-  border: 1px solid var(--auth-border);
+  border: 1px solid rgba(255, 79, 155, 0.3);
   border-radius: 12px;
   padding: 0 12px;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
-  box-sizing: border-box;
 }
+
 .auth2-input::placeholder {
   color: #8a8a8a;
 }
+
 .auth2-input:focus {
-  border-color: #303030;
-  box-shadow: 0 0 0 3px rgba(255, 64, 129, 0.15);
+  border-color: #ff4f9b;
+  box-shadow: 0 0 0 3px rgba(255, 71, 126, 0.25);
 }
 
-/* כפתורים */
+/* ============================
+   BUTTON
+   ============================ */
+
 .auth2-button {
   width: 100%;
   height: 46px;
@@ -132,44 +173,53 @@
   font-weight: 800;
   letter-spacing: 0.3px;
   color: white;
-  background: linear-gradient(90deg, var(--auth-accent-2), var(--auth-accent));
-  transition: transform 0.05s ease, filter 0.2s ease;
-}
-.auth2-button:hover {
-  filter: brightness(1.05);
-}
-.auth2-button:active {
-  transform: scale(0.995);
-}
-.auth2-button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+  background: linear-gradient(90deg, var(--auth-accent), var(--auth-accent-2));
+  box-shadow: 0 6px 16px rgba(255, 71, 126, 0.45);
+  transition: transform 0.06s ease, filter 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* קישורים קטנים */
+.auth2-button:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 10px 24px rgba(255, 71, 126, 0.55);
+}
+
+.auth2-button:active {
+  transform: scale(0.985);
+}
+
+/* ============================
+   SMALL LINKS
+   ============================ */
+
 .auth2-text-btn {
   background: none;
   border: 0;
   padding: 0;
-  color: var(--auth-accent);
+  color: #ff77b1;
   cursor: pointer;
   font-weight: 700;
 }
+
 .auth2-bottom-text {
   text-align: center;
   color: var(--auth-muted);
   margin: 12px 0 0;
 }
+
 .auth2-bottom-text a {
-  color: var(--auth-accent);
+  color: #ff77b1;
   text-decoration: none;
   font-weight: 800;
 }
+
 .auth2-bottom-text a:hover {
   text-decoration: underline;
 }
 
-/* הודעות */
+/* ============================
+   ALERTS
+   ============================ */
+
 .auth2-alert {
   border-radius: 12px;
   padding: 10px 12px;
@@ -177,26 +227,23 @@
   font-size: 14px;
   line-height: 1.4;
 }
+
 .auth2-alert-error {
-  color: #ffb3b3;
-  background: #2a0f12;
-  border: 1px solid #512022;
+  color: #ffc2cf;
+  background: rgba(255, 79, 155, 0.15);
+  border: 1px solid rgba(255, 79, 155, 0.4);
 }
+
 .auth2-alert-ok {
-  color: #b8ffc7;
-  background: #11311e;
-  border: 1px solid #1c4d2f;
+  color: #c6ffea;
+  background: rgba(79, 255, 175, 0.12);
+  border: 1px solid rgba(79, 255, 175, 0.3);
 }
 
-/* מפריד */
-.auth2-divider {
-  height: 1px;
-  background: var(--auth-border);
-  margin: 18px 0 10px;
-  border-radius: 1px;
-}
+/* ============================
+   RESPONSIVE
+   ============================ */
 
-/* רספונסיביות */
 @media (max-width: 980px) {
   .auth2-container {
     grid-template-columns: 1fr;
@@ -205,6 +252,7 @@
     height: 38vh;
   }
 }
+
 @media (max-width: 420px) {
   .auth2-card {
     padding: 16px;
@@ -214,17 +262,202 @@
     height: 96px;
   }
 }
+/* תיקון מיקום כפתור "הצג" בשדה סיסמה */
+.auth2-password-wrapper {
+  position: relative;
+}
 
-/* תמיכה במצב בהיר אוטומטי (אם תרצי) */
-@media (prefers-color-scheme: light) {
-  :root {
-    --auth-bg: #f6f7fb;
-    --auth-card: #ffffff;
-    --auth-text: #111827;
-    --auth-muted: #6b7280;
-    --auth-border: #e5e7eb;
+.auth2-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 12px; /* מחליף צד */
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #ff477e;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+.auth2-password-toggle:hover {
+  color: #ff7aa5;
+}
+
+/* לוודא שכל שדות הטקסט באותו גודל ומתיישרים */
+.auth2-input {
+  width: 100% !important;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* מעט ריפוד בתוך הכרטיסייה */
+.auth2-card {
+  padding: 28px 26px;
+}
+/* עטיפת סיסמה – הפיכה ל-LTR כדי לשלוט בצדדים */
+.auth2-password-wrapper {
+  position: relative;
+  direction: ltr !important;
+}
+
+/* כפתור "הצג" – למקם בצד שמאל */
+.auth2-password-toggle {
+  position: absolute;
+  top: 50%;
+  left: 12px !important;
+  right: auto !important;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #ff477e;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+.auth2-password-toggle:hover {
+  color: #ff7aa5;
+}
+/* שורת "סיסמה" + כפתור "הצג" בקצוות */
+.auth2-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* טקסט בקצה ימין, כפתור בקצה שמאל */
+  direction: rtl; /* לשמור על עברית מימין לשמאל */
+}
+
+/* לוודא שהכפתור נראה כמו לינק קטן */
+.auth2-label-row .auth2-text-btn {
+  font-size: 13px;
+  padding: 0;
+}
+/* ============================
+   AUTH PAGE – CLEAN PINK/BLACK THEME
+   *** רק החלפת צבעים — הפריסה נשארת 100% זהה ***
+   ============================ */
+
+:root {
+  --auth-bg: #050008; /* שחור רקע */
+  --auth-card: #0b0615; /* כרטיס כהה */
+  --auth-card-soft: #130a22; /* רקע שדות */
+
+  --auth-text: #ffffff; /* טקסט לבן */
+  --auth-muted: #d4ccda; /* טקסט משני */
+
+  --auth-border: rgba(183, 31, 90, 0.45); /* ורוד כהה שקוף */
+
+  --auth-accent: #b71f5a; /* כפתור ורוד חדש */
+  --auth-accent-2: #b71f5a; /* צבע אחיד — אין מעבר צבע */
+
+  --auth-shadow: 0 18px 45px rgba(0, 0, 0, 0.85);
+}
+
+/* HERO TITLE/SHADOW – שינוי צבע לסגול → ורוד */
+.auth2-hero-title {
+  color: #ffffff;
+  text-shadow: 0 0 14px rgba(183, 31, 90, 0.55);
+}
+
+/* גרדיאנט של צד תמונה – החלפנו סגול לורוד נקי */
+.auth2-hero::after {
+  background: linear-gradient(
+    180deg,
+    rgba(183, 31, 90, 0.25),
+    rgba(0, 0, 0, 0.75)
+  );
+}
+
+/* INPUT BORDER */
+.auth2-input {
+  border: 1px solid rgba(183, 31, 90, 0.45);
+}
+.auth2-input:focus {
+  border-color: #b71f5a;
+  box-shadow: 0 0 0 3px rgba(183, 31, 90, 0.25);
+}
+
+/* BUTTON – ורוד בלבד */
+.auth2-button {
+  background: #b71f5a !important;
+  box-shadow: 0 6px 16px rgba(183, 31, 90, 0.45);
+}
+.auth2-button:hover {
+  background: #a81952 !important;
+}
+
+/* כפתור "הצג" בשדה סיסמה */
+.auth2-password-toggle {
+  color: #b71f5a;
+}
+.auth2-password-toggle:hover {
+  color: #ff77a8;
+}
+
+/* לינקים קטנים */
+.auth2-text-btn,
+.auth2-bottom-text a {
+  color: #ff77a8;
+}
+
+/* הודעת שגיאה */
+.auth2-alert-error {
+  color: #ffd5df;
+  background: rgba(183, 31, 90, 0.18);
+  border: 1px solid rgba(183, 31, 90, 0.45);
+}
+
+/* רקע עליון של הדף (הסרנו סגולים מהגרדיאנט) */
+.auth2-container {
+  background: var(--auth-bg);
+}
+@media (max-width: 600px) {
+  .auth2-panel {
+    padding: 16px;
   }
-  .auth2-input {
-    background: #fff;
+
+  .auth2-card {
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+    padding: 20px 16px;
+  }
+
+  .auth2-hero-overlay {
+    padding: 18px;
+  }
+
+  .auth2-hero-title {
+    font-size: 24px;
+  }
+}
+@media (max-width: 600px) {
+  body {
+    font-size: 15px;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
+  h2 {
+    font-size: 18px;
+  }
+
+  .dashboard-main,
+  .main-content {
+    padding: 16px 12px;
+  }
+
+  .split-card,
+  .trainee-dashboard .trainee-form,
+  .meal-card,
+  .instructions-card,
+  .resource-card,
+  .card-pink {
+    padding: 16px 14px;
+    border-radius: 14px;
   }
 }

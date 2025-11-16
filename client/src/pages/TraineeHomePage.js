@@ -112,10 +112,9 @@ export default function TraineeHomePage() {
 
       {/* למה לבחור בי? */}
       <section className="coach-section">
-        <h2 className="coach-section-title">למה לבחור בי?</h2>
         <div className="coach-card coach-card--list">
           <p>
-            כי אני <strong>לא עוד מאמנת</strong>. אני מבינה איך הראש של אישה עם
+            אני <strong>לא עוד מאמנת</strong>. אני מבינה איך הראש של אישה עם
             עודף משקל באמת עובד.
           </p>
 
@@ -158,7 +157,7 @@ export default function TraineeHomePage() {
         <h2 className="coach-section-title">שינויים אמיתיים מהתהליכים</h2>
 
         <p className="coach-gallery-subtitle">
-          חלק קטן מהנשים שעברו איתי תהליך והפכו לחלשות, בריאות ובטוחות יותר
+          חלק קטן מהנשים שעברו איתי תהליך והפכו לחזקות, בריאות ובטוחות יותר
           בעצמן 💗
         </p>
 

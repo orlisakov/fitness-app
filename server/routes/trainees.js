@@ -188,7 +188,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// עדכון רשימת מזונות שלא נאכלים
+// עדכון העדפות שלא נאכלים
 router.put("/:id/disliked-foods", authMiddleware, async (req, res) => {
   try {
     const trainee = await Trainee.findById(req.params.id);

@@ -433,7 +433,7 @@ export default function DashboardCoach() {
       if (!res.ok) {
         const text = await res.text();
         console.error("Server returned:", text);
-        throw new Error("שגיאה בשמירת המזונות שלא נאכלים");
+        throw new Error("שגיאה בשמירת העדפות");
       }
       setTrainees((prev) =>
         prev.map((t) =>
@@ -624,7 +624,7 @@ export default function DashboardCoach() {
                     className="action-btn"
                     onClick={() => openDislikedFoodsModal(t)}
                   >
-                    מזונות לא נאכלים
+                    העדפות
                   </button>
                 </td>
                 <td>
@@ -1054,7 +1054,7 @@ export default function DashboardCoach() {
         <div className="modal-backdrop">
           <div className="modal" dir="rtl">
             <div className="modal-header">
-              <h2>בחרי מזונות שלא נאכלים - {selectedTrainee?.fullName}</h2>
+              <h2>בחרי העדפות - {selectedTrainee?.fullName}</h2>
               <button
                 className="close-btn"
                 onClick={() => setShowDislikedFoodsModal(false)}

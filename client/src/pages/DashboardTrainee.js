@@ -406,7 +406,7 @@ export default function DashboardTrainee() {
               <div className="modal-backdrop">
                 <div className="modal" dir="rtl">
                   <div className="modal-header">
-                    <h2>בחרי מזונות שלא נאכלים</h2>
+                    <h2>בחרי העדפות</h2>
                     <button
                       className="close-btn"
                       onClick={() => setShowDislikedFoodsModal(false)}

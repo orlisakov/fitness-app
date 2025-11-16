@@ -2,26 +2,26 @@
    ROOT – DARK GLAM THEME
    ========================= */
 :root {
-  /* בסיס דארק ניאון */
+  /* בסיס דארק נקי – שחור עם נגיעה ורודה */
   --bg-page: #050008;
-  --bg-panel: #0b0615;
-  --bg-panel-soft: #130a22;
+  --bg-panel: #07040a; /* פאנלים כהים, כמעט שחור */
+  --bg-panel-soft: #0f0b14; /* טיפה פחות כהה */
 
-  /* אקסנטים */
-  --accent-pink: #ff1f71;
-  --accent-pink-soft: #ff4f9b;
-  --accent-purple: #b023ff;
+  /* אקסנטים – ורוד בלבד */
+  --accent-pink: #ff477e;
+  --accent-pink-soft: #ff7aa5;
+  --accent-purple: #ff7aa5; /* כבר לא סגול, רק עוד גוון ורוד */
   --accent-pill: #ff005c;
 
   /* טקסט */
-  --text-main: #f7f5ff;
-  --text-muted: #a8a2c0;
-  --text-soft: #80789c;
+  --text-main: #fdfbff;
+  --text-muted: #b9b4c8;
+  --text-soft: #8e869f;
 
   /* קווים וצל */
-  --border-soft: rgba(255, 255, 255, 0.05);
-  --border-strong: rgba(255, 31, 113, 0.7);
-  --shadow-strong: 0 26px 60px rgba(0, 0, 0, 0.95);
+  --border-soft: rgba(255, 255, 255, 0.06);
+  --border-strong: rgba(255, 71, 126, 0.9);
+  --shadow-strong: 0 26px 60px rgba(0, 0, 0, 0.96);
 
   /* שמות "מורשת" כדי לא לשבור קוד קיים */
   --primary-pink: var(--accent-pink);
@@ -31,14 +31,14 @@
 
   --background: var(--bg-page);
   --background-dark: var(--bg-page);
-  --background-light: #090310;
+  --background-light: #050008;
 
   --text: var(--text-main);
   --text-light: #ffffff;
   --text-dark: var(--text-main);
 
   --border-color: var(--border-soft);
-  --shadow-color: rgba(0, 0, 0, 0.85);
+  --shadow-color: rgba(0, 0, 0, 0.9);
 
   --success: #ff80ab;
   --error: #f44336;
@@ -73,21 +73,16 @@ body {
   direction: rtl;
   color: var(--text-main);
   background: radial-gradient(
-      circle at top left,
-      rgba(176, 35, 255, 0.55) 0,
+      circle at top center,
+      rgba(255, 71, 126, 0.4) 0,
       transparent 55%
     ),
     radial-gradient(
       circle at bottom right,
-      rgba(255, 0, 92, 0.55) 0,
+      rgba(255, 71, 126, 0.3) 0,
       transparent 55%
     ),
-    radial-gradient(
-      circle at top right,
-      rgba(37, 0, 83, 0.9) 0,
-      transparent 60%
-    ),
-    var(--bg-page);
+    #050008; /* בסיס שחור */
 }
 
 h1,
@@ -215,7 +210,7 @@ button,
 .resource-btn,
 .btn-link,
 .gradient-button {
-  background: #ff477e !important;
+  background: #b71f5a !important;
   color: #ffffff !important;
   border: none !important;
   border-radius: 999px;
@@ -234,7 +229,7 @@ button:hover,
 .resource-btn:hover,
 .btn-link:hover,
 .gradient-button:hover {
-  background: #e43f72 !important;
+  background: #d4246b !important;
   box-shadow: 0 8px 22px rgba(255, 71, 126, 0.55) !important;
   transform: translateY(-2px);
 }
@@ -987,11 +982,10 @@ table.history-table,
   overflow: hidden;
 }
 
-/* כותרות כלליות */
 .history-table thead,
 .menu-table thead tr:first-child,
 .table thead tr {
-  background: linear-gradient(135deg, #2c0a3a, #b50073);
+  background: linear-gradient(135deg, #08040b, #ff477e);
   color: #ffffff;
 }
 
@@ -1745,6 +1739,288 @@ body,
   }
 
   .coach-gallery-grid img {
+    border-radius: 14px;
+  }
+}
+.menu-table thead th.grp {
+  background: linear-gradient(90deg, #08040b, #ff477e);
+  color: #ffffff;
+  padding: 16px;
+  font-size: 18px;
+  font-weight: 800;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+  border-bottom: 2px solid #ff4f9b;
+}
+/* =========================
+   TABLES – HISTORY + MENU
+   ========================= */
+.table-wrapper,
+.table-wrap {
+  overflow-x: auto;
+}
+
+/* בסיס לטבלאות */
+table.history-table,
+.menu-table,
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #050008;
+  color: var(--text-main);
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.85);
+}
+
+/* כותרות כלליות */
+.history-table thead,
+.table thead tr {
+  background: linear-gradient(135deg, #08040b, #ff477e);
+  color: #ffffff;
+}
+
+/* תאים כלליים */
+.history-table th,
+.history-table td,
+.table th,
+.table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 10px 12px;
+  font-size: 14px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* זברה עדינה להיסטוריה/טבלאות כלליות */
+.history-table tbody tr:nth-child(even),
+.table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.history-table tbody tr:nth-child(odd),
+.table tbody tr:nth-child(odd) {
+  background: transparent;
+}
+
+.history-table tbody tr:hover,
+.table tbody tr:hover {
+  background: rgba(255, 71, 126, 0.08);
+}
+
+/* ===== תפריט (menu-table) – לוק מיוחד ===== */
+
+/* רקע כרטיס */
+.menu-table {
+  background: radial-gradient(circle at top, rgba(255, 71, 126, 0.2), #050008);
+  border: 1px solid rgba(255, 71, 126, 0.7);
+}
+
+/* כותרות עליונות – חלבון / פחמימה */
+.menu-table thead tr:first-child th {
+  background: #6a0b27; /* ורוד אחיד */
+  color: #ffffff;
+  padding: 16px 12px;
+  font-size: 18px;
+  font-weight: 800;
+  text-shadow: none; /* בלי עננות */
+  border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+}
+
+/* שורת כותרת שנייה – "מוצר / כמות" */
+.menu-table thead tr:nth-child(2) th {
+  background: #b71f5a; /* ורוד בהיר יותר, אחיד */
+  color: #ffffff;
+  font-weight: 800;
+  padding: 15px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  text-shadow: none;
+}
+
+/* תאים בגוף הטבלה */
+.menu-table th,
+.menu-table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+/* יישור טקסט: עמודת מוצר – ימין, עמודת כמות – מרכז */
+.menu-table tbody td:nth-child(1),
+.menu-table thead tr:nth-child(2) th:nth-child(1),
+.menu-table tbody td:nth-child(3),
+.menu-table thead tr:nth-child(2) th:nth-child(3) {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.menu-table tbody td:nth-child(2),
+.menu-table thead tr:nth-child(2) th:nth-child(2) {
+  text-align: right;
+}
+
+/* זברה עדינה לגוף הטבלה */
+.menu-table tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.menu-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Hover מודגש יותר */
+.menu-table tbody tr:hover {
+  background: rgba(255, 71, 126, 0.1);
+}
+
+/* עמודות כמות בורוד מודגש */
+.menu-table td.amount {
+  color: #ffb6e6;
+  font-weight: 700;
+  text-shadow: 0 0 4px rgba(255, 71, 126, 0.6);
+}
+
+/* שורה אחרונה – בלי קו תחתון חזק מדי */
+.menu-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+@media (max-width: 720px) {
+  .table td,
+  .table th,
+  .menu-table td,
+  .menu-table th {
+    padding: 8px 6px;
+    font-size: 13px;
+  }
+}
+/* ===== כפתורים כלליים – וורוד כהה אחיד ===== */
+button,
+.btn,
+.resource-btn,
+.btn-link,
+.gradient-button,
+.action-btn,
+.history-table button,
+.table button {
+  background: #b71f5a !important; /* ורוד כהה אחיד */
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(183, 31, 90, 0.35) !important;
+  text-decoration: none;
+  font-family: "Alef", sans-serif;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+button:hover,
+.btn:hover,
+.resource-btn:hover,
+.btn-link:hover,
+.gradient-button:hover,
+.action-btn:hover {
+  background: #a01851 !important;
+  box-shadow: 0 8px 22px rgba(183, 31, 90, 0.55) !important;
+  transform: translateY(-2px);
+}
+
+/* ===== כפתור מחיקה בלבד ===== */
+.action-btn.delete-btn,
+.btn-delete,
+button.delete,
+button.delete-btn {
+  background: #e53935 !important;
+  box-shadow: 0 6px 16px rgba(229, 57, 53, 0.4) !important;
+  color: #fff !important;
+}
+
+.action-btn.delete-btn:hover {
+  background: #c62828 !important;
+  box-shadow: 0 8px 24px rgba(229, 57, 53, 0.6) !important;
+}
+
+/* ===== כפתור הוספת מאכל חדש ===== */
+.add-btn,
+.add-food-btn,
+button.add-food {
+  background: #b71f5a !important;
+  color: #ffffff !important;
+  border-radius: 30px !important;
+  padding: 12px 26px !important;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 6px 16px rgba(183, 31, 90, 0.35) !important;
+}
+
+.add-btn:hover,
+.add-food-btn:hover {
+  background: #a01851 !important;
+}
+/* ===== כותרת ראשית אחידה לכל הטבלאות ===== */
+
+.history-table thead tr:first-child,
+.menu-table thead tr:first-child,
+.table thead tr:first-child {
+  background: #b71f5a !important; /* ורוד אחיד */
+}
+
+.history-table thead th,
+.menu-table thead th,
+.table thead th {
+  background: #b71f5a !important;
+  color: #ffffff !important;
+  font-weight: 800;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+}
+@media (max-width: 600px) {
+  .auth2-panel {
+    padding: 16px;
+  }
+
+  .auth2-card {
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+    padding: 20px 16px;
+  }
+
+  .auth2-hero-overlay {
+    padding: 18px;
+  }
+
+  .auth2-hero-title {
+    font-size: 24px;
+  }
+}
+@media (max-width: 600px) {
+  body {
+    font-size: 15px;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
+  h2 {
+    font-size: 18px;
+  }
+
+  .dashboard-main,
+  .main-content {
+    padding: 16px 12px;
+  }
+
+  .split-card,
+  .trainee-dashboard .trainee-form,
+  .meal-card,
+  .instructions-card,
+  .resource-card,
+  .card-pink {
+    padding: 16px 14px;
     border-radius: 14px;
   }
 }
