@@ -129,8 +129,6 @@ export default function PersonalMenu({ traineeData }) {
     const CONTENT_W = PAGE_W - MARGIN * 2;
     const CONTENT_H = PAGE_H - MARGIN * 2;
 
-    // === נועל רוחב DOM קבוע כדי למנוע שבירת שורות/סקיילים שונים בין כרטיסים ===
-    // 794px ~ 210mm ב־96dpi; זה רוחב "בטוח" ל־A4. נעמיס לכאן גם scale בקנבס.
     const container = pdfRef.current;
     const prevWidth = container.style.width;
     const prevBoxSizing = container.style.boxSizing;
@@ -142,7 +140,6 @@ export default function PersonalMenu({ traineeData }) {
         ".instructions-card, .meal-card"
       );
       if (!cards.length) {
-        // fallback: אם אין כרטיסים ספציפיים, נייצא את כל ה־container כעמוד אחד
         const fullCanvas = await html2canvas(container, {
           backgroundColor: "#fff",
           scale: 2,
@@ -163,32 +160,27 @@ export default function PersonalMenu({ traineeData }) {
       let first = true;
 
       for (const card of cards) {
-        // מרנדרים כל "כרטיס" בקנבס איכותי
         const canvas = await html2canvas(card, {
           backgroundColor: "#fff",
-          scale: 2, // איכות גבוהה
+          scale: 2,
           useCORS: true,
           allowTaint: true,
-          windowWidth: container.scrollWidth, // חשוב! כדי לשמר פריסה יציבה
+          windowWidth: container.scrollWidth,
         });
 
-        // חישוב סקלת מעבר מפיקסלים למ"מ לפי יחס התמונה
         const imgData = canvas.toDataURL("image/png");
         const imgNaturalWpx = canvas.width;
         const imgNaturalHpx = canvas.height;
 
-        // ממירים למ"מ בשמירה על יחס: נשתמש ברוחב התוכן (CONTENT_W)
         let imgWmm = CONTENT_W;
         let imgHmm = (imgNaturalHpx * imgWmm) / imgNaturalWpx;
 
-        // אם הכרטיס גבוה מדי לעמוד יחיד — נקטין פרופורציונלית כך שייכנס בעמוד אחד
         if (imgHmm > CONTENT_H) {
-          const scale = CONTENT_H / imgHmm; // < 1
+          const scale = CONTENT_H / imgHmm;
           imgWmm = imgWmm * scale;
           imgHmm = imgHmm * scale;
         }
 
-        // אם אין מספיק מקום בעמוד הנוכחי — עוברים לעמוד חדש
         if (!first && y + imgHmm > PAGE_H - MARGIN) {
           pdf.addPage();
           y = MARGIN;
@@ -202,7 +194,7 @@ export default function PersonalMenu({ traineeData }) {
           imgWmm,
           imgHmm
         );
-        y += imgHmm + 6; // רווח אנכי בין כרטיסים
+        y += imgHmm + 6;
         first = false;
       }
 
@@ -211,7 +203,6 @@ export default function PersonalMenu({ traineeData }) {
       console.error("PDF export error:", err);
       alert("אירעה שגיאה ביצוא ה-PDF. נסי שוב.");
     } finally {
-      // מחזירים את הסטיילים כפי שהיו
       container.style.width = prevWidth || "";
       container.style.boxSizing = prevBoxSizing || "";
     }
@@ -297,9 +288,9 @@ export default function PersonalMenu({ traineeData }) {
             const c = get(carbOptions, i);
             return (
               <tr key={i}>
-                <td>{p?.displayText || ""}</td>
+                <td className="amount">{p?.displayText || ""}</td>
                 <td>{p?.food?.name || ""}</td>
-                <td>{c?.displayText || ""}</td>
+                <td className="amount">{c?.displayText || ""}</td>
                 <td>{c?.food?.name || ""}</td>
               </tr>
             );
@@ -353,11 +344,11 @@ export default function PersonalMenu({ traineeData }) {
             const f = get(fruitsOptions, i);
             return (
               <tr key={i}>
-                <td>{p?.displayText || ""}</td>
+                <td className="amount">{p?.displayText || ""}</td>
                 <td>{p?.food?.name || ""}</td>
-                <td>{s?.displayText || ""}</td>
+                <td className="amount">{s?.displayText || ""}</td>
                 <td>{s?.food?.name || ""}</td>
-                <td>{f?.displayText || ""}</td>
+                <td className="amount">{f?.displayText || ""}</td>
                 <td>{f?.food?.name || ""}</td>
               </tr>
             );
@@ -383,7 +374,7 @@ export default function PersonalMenu({ traineeData }) {
         {
           food: eggs.food,
           displayText: eggs.displayText,
-          _isEggCombo: true, // אופציונלי — אם רוצים עיצוב שונה
+          _isEggCombo: true,
         },
       ];
     }
@@ -436,7 +427,7 @@ export default function PersonalMenu({ traineeData }) {
           <tbody>
             {legumes.map((opt, i) => (
               <tr key={i}>
-                <td>{opt?.displayText || ""}</td>
+                <td className="amount">{opt?.displayText || ""}</td>
                 <td>{opt?.food?.name || ""}</td>
               </tr>
             ))}
@@ -477,17 +468,14 @@ export default function PersonalMenu({ traineeData }) {
     const proteinLabel = proteinGroup?.title || "חלבון (בחרי אחד)";
     const carbsLabel = carbsGroup?.title || "פחמימות (בחרי אחד)";
 
-    // מזהה קטניה לפי קטגוריות/שם
     const isLegume = (opt) => {
       const cats = opt?.food?.categories || [];
       return cats.includes("legumes_lunch");
     };
 
-    // פירוק מהפחמימות
     const legumesFromCarbs = allCarbs.filter(isLegume);
     const carbsNoLegumes = allCarbs.filter((o) => !isLegume(o));
 
-    // איחוד קטניות משתי הקבוצות והסרת כפילויות לפי food._id
     const byId = (o) =>
       String(o?.food?._id || o?.food?.id || o?.food?.name || "");
     const legumesMerged = [
@@ -541,6 +529,74 @@ export default function PersonalMenu({ traineeData }) {
     );
   }
 
+  function QuadGroupTable({
+    proteinOptions = [],
+    sweetsOptions = [],
+    fruitsOptions = [],
+    fatsOptions = [],
+  }) {
+    const maxRows = Math.max(
+      proteinOptions.length,
+      sweetsOptions.length,
+      fruitsOptions.length,
+      fatsOptions.length
+    );
+    const get = (arr, i) => (i < arr.length ? arr[i] : null);
+
+    if (maxRows === 0) return null;
+
+    return (
+      <table className="menu-table" dir="rtl">
+        <thead>
+          <tr>
+            <th colSpan={2} className="grp">
+              חלבון (בחר אחד):
+            </th>
+            <th colSpan={2} className="grp">
+              מתוקים (בחר אחד):
+            </th>
+            <th colSpan={2} className="grp">
+              או (בחר אחד)
+            </th>
+            <th colSpan={2} className="grp">
+              או (בחר אחד)
+            </th>
+          </tr>
+          <tr>
+            <th style={{ width: 110 }}>כמות</th>
+            <th>מוצר</th>
+            <th style={{ width: 110 }}>כמות</th>
+            <th>מוצר</th>
+            <th style={{ width: 110 }}>כמות</th>
+            <th>מוצר</th>
+            <th style={{ width: 110 }}>כמות</th>
+            <th>מוצר</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: maxRows }).map((_, i) => {
+            const p = get(proteinOptions, i);
+            const s = get(sweetsOptions, i);
+            const f = get(fruitsOptions, i);
+            const fat = get(fatsOptions, i);
+            return (
+              <tr key={i}>
+                <td className="amount">{p?.displayText || ""}</td>
+                <td>{p?.food?.name || ""}</td>
+                <td className="amount">{s?.displayText || ""}</td>
+                <td>{s?.food?.name || ""}</td>
+                <td className="amount">{f?.displayText || ""}</td>
+                <td>{f?.food?.name || ""}</td>
+                <td className="amount">{fat?.displayText || ""}</td>
+                <td>{fat?.food?.name || ""}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    );
+  }
+
   function SnackBlock({ meal }) {
     const t = meal.targets;
     const prot =
@@ -549,15 +605,17 @@ export default function PersonalMenu({ traineeData }) {
       meal.groups.find((g) => g.key === "sweet_snack")?.options || [];
     const fruits =
       meal.groups.find((g) => g.key === "fruit_snack")?.options || [];
+    const fats = meal.groups.find((g) => g.key === "fat_snack")?.options || [];
 
     return (
       <div className="meal-card stacked">
         <SectionTitle>ארוחת ביניים</SectionTitle>
         <TargetsRow t={t} />
-        <TripleGroupTable
+        <QuadGroupTable
           proteinOptions={prot}
           sweetsOptions={sweets}
           fruitsOptions={fruits}
+          fatsOptions={fats}
         />
       </div>
     );
@@ -657,31 +715,82 @@ export default function PersonalMenu({ traineeData }) {
 
 /* ===== דגשים ===== */
 function InstructionsCard() {
-  const BULLETS = [
-    "חשוב לשתות לפחות 3 ליטר מים ביום.",
-    "משקל מזון – חובה.",
-    "להעדיף ספריי שמן.",
-    "חלב 0% (עד כוס חד־פעמי ביום).",
-    "מומלץ סויה ללא סוכר אם מתאים. משקאות זירו – מותר.",
-    "לא להעמיס סוכר/סילאן אלא אם מצוין.",
-    "ירקות – הרבה! (בצל מוגבל).",
-    "ארוחות מסודרות: לא לדלג. לא לנשנש בין הארוחות.",
-    "אורז לבן/בסמטי עד 400 גרם מבושל ביום (חלוקה לפי התפריט).",
-    "פסטה רק עם רוטב עגבניות – ללא שמנת.",
-    "לאכול עד שעתיים אחרי אימון; להימנע מאכילה מאוחרת (עד 21:00 אם אפשר).",
-    "אם מתחשק מתוק – אפשר להחליף למנה שמופיעה בתפריט (או פרי).",
-    "ירקות חופשיים: עגבניה, מלפפון, כרוב, פלפל, ברוקולי מבושל, גזר, שומר טרי, אספרגוס, סלק, בצל (מוגבל).",
-    "אם משהו לא בטוח – לשאול לפני שאוכלים 🙂",
-  ];
-
   return (
-    <div className="instructions-card meal-card">
-      <h2 className="menu-title highlight">דגשים חשובים!</h2>
-      <ol className="instructions-list">
-        {BULLETS.map((t, i) => (
-          <li key={i}>{t}</li>
-        ))}
+    <div dir="rtl" style={{ padding: 20, maxWidth: 900, margin: "0 auto" }}>
+      <h1 style={{ marginBottom: 12 }}>דגשים חשובים לתזונה</h1>
+
+      <ol style={{ lineHeight: 1.7, fontSize: 15, paddingInlineStart: 18 }}>
+        <li style={{ marginBottom: 8 }}>
+          אין תפריט מושלם – יש התמדה מושלמת. כל בחירה מדויקת שאת עושה ביום־יום
+          מצטברת לתוצאה גדולה.
+        </li>
+
+        <li style={{ marginBottom: 8 }}>
+          חלבון זה הבסיס שלך. אל תדלגי עליו – הוא שומר על השריר, מגביר שובע,
+          ומזרז חילוף חומרים.
+        </li>
+
+        <li style={{ marginBottom: 8 }}>
+          מים זה חלק מהתפריט. לשתות לפחות 3 ליטר ביום – לפני שאת מרגישה צמא. אם
+          קשה לך לשתות מים – אפשר להשתמש בפטל דל קלוריות של יכין.
+        </li>
+
+        <li style={{ marginBottom: 8 }}>
+          חשוב לשקול את האוכל אחרי בישול, לפי משקל מזון מבושל – זה מה שקובע את
+          הדיוק בתפריט.
+        </li>
+
+        <li style={{ marginBottom: 8 }}>
+          להשתמש תמיד בספריי שמן בלבד – לא לשפוך שמן חופשי.
+        </li>
+
+        <li style={{ marginBottom: 8 }}>
+          פחמימות לא אויב. לבחור חכמות בלבד – כוסמת, בורגול, בטטה, קינואה, אורז
+          מלא או לחם/פיתה PRO, ול לאכול לפי הכמויות הכתובות לך בתפריט. ממליצה
+          לשלב גם סקיני פסטה – תחליף מצוין ודל קלוריות.
+        </li>
+
+        <li style={{ marginBottom: 8 }}>
+          ירקות בכל ארוחה עיקרית. הם מאזנים את רמות הסוכר בדם, תורמים לעיכול
+          ולתחושת שובע. מומלץ להוסיף שעועית ירוקה, ברוקולי וירוקים בכל יום – הם
+          תומכים בחילוף חומרים ומפחיתים חשקים.
+        </li>
+
+        <li style={{ marginBottom: 8 }}>
+          ניתן להחליף בין ארוחות במהלך היום, כל עוד נשמר מרווח של כ־4 שעות בין
+          ארוחה לארוחה.
+        </li>
+
+        <li style={{ marginBottom: 8 }}>
+          להחליף סוכר לממתיקים טבעיים בלבד – כמו סטיביה, סוויטנגו, או סוכרלוז
+          נוזלי / שקיות לפי הטעם.
+        </li>
+
+        <li style={{ marginBottom: 8 }}>
+          חלב לשתות 1% שומן בלבד – עד כוס חד־פעמית אחת ביום. לחלופין ניתן לעבור
+          לחלב סויה ללא סוכר או חלב שקדים ללא סוכר, אותם אפשר לשתות ללא הגבלה.
+        </li>
+
+        <li style={{ marginBottom: 8 }}>
+          שינה = חילוף חומרים. לפחות 7 שעות בלילה – הגוף שלך נבנה ונשרף בזמן
+          המנוחה.
+        </li>
+
+        <li style={{ marginBottom: 8 }}>
+          לא לדלג על ארוחות. הגוף צריך רצף אנרגיה קבוע כדי לשרוף טוב יותר אם את
+          לא רעבה תכניסי לפחות את המנת חלבון של אותה ארוחה.
+        </li>
+
+        <li style={{ marginBottom: 8 }}>
+          אין דבר כזה “חטאתי”. אם יצאת מהמסגרת – פשוט לחזור לתפריט בארוחה הבאה,
+          בלי רגשות אשמה.
+        </li>
       </ol>
+
+      <p style={{ marginTop: 14, fontWeight: 600 }}>
+        תזכרי – תהליך אמיתי לא קורה בשבוע. הוא קורה כשאת מפסיקה לוותר על עצמך כל
+        פעם מחדש ❤️
+      </p>
     </div>
   );
 }

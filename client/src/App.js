@@ -1,4 +1,3 @@
-// src/App.js (גרסה עם userLoading + RequireRole מתוקן)
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 
@@ -14,6 +13,7 @@ import ManageFoods from "./pages/ManageFoods";
 import TraineeDetailsForm from "./components/TraineeDetailsForm";
 import Login from "./Login";
 import Register from "./Register";
+import TraineeHomePage from "./pages/TraineeHomePage";
 import config from "./config";
 
 export default function App() {
@@ -50,7 +50,7 @@ export default function App() {
     window.location.reload();
   };
 
-  // Guard לפי תפקיד, עם טיפול בטעינה
+  // ✅ רכיב ביניים למניעת גישה לפי תפקיד
   const RequireRole = ({ allow, element }) => {
     if (userLoading) return <div dir="rtl">טוען…</div>;
     return user && allow.includes(user.role) ? (
@@ -62,6 +62,7 @@ export default function App() {
 
   return (
     <Routes>
+      {/* דפים ציבוריים */}
       <Route
         path="/login"
         element={
@@ -79,13 +80,15 @@ export default function App() {
         }
       />
 
+      {/* דפי משתמש ספציפיים */}
       <Route path="/trainees/:id" element={<TraineeDetailsForm />} />
 
+      {/* דשבורד ראשי */}
       <Route
         path="/"
         element={<DashboardLayout onLogout={handleLogout} user={user} />}
       >
-        {/* דף הבית בתוך הדשבורד */}
+        {/* Index route */}
         <Route
           index
           element={
@@ -95,7 +98,7 @@ export default function App() {
               user.role === "coach" ? (
                 <DashboardCoach user={user} />
               ) : (
-                <DashboardTrainee user={user} />
+                <TraineeHomePage user={user} />
               )
             ) : (
               <Navigate to="/login" replace />
@@ -103,13 +106,32 @@ export default function App() {
           }
         />
 
-        {/* מתאמנת */}
+        {/* דף הבית של המתאמנת */}
+        <Route path="trainee-home" element={<TraineeHomePage user={user} />} />
+
+        {/* דשבורד המתאמנת */}
+        <Route
+          path="trainee-dashboard"
+          element={
+            <RequireRole allow={["trainee"]} element={<DashboardTrainee />} />
+          }
+        />
+
+        {/* אימונים */}
         <Route
           path="workouts"
           element={
             <RequireRole allow={["trainee"]} element={<TraineeWorkouts />} />
           }
         />
+        <Route
+          path="coach-workouts"
+          element={
+            <RequireRole allow={["coach"]} element={<CoachWorkouts />} />
+          }
+        />
+
+        {/* תפריט אישי */}
         <Route
           path="personal-menu"
           element={
@@ -120,18 +142,13 @@ export default function App() {
           }
         />
 
-        {/* מאמנת */}
-        <Route
-          path="coach-workouts"
-          element={
-            <RequireRole allow={["coach"]} element={<CoachWorkouts />} />
-          }
-        />
+        {/* ניהול מזונות */}
         <Route
           path="manage-foods"
           element={<RequireRole allow={["coach"]} element={<ManageFoods />} />}
         />
 
+        {/* ניהול קבצים */}
         <Route
           path="resources-manage"
           element={
@@ -148,11 +165,11 @@ export default function App() {
           }
         />
 
-        {/* 404 בתוך הדשבורד */}
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
 
-      {/* 404 גלובלי (ליתר ביטחון) */}
+      {/* Fallback גלובלי */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

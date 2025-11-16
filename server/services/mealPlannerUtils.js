@@ -763,7 +763,6 @@ function buildDynamicSplitInGrams(totals, ctx = {}) {
   return { protein, carbs, fat, calories };
 }
 
-// helper: grams-per-meal -> split percentages per meal
 function gramsToSplitPct(mealGrams, totals) {
   const safe = (x) => (typeof x === "number" && isFinite(x) ? x : 0);
 
@@ -775,9 +774,10 @@ function gramsToSplitPct(mealGrams, totals) {
   const out = {};
   for (const meal of Object.keys(mealGrams || {})) {
     const m = mealGrams[meal] || {};
-    const p = safe(m.protein),
-      c = safe(m.carbs),
-      f = safe(m.fat);
+    const p = safe(m.protein);
+    const c = safe(m.carbs);
+    // אם אין ערך לשומן, נניח שהוא חלק קטן מהתפריט (לדוגמה 0.1)
+    const f = "fat" in m ? safe(m.fat) : 0.1;
     const k = p * 4 + c * 4 + f * 9;
 
     out[meal] = {
@@ -1325,6 +1325,11 @@ class RuleBasedPlanner {
       (f) => bySuitability("snack", minSuit)(f) && inCats(f, ["fruit_snack"])
     );
   }
+  getFatSnack(minSuit = 3) {
+    return this.pool(
+      (f) => bySuitability("snack", minSuit)(f) && inCats(f, ["fat_snack"])
+    );
+  }
 
   buildLunch(totalTargets) {
     // אם צמחונית — נשתמש בגרסה הצמחונית הקיימת
@@ -1515,9 +1520,10 @@ class RuleBasedPlanner {
     }
 
     // מאגרים
-    const proteinPool = this.getProteinSnack(0); // חלבוני-ביניים
-    const sweetsPool = this.getSweetSnack(); // פחמימות לביניים (חטיפים/מתוקים)
-    const fruitsPool = this.getFruitSnack(); // חלופה לפחמימה: פרי
+    const proteinPool = this.getProteinSnack(0);
+    const sweetsPool = this.getSweetSnack();
+    const fruitsPool = this.getFruitSnack();
+    const FatsPool = this.getFatSnack();
 
     // אופציות לפי מאקרו יחיד
     const proteins = buildSingleMacroOptions(
@@ -1536,6 +1542,13 @@ class RuleBasedPlanner {
       fruitsPool,
       "carbs",
       totalTargets.carbs,
+      20
+    );
+
+    const FatsAsAlt = buildSingleMacroOptions(
+      FatsPool,
+      "fat",
+      totalTargets.fat,
       20
     );
 
@@ -1559,6 +1572,11 @@ class RuleBasedPlanner {
           title: "פירות (חלופה לפחמימות הביניים)",
           key: "fruit_snack",
           options: fruitsAsAlt,
+        },
+        {
+          title: "שומנים (חלופה לפחמימות הביניים)",
+          key: "fat_snack",
+          options: FatsAsAlt,
         },
       ],
     };

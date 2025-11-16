@@ -1,4 +1,6 @@
 // client/src/pages/DashboardTrainee.jsx
+import { useNavigate } from "react-router-dom";
+
 import React, { useEffect, useState } from "react";
 import "../styles/theme.css";
 import config from "../config";
@@ -11,6 +13,8 @@ const LEVEL_LABELS = {
 };
 
 export default function DashboardTrainee() {
+  const navigate = useNavigate();
+
   const [trainee, setTrainee] = useState(null);
   const [measurements, setMeasurements] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
