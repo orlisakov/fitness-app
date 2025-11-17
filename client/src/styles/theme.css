@@ -2080,3 +2080,229 @@ button.add-food {
     justify-content: center;
   }
 }
+/* ===== COACH DASHBOARD – MOBILE TABLE ===== */
+
+.coach-dashboard {
+  max-width: 100%;
+}
+
+/* עוטף הטבלה – כבר קיים class table-wrapper עם overflow-x:auto */
+.coach-table-wrapper {
+  margin-top: 12px;
+}
+
+/* התאמות לנייד */
+@media (max-width: 780px) {
+  .coach-title {
+    font-size: 20px;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .coach-dashboard .add-btn {
+    width: 100%;
+    margin: 8px 0 14px;
+  }
+
+  .coach-table th,
+  .coach-table td {
+    padding: 8px 6px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  /* מסתירים עמודות פחות קריטיות במסך צר – היסטוריה + דרגה */
+  .coach-table th:nth-child(4),
+  .coach-table td:nth-child(4),
+  .coach-table th:nth-child(5),
+  .coach-table td:nth-child(5) {
+    display: none;
+  }
+
+  /* פעולות – כפתורים בשתי עמודות קטנות */
+  .coach-table td:nth-child(3) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+  }
+
+  .coach-table td:nth-child(3) .action-btn {
+    flex: 1 1 46%;
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+}
+
+/* טבלת היסטוריה בתוך מודאל – טקסט קטן יותר במובייל */
+@media (max-width: 780px) {
+  .modal .history-table th,
+  .modal .history-table td {
+    font-size: 12px;
+    padding: 6px 4px;
+  }
+}
+/* ===== TRAINEE DASHBOARD – RESPONSIVE LAYOUT ===== */
+
+.trainee-dashboard-page {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: var(--container-pad);
+}
+
+.trainee-title {
+  font-size: 26px;
+  margin: 0 0 16px;
+}
+
+.trainee-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.trainee-main-column {
+  flex: 1;
+  min-width: 300px;
+}
+
+.trainee-history-btn {
+  margin-top: 8px;
+}
+
+.trainee-history-block {
+  margin-top: 20px;
+}
+
+/* מובייל */
+@media (max-width: 780px) {
+  .trainee-dashboard-page {
+    padding: 16px 12px 32px;
+  }
+
+  .trainee-title {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .trainee-layout {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .trainee-main-column {
+    min-width: 0;
+  }
+
+  .trainee-history-btn {
+    width: 100%;
+  }
+}
+/* ===== PERSONAL MENU – LAYOUT & MOBILE ===== */
+
+.menu-container {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: var(--container-pad);
+}
+
+.meals-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* כרטיס הדגשים למעלה */
+.instructions-card {
+  background: rgba(10, 6, 20, 0.9);
+  border-radius: 16px;
+  padding: 20px 22px;
+  max-width: 900px;
+  margin: 0 auto 18px;
+  border: 1px solid rgba(255, 71, 126, 0.35);
+}
+
+.instructions-title {
+  margin: 0 0 12px;
+  font-size: 20px;
+}
+
+.instructions-list {
+  line-height: 1.7;
+  font-size: 15px;
+  padding-inline-start: 20px;
+  margin: 0;
+}
+
+.instructions-footer {
+  margin-top: 14px;
+  font-weight: 600;
+}
+
+/* טבלה – קצת צמצום שתתאים למסך קטן */
+.menu-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.menu-table th,
+.menu-table td {
+  padding: 6px 8px;
+  font-size: 14px;
+}
+
+.menu-table .amount {
+  white-space: nowrap;
+}
+
+/* כפתורים תחתונים */
+.menu-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.menu-footnote {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+}
+
+/* ----- MOBILE ----- */
+@media (max-width: 780px) {
+  .menu-container {
+    padding: 16px 10px 32px;
+  }
+
+  .instructions-card {
+    padding: 14px 12px;
+    margin-bottom: 16px;
+  }
+
+  .instructions-title {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .instructions-list {
+    font-size: 13px;
+    padding-inline-start: 16px;
+  }
+
+  .menu-table th,
+  .menu-table td {
+    padding: 4px 5px;
+    font-size: 12px;
+  }
+
+  .menu-actions {
+    flex-direction: column;
+  }
+
+  .menu-actions .btn,
+  .menu-actions button {
+    width: 100%;
+  }
+}

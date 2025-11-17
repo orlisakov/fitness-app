@@ -586,66 +586,68 @@ export default function DashboardCoach() {
       {trainees.length === 0 ? (
         <p className="dashboard-message">אין מתאמנות במערכת כרגע</p>
       ) : (
-        <table className="history-table">
-          <thead>
-            <tr>
-              <th>שם מלא</th>
-              <th>טלפון</th>
-              <th>פעולות</th>
-              <th>היסטוריית שקילויות</th>
-              <th>דרגה</th>
-            </tr>
-          </thead>
-          <tbody>
-            {trainees.map((t) => (
-              <tr key={t._id}>
-                <td>{t.fullName}</td>
-                <td>{t.phone || "-"}</td>
-                <td>
-                  <button
-                    className="action-btn"
-                    onClick={() => openTraineeModal(t)}
-                  >
-                    עריכה
-                  </button>
-                  <button
-                    className="action-btn delete-btn"
-                    onClick={() => handleDelete(t._id)}
-                  >
-                    מחק
-                  </button>
-                  <button
-                    className="action-btn add-btn"
-                    onClick={() => openMeasurementModal(t)}
-                  >
-                    מדידה
-                  </button>
-                  <button
-                    className="action-btn"
-                    onClick={() => openDislikedFoodsModal(t)}
-                  >
-                    העדפות
-                  </button>
-                </td>
-                <td>
-                  <button
-                    className="action-btn"
-                    onClick={() => openMeasurementHistory(t)}
-                  >
-                    ראה
-                  </button>
-                </td>
-                <td>
-                  {t.trainingLevel === "advanced"
-                    ? "מתקדמות"
-                    : t.trainingLevel === "intermediate"
-                    ? "בינוניות"
-                    : "מתחילות"}
-                </td>
+        <div className="table-wrapper coach-table-wrapper">
+          <table className="history-table coach-table">
+            <thead>
+              <tr>
+                <th>שם מלא</th>
+                <th>טלפון</th>
+                <th>פעולות</th>
+                <th>היסטוריית שקילויות</th>
+                <th>דרגה</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {trainees.map((t) => (
+                <tr key={t._id}>
+                  <td>{t.fullName}</td>
+                  <td>{t.phone || "-"}</td>
+                  <td>
+                    <button
+                      className="action-btn"
+                      onClick={() => openTraineeModal(t)}
+                    >
+                      עריכה
+                    </button>
+                    <button
+                      className="action-btn delete-btn"
+                      onClick={() => handleDelete(t._id)}
+                    >
+                      מחק
+                    </button>
+                    <button
+                      className="action-btn add-btn"
+                      onClick={() => openMeasurementModal(t)}
+                    >
+                      מדידה
+                    </button>
+                    <button
+                      className="action-btn"
+                      onClick={() => openDislikedFoodsModal(t)}
+                    >
+                      העדפות
+                    </button>
+                  </td>
+                  <td>
+                    <button
+                      className="action-btn"
+                      onClick={() => openMeasurementHistory(t)}
+                    >
+                      ראה
+                    </button>
+                  </td>
+                  <td>
+                    {t.trainingLevel === "advanced"
+                      ? "מתקדמות"
+                      : t.trainingLevel === "intermediate"
+                      ? "בינוניות"
+                      : "מתחילות"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {showTraineeModal && (
@@ -1011,40 +1013,42 @@ export default function DashboardCoach() {
             {measurements.length === 0 ? (
               <p>אין מדידות קודמות</p>
             ) : (
-              <table className="history-table">
-                <thead>
-                  <tr>
-                    <th>תאריך</th>
-                    <th>משקל (ק"ג)</th>
-                    <th>אחוז שומן (%)</th>
-                    <th>מותניים (ס"מ)</th>
-                    <th>אגן (ס"מ)</th>
-                    <th>חזה (ס"מ)</th>
-                    <th>הסר</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {measurements.map((m, index) => (
-                    <tr key={index}>
-                      <td>{new Date(m.date).toLocaleDateString("he-IL")}</td>
-                      <td>{m.AbdominalCircumference}</td>
-                      <td>{m.TopCircumference}</td>
-                      <td>{m.ButtockCircumference}</td>
-                      <td>{m.ThighCircumference}</td>
-                      <td>{m.ArmCircumference}</td>
-                      <td>
-                        <button
-                          className="action-btn delete-btn"
-                          onClick={() => deleteMeasurement(m._id)}
-                          disabled={!m._id}
-                        >
-                          הסר
-                        </button>
-                      </td>
+              <div className="table-wrapper">
+                <table className="history-table narrow">
+                  <thead>
+                    <tr>
+                      <th>תאריך</th>
+                      <th>משקל (ק"ג)</th>
+                      <th>אחוז שומן (%)</th>
+                      <th>מותניים (ס"מ)</th>
+                      <th>אגן (ס"מ)</th>
+                      <th>חזה (ס"מ)</th>
+                      <th>הסר</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {measurements.map((m, index) => (
+                      <tr key={index}>
+                        <td>{new Date(m.date).toLocaleDateString("he-IL")}</td>
+                        <td>{m.AbdominalCircumference}</td>
+                        <td>{m.TopCircumference}</td>
+                        <td>{m.ButtockCircumference}</td>
+                        <td>{m.ThighCircumference}</td>
+                        <td>{m.ArmCircumference}</td>
+                        <td>
+                          <button
+                            className="action-btn delete-btn"
+                            onClick={() => deleteMeasurement(m._id)}
+                            disabled={!m._id}
+                          >
+                            הסר
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>

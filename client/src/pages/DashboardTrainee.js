@@ -243,11 +243,11 @@ export default function DashboardTrainee() {
   const foodsArray = toArray(allFoods);
 
   return (
-    <div className="trainee-dashboard" dir="rtl" style={{ padding: "2rem" }}>
-      <h1>ברוכה הבאה, {trainee.fullName}</h1>
+    <div className="trainee-dashboard trainee-dashboard-page" dir="rtl">
+      <h1 className="trainee-title">ברוכה הבאה, {trainee.fullName}</h1>
 
-      <div style={{ display: "flex", gap: "2rem", alignItems: "flex-start" }}>
-        <div style={{ flex: 1, minWidth: "300px" }}>
+      <div className="trainee-layout">
+        <div className="trainee-main-column">
           <h2 className="section-title">פרטי מתאמנת</h2>
 
           <form onSubmit={handleUpdate} className="trainee-form" dir="rtl">
@@ -574,12 +574,15 @@ export default function DashboardTrainee() {
           </form>
 
           <hr style={{ margin: "2rem 0" }} />
-          <button className="action-btn" onClick={fetchMeasurements}>
+          <button
+            className="action-btn trainee-history-btn"
+            onClick={fetchMeasurements}
+          >
             הצג היסטוריית מדידות
           </button>
 
           {showHistory && (
-            <div style={{ marginTop: "20px" }}>
+            <div className="trainee-history-block">
               <h2>היסטוריית מדידות</h2>
               {measurements.length === 0 ? (
                 <p>אין מדידות קודמות</p>

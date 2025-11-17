@@ -688,27 +688,13 @@ export default function PersonalMenu({ traineeData }) {
         </div>
       </div>
 
-      <div
-        style={{
-          marginTop: 16,
-          display: "flex",
-          gap: 10,
-          justifyContent: "center",
-        }}
-      >
-        <button onClick={exportToPDF}>הורד כ-PDF</button>
+      <div className="menu-actions">
+        <button className="btn primary" onClick={exportToPDF}>
+          הורד כ-PDF
+        </button>
       </div>
 
-      <div
-        style={{
-          marginTop: 12,
-          fontSize: 12,
-          color: "#666",
-          textAlign: "center",
-        }}
-      >
-        הכמויות נקבעות לפי אילוצי ההגשה...
-      </div>
+      <div className="menu-footnote">הכמויות נקבעות לפי אילוצי ההגשה...</div>
     </div>
   );
 }
@@ -716,10 +702,10 @@ export default function PersonalMenu({ traineeData }) {
 /* ===== דגשים ===== */
 function InstructionsCard() {
   return (
-    <div dir="rtl" style={{ padding: 20, maxWidth: 900, margin: "0 auto" }}>
-      <h1 style={{ marginBottom: 12 }}>דגשים חשובים לתזונה</h1>
+    <div className="instructions-card" dir="rtl">
+      <h1 className="instructions-title">דגשים חשובים לתזונה</h1>
 
-      <ol style={{ lineHeight: 1.7, fontSize: 15, paddingInlineStart: 18 }}>
+      <ol className="instructions-list">
         <li style={{ marginBottom: 8 }}>
           אין תפריט מושלם – יש התמדה מושלמת. כל בחירה מדויקת שאת עושה ביום־יום
           מצטברת לתוצאה גדולה.
@@ -787,7 +773,7 @@ function InstructionsCard() {
         </li>
       </ol>
 
-      <p style={{ marginTop: 14, fontWeight: 600 }}>
+      <p className="instructions-footer">
         תזכרי – תהליך אמיתי לא קורה בשבוע. הוא קורה כשאת מפסיקה לוותר על עצמך כל
         פעם מחדש ❤️
       </p>
