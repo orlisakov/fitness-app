@@ -28,90 +28,115 @@ export default function DashboardLayout({ onLogout, user }) {
   }
 
   function handleNavClick() {
-    // כשנלחץ לינק בנייד – נסגור את התפריט
+    // בנייד – כשנלחץ לינק, נסגור את התפריט
     setMenuOpen(false);
   }
-
-  const userId = user?._id || user?.id || "";
 
   return (
     <>
       <header className="dashboard-header" dir="rtl">
-        <div className="nav-left">
-          <img
-            src={logo}
-            alt="לוגו"
-            className="dashboard-logo"
-            style={{ cursor: "pointer" }}
-            onClick={onLogoClick}
-          />
+        <div className="dashboard-header-inner">
+          <div className="nav-left">
+            <img
+              src={logo}
+              alt="לוגו"
+              className="dashboard-logo"
+              style={{ cursor: "pointer" }}
+              onClick={onLogoClick}
+            />
 
-          <button
-            type="button"
-            className="site-title-btn"
-            onClick={onLogoClick}
-            aria-label="חזרה לדשבורד"
-          >
-            Eiv's Studio
-          </button>
+            <button
+              type="button"
+              className="site-title"
+              onClick={onLogoClick}
+              aria-label="חזרה לדשבורד"
+            >
+              Eiv's Studio
+            </button>
 
-          {/* כפתור תפריט – מוצג רק בנייד דרך CSS */}
-          <button
-            type="button"
-            className="nav-toggle"
-            onClick={() => setMenuOpen((prev) => !prev)}
-            aria-label="פתיחת תפריט"
-          >
-            ☰
-          </button>
+            {/* כפתור תפריט – מוצג רק בנייד (CSS) */}
+            <button
+              type="button"
+              className="nav-toggle"
+              onClick={() => setMenuOpen((prev) => !prev)}
+              aria-label="פתיחת תפריט"
+            >
+              ☰
+            </button>
+          </div>
+
+          <nav className={`nav-links ${menuOpen ? "nav-links-open" : ""}`}>
+            {role === "trainee" && (
+              <NavLink
+                to="/trainee-dashboard"
+                className={linkCls}
+                onClick={handleNavClick}
+              >
+                פרטים אישיים
+              </NavLink>
+            )}
+
+            {role === "coach" ? (
+              <NavLink
+                to={COACH_WORKOUTS_PATH}
+                className={linkCls}
+                onClick={handleNavClick}
+              >
+                תכניות אימון שלי
+              </NavLink>
+            ) : (
+              <NavLink
+                to={TRAINEE_WORKOUTS_PATH}
+                className={linkCls}
+                onClick={handleNavClick}
+              >
+                אימונים ביתיים
+              </NavLink>
+            )}
+
+            {role === "trainee" && (
+              <NavLink
+                to={PERSONAL_MENU_PATH}
+                className={linkCls}
+                onClick={handleNavClick}
+              >
+                תפריט אישי
+              </NavLink>
+            )}
+
+            {role === "coach" && (
+              <NavLink
+                to={MANAGE_FOODS_PATH}
+                className={linkCls}
+                onClick={handleNavClick}
+              >
+                ניהול מאגר
+              </NavLink>
+            )}
+
+            {role === "coach" && (
+              <NavLink
+                to="/resources-manage"
+                className={linkCls}
+                onClick={handleNavClick}
+              >
+                קבצים להעלאה
+              </NavLink>
+            )}
+
+            <NavLink
+              to="/resources"
+              className={linkCls}
+              onClick={handleNavClick}
+            >
+              קבצים להורדה
+            </NavLink>
+
+            <button type="button" className="logout-button" onClick={onLogout}>
+              התנתקות
+            </button>
+          </nav>
         </div>
-
-        <nav
-          className={`nav-links ${menuOpen ? "nav-links-open" : ""}`}
-          onClick={handleNavClick}
-        >
-          {role === "trainee" && (
-            <NavLink to="/trainee-dashboard" className={linkCls}>
-              פרטים אישיים
-            </NavLink>
-          )}
-
-          {role === "coach" ? (
-            <NavLink to={COACH_WORKOUTS_PATH} className={linkCls}>
-              תכניות אימון שלי
-            </NavLink>
-          ) : (
-            <NavLink to={TRAINEE_WORKOUTS_PATH} className={linkCls}>
-              אימונים ביתיים
-            </NavLink>
-          )}
-
-          {role === "trainee" && (
-            <NavLink to={PERSONAL_MENU_PATH} className={linkCls}>
-              תפריט אישי
-            </NavLink>
-          )}
-
-          {role === "coach" && (
-            <NavLink to={MANAGE_FOODS_PATH} className={linkCls}>
-              ניהול מאגר
-            </NavLink>
-          )}
-
-          {role === "coach" && (
-            <NavLink to="/resources-manage" className={linkCls}>
-              קבצים להעלאה
-            </NavLink>
-          )}
-
-          <NavLink to="/resources" className={linkCls}>
-            קבצים להורדה
-          </NavLink>
-
-          <button type="button" className="logout-button" onClick={onLogout}>
-            התנתקות
-          </button>
-        </nav>
       </header>
 
       <main className="dashboard-main" dir="rtl">

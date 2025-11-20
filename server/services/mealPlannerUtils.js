@@ -1365,18 +1365,18 @@ class RuleBasedPlanner {
       targets: totalTargets,
       groups: [
         {
-          title: "חלבון לצהריים (בחרי אחד)",
+          title: "חלבון - בחרי אחד",
           key: "protein",
           options: proteins,
           selected: proteins[0],
         },
         {
-          title: "פחמימות / קטניות (בחרי אחד)",
+          title: "פחמימה - בחרי אחד",
           key: "carbs",
           options: carbs,
           selected: carbs[0],
         },
-        { title: "ירקות (חופשי)", key: "veg_free", options: vegFree },
+        //{ title: "ירקות (חופשי)", key: "veg_free", options: vegFree },
       ],
     };
   }
@@ -1557,24 +1557,24 @@ class RuleBasedPlanner {
       targets: totalTargets,
       groups: [
         {
-          title: "חלבון ביניים (בחרי אחד)",
+          title: "חלבון - בחרי אחד",
           key: "protein_snack",
           options: proteins,
           selected: proteins[0] || undefined,
         },
         {
-          title: "פחמימות ביניים (בחרי אחד)",
+          title: "פחמימה - בחרי אחד",
           key: "sweet_snack",
           options: sweetsAsCarb,
           selected: sweetsAsCarb[0] || undefined,
         },
         {
-          title: "פירות (חלופה לפחמימות הביניים)",
+          title: "או פירות",
           key: "fruit_snack",
           options: fruitsAsAlt,
         },
         {
-          title: "שומנים (חלופה לפחמימות הביניים)",
+          title: "או שומנים",
           key: "fat_snack",
           options: FatsAsAlt,
         },
@@ -1902,13 +1902,13 @@ class RuleBasedPlanner {
       targets: totalTargets,
       groups: [
         {
-          title: "חלבון לבוקר — גבינות/טונה/דגים (בחרי אחד)",
+          title: "חלבון - בחרי אחד",
           key: "prot_breakfast",
           options: proteinOptions,
           selected: finalProtein || undefined,
         },
         {
-          title: "פחמימות בוקר (בחרי אחד)",
+          title: "פחמימה - בחרי אחד",
           key: "breads",
           options: carbsOptions,
           selected: finalCarbs || undefined,
@@ -1963,24 +1963,24 @@ class RuleBasedPlanner {
       targets: totalTargets,
       groups: [
         {
-          title: "חלבון לצהריים (בחרי אחד)",
+          title: "חלבון - בחרי אחד",
           key: "protein",
           options: proteinOptions,
           selected: proteinOptions[0] || undefined,
         },
         {
-          title: "פחמימות (בחרי אחד)",
+          title: "פחמימה - בחרי אחד",
           key: "carbs",
           options: carbsOptions,
           selected: carbsOptions[0] || undefined,
         },
         {
-          title: "קטניות (מנה עיקרית — בחרי אחת)",
+          title: "קטניות - בחרי אחד",
           key: "legumes_lunch",
           options: legumesOptions,
           selected: legumesOptions[0] || undefined,
         },
-        { title: "ירקות (חופשי)", key: "veg_free", options: vegFree },
+        { title: "ירקות - חופשי", key: "veg_free", options: vegFree },
       ],
     };
   }
@@ -2022,13 +2022,13 @@ class RuleBasedPlanner {
       targets: totalTargets,
       groups: [
         {
-          title: "חלבון צמחוני (בחרי אחד)",
+          title: "חלבון - בחרי אחד",
           key: "veges_Protein",
           options: vegProtOptions,
           selected: vegProtOptions[0] || undefined,
         },
         {
-          title: "קטניות (מנה עיקרית — בחרי אחת)",
+          title: "או קטניות - בחרי אחד",
           key: "legumes_dinner",
           options: legumesOptions,
           selected: legumesOptions[0] || undefined,
@@ -2091,13 +2091,13 @@ class RuleBasedPlanner {
       targets: totalTargets,
       groups: [
         {
-          title: "חלבון לערב (בחרי אחד)",
+          title: "חלבון - בחרי אחד",
           key: "protein",
           options: proteinsMeaty,
           selected: proteinsMeaty[0],
         },
         {
-          title: "פחמימות / קטניות (בחרי אחד)",
+          title: "פחמימה - בחרי אחד",
           key: "carbs",
           options: carbsOrLegumes,
           selected: carbsOrLegumes[0],

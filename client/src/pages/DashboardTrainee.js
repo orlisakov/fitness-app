@@ -13,8 +13,6 @@ const LEVEL_LABELS = {
 };
 
 export default function DashboardTrainee() {
-  const navigate = useNavigate();
-
   const [trainee, setTrainee] = useState(null);
   const [measurements, setMeasurements] = useState([]);
   const [showHistory, setShowHistory] = useState(false);

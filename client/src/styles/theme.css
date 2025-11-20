@@ -116,17 +116,25 @@ h2 {
 
 .dashboard-header,
 .top-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   background: rgba(5, 0, 12, 0.98);
   border-bottom: 1px solid rgba(255, 31, 113, 0.6);
   box-shadow: 0 20px 45px rgba(0, 0, 0, 0.9);
   color: var(--text-main);
-  padding: 0.75rem var(--container-pad);
+  padding: 0; /* ✅ בלי padding – הוא יעבור ל-inner */
   position: sticky;
   top: 0;
   z-index: 999;
+}
+
+.dashboard-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.75rem var(--container-pad);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap; /* מאפשר לשבור שורה כשאין מקום */
 }
 
 .dashboard-logo {
@@ -487,26 +495,6 @@ label,
   box-shadow: var(--shadow-strong);
 }
 
-.trainee-dashboard .form-grid {
-  display: grid;
-  grid-template-columns: repeat(3, max-content);
-  column-gap: 20px;
-  row-gap: 15px;
-  justify-content: start;
-  align-items: end;
-}
-
-.trainee-dashboard .form-grid.three {
-  grid-template-columns: repeat(3, max-content);
-  column-gap: 15px;
-  row-gap: 10px;
-}
-
-.trainee-dashboard .form-grid.four {
-  grid-template-columns: repeat(4, max-content);
-  column-gap: 20px;
-}
-
 .trainee-dashboard .field label {
   font-size: 14px;
   margin-bottom: 5px;
@@ -540,30 +528,6 @@ label,
 .trainee-dashboard .check input {
   transform: scale(1.1);
   accent-color: var(--primary-pink);
-}
-
-@media (max-width: 900px) {
-  .trainee-dashboard .form-grid {
-    grid-template-columns: repeat(2, max-content);
-  }
-  .trainee-dashboard .form-grid.four {
-    grid-template-columns: repeat(2, max-content);
-  }
-  .trainee-dashboard .checks-grid {
-    grid-template-columns: repeat(2, max-content);
-  }
-}
-
-@media (max-width: 520px) {
-  .trainee-dashboard .form-grid,
-  .trainee-dashboard .form-grid.four,
-  .trainee-dashboard .checks-grid {
-    grid-template-columns: 1fr;
-  }
-  .trainee-dashboard .field input,
-  .trainee-dashboard .field select {
-    width: 100%;
-  }
 }
 
 /* =========================
@@ -2031,7 +1995,7 @@ button.add-food {
 
 /* מובייל */
 @media (max-width: 780px) {
-  .dashboard-header {
+  .dashboard-header-inner {
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
@@ -2303,6 +2267,90 @@ button.add-food {
 
   .menu-actions .btn,
   .menu-actions button {
+    width: 100%;
+  }
+}
+.trainee-dashboard .form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 20px;
+  row-gap: 15px;
+  align-items: end;
+}
+
+.trainee-dashboard .form-grid.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 15px;
+  row-gap: 10px;
+}
+
+.trainee-dashboard .form-grid.four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 20px;
+}
+@media (max-width: 900px) {
+  .trainee-dashboard .form-grid,
+  .trainee-dashboard .form-grid.four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .trainee-dashboard .checks-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .trainee-dashboard .form-grid,
+  .trainee-dashboard .form-grid.four,
+  .trainee-dashboard .checks-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trainee-dashboard .field input,
+  .trainee-dashboard .field select {
+    width: 100%;
+  }
+}
+.trainee-dashboard .field input,
+.trainee-dashboard .field select,
+.trainee-dashboard .field textarea {
+  width: 100%;
+  max-width: 100%;
+  height: 40px;
+  font-size: 14px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: #ffffff;
+  color: #2b1525;
+  box-sizing: border-box;
+}
+.trainee-dashboard-page {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: var(--container-pad);
+}
+
+@media (max-width: 780px) {
+  .trainee-dashboard-page {
+    padding: 16px 12px 32px;
+  }
+
+  .trainee-title {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .trainee-layout {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .trainee-main-column {
+    min-width: 0;
+  }
+
+  .trainee-history-btn {
     width: 100%;
   }
 }

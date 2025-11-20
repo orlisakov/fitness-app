@@ -12,11 +12,11 @@
     "cloudinary": "^2.7.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
+    "jspdf-autotable": "^5.0.2",
     "jwt-decode": "^4.0.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.7.0",
-    "react-scripts": "5.0.1",
     "react-select": "^5.10.2",
     "web-vitals": "^2.1.4"
   },
@@ -45,6 +45,7 @@
     ]
   },
   "devDependencies": {
-    "cross-env": "^10.0.0"
+    "cross-env": "^10.0.0",
+    "react-scripts": "5.0.1"
   }
 }
