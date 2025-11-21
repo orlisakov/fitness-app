@@ -1,16 +1,14 @@
-// כל ה־import נשארים כמעט כמו קודם
+// client/src/pages/PersonalMenu.jsx
+
+// ===== Imports =====
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import "../styles/theme.css";
 import config from "../config";
-import jsPDF from "jspdf";
 import { loadRubikFonts, rtlFix } from "../utils/pdfFonts";
+import jsPDF from "jspdf";
 
-/* ---------------------- עזרי RTL ל-PDF ---------------------- */
-// עטיפה לטקסט עברי/מעורב – הופך ל-RTL חזותי + תיקון אנגלית
-function rtlWrap(text) {
-  return rtlFix(text ?? "");
-}
+// ===== RTL helpers for PDF =====
 
 // טעינת תמונה מה-public כ-HTMLImageElement
 function loadImage(url) {
@@ -23,44 +21,48 @@ function loadImage(url) {
   });
 }
 
-// התחלה של עמוד שחור + הוספת ההדר העליון
+// התחלה של עמוד שחור + הוספת ההדר העליון (ללא שינוי אם זה כבר תקין)
 function startBlackPageWithHeader(pdf, headerImg) {
   const PAGE_W = pdf.internal.pageSize.getWidth();
   const PAGE_H = pdf.internal.pageSize.getHeight();
 
-  // רקע שחור מלא
   pdf.setFillColor(0, 0, 0);
   pdf.rect(0, 0, PAGE_W, PAGE_H, "F");
 
-  // תמונת ההדר בחלק העליון
-  const headerHeight = 70; // אפשר לשחק עם המספר הזה
+  const headerHeight = 70;
   pdf.addImage(headerImg, "PNG", 0, 0, PAGE_W, headerHeight);
-
-  // טקסט לבן כברירת מחדל
   pdf.setTextColor(255, 255, 255);
 
-  // נקודת התחלה לטקסט אחרי ההדר
   const startY = headerHeight + 12;
-
-  return { PAGE_W, PAGE_H, Y: startY };
+  return { PAGE_W, Y: startY };
 }
 
+function makeEnsureSpaceBlack(pdf, headerImg, bottomMargin = 20) {
+  const h = pdf.internal.pageSize.getHeight(); // גובה אמיתי
+  return function ensure(y) {
+    if (y > h - bottomMargin) {
+      pdf.addPage();
+      const { Y: newY } = startBlackPageWithHeader(pdf, headerImg);
+      return newY;
+    }
+    return y;
+  };
+}
+
+// כותרת צהובה – משתמשים ב-rtl()
 function drawYellowTitle(pdf, text, PAGE_W, Y) {
   pdf.setFont("Rubik", "bold");
   pdf.setFontSize(18);
   pdf.setTextColor(255, 230, 0);
 
-  const wrapped = rtlWrap(text);
+  const visual = rtlFix(text);
+  const visualForWidth = visual;
+
   const xCenter = PAGE_W / 2;
+  pdf.text(visual, xCenter, Y, { align: "center" });
 
-  pdf.text(wrapped, xCenter, Y, {
-    align: "center",
-    lang: "he",
-  });
-
-  // underline
   const lineMargin = 4;
-  const textWidth = pdf.getTextWidth(wrapped);
+  const textWidth = pdf.getTextWidth(visualForWidth);
   pdf.setDrawColor(255, 230, 0);
   pdf.setLineWidth(0.8);
   pdf.line(
@@ -73,44 +75,82 @@ function drawYellowTitle(pdf, text, PAGE_W, Y) {
   return Y + 12;
 }
 
-function drawCenteredLines(pdf, lines, PAGE_W, Y, lineGap = 7) {
+// טקסט ממורכז עם שבירת עמוד – שימי לב: משתמשים ב-ensure(Y) במקום ensureSpace(...)
+function drawCenteredLines(pdf, lines, PAGE_W, Y, ensure, lineGap = 7) {
   pdf.setFont("Rubik", "normal");
   pdf.setFontSize(12);
   pdf.setTextColor(255, 255, 255);
 
   const xCenter = PAGE_W / 2;
+  (lines || []).forEach((raw) => {
+    const text = raw ?? "";
+    if (!text) {
+      Y += lineGap;
+      return;
+    }
 
-  lines.forEach((raw) => {
-    // הופכים פעם אחת ל-RTL חזותי + תיקון אנגלית
-    const visual = rtlWrap(raw);
-    const wrapped = pdf.splitTextToSize(visual, PAGE_W - 40);
-
+    const wrapped = pdf.splitTextToSize(text, PAGE_W - 40);
     wrapped.forEach((l) => {
-      Y = ensureSpace(pdf, Y);
-      // כאן לא קוראים שוב ל-rtlWrap, כדי לא "להפוך" שוב
-      pdf.text(l, xCenter, Y, {
-        align: "center",
-        lang: "he",
-      });
+      Y = ensure ? ensure(Y) : Y;
+      pdf.text(rtlFix(l), xCenter, Y, { align: "center" });
       Y += lineGap;
     });
-
     Y += 2;
   });
+  return Y;
+}
 
+/**
+ * כתיבת טקסט מיושר לימין (עם ensure) — לעמודי הארוחות
+ * *** גרסה מתוקנת עם סדר ויזואלי נכון: טקסט -> מספר -> • ***
+ */
+function drawRightAlignedLines(pdf, lines, PAGE_W, Y, ensure, lineGap = 7) {
+  pdf.setFont("Rubik", "normal");
+  pdf.setFontSize(12);
+  pdf.setTextColor(255, 255, 255);
+
+  const xRight = PAGE_W - 20;
+
+  (lines || []).forEach((raw) => {
+    const text = raw ?? "";
+    if (!text) {
+      Y += lineGap;
+      return;
+    }
+
+    const wrapped = pdf.splitTextToSize(text, PAGE_W - 40);
+    wrapped.forEach((line) => {
+      Y = ensure(Y);
+
+      // Check for lines that start with a bullet, then a number, then text
+      const match = line.match(/^(\s*•\s*)([0-9.,/()%+-]+)(.*)$/);
+
+      if (match) {
+        const [, bullet, number, restOfText] = match;
+        const cleanRest = restOfText.trim();
+
+        // Construct the final visual string in the correct logical order for RTL rendering
+        // The library will reverse it, so we build it visually backwards.
+        const finalString = `${cleanRest} ${number} ${bullet.trim()}`;
+        pdf.text(rtlFix(finalString), xRight, Y, { align: "right" });
+      } else {
+        // For lines without the number pattern, just reverse them
+        const cleanLine = line.startsWith("• ")
+          ? `- ${line.substring(2)}`
+          : line;
+        pdf.text(rtlFix(cleanLine), xRight, Y, { align: "right" });
+      }
+
+      Y += lineGap;
+    });
+    Y += 2;
+  });
   return Y;
 }
 
 /* ---------------------- HELPERS FOR PDF ---------------------- */
 
-function ensureSpace(pdf, Y, PAGE_H = 297, bottomMargin = 20) {
-  if (Y > PAGE_H - bottomMargin) {
-    pdf.addPage();
-    return 20;
-  }
-  return Y;
-}
-
+// ===== Main Component =====
 export default function PersonalMenu({ traineeData }) {
   const [mealPlan, setMealPlan] = useState(null);
   const [appliedPrefs, setAppliedPrefs] = useState(null);
@@ -125,9 +165,19 @@ export default function PersonalMenu({ traineeData }) {
     return x.toFixed(d).replace(/\.00$/, "");
   }
 
+  // מנרמל טקסט כמות לפני שהוא נכנס למחרוזת
+  function normalizeAmount(text) {
+    if (!text) return "";
+    // תופס מספר/שבר/אחוזים בתחילת המחרוזת (פשוט, בלי מניפולציות כיוון)
+    const m = text.match(/^([0-9.,/()%+-]+)(\s*)(.*)$/);
+    if (!m) return text;
+    const [, num, , rest] = m;
+    return rest ? `${num} ${rest}` : num;
+  }
+
   useEffect(() => {
     if (mealPlan?.meals?.dinner) {
-      console.log("DINNER KEYS:", Object.keys(mealPlan.meals.dinner));
+      // console.log("DINNER KEYS:", Object.keys(mealPlan.meals.dinner));
     }
   }, [mealPlan]);
 
@@ -183,7 +233,6 @@ export default function PersonalMenu({ traineeData }) {
 
         const token =
           sessionStorage.getItem("token") || localStorage.getItem("token");
-
         if (!token) {
           setError("נראה שאינך מחוברת. התחברי מחדש ואז נסי שוב.");
           setIsLoading(false);
@@ -229,13 +278,17 @@ export default function PersonalMenu({ traineeData }) {
 
     const pdf = new jsPDF("p", "mm", "a4");
     await loadRubikFonts(pdf);
+    console.log(pdf.getFontList());
     pdf.setFont("Rubik", "normal");
 
     // תמונת ההדר מתוך client/public/header-eiv.png
     const headerImg = await loadImage("/header-eiv.png");
 
+    // ensureSpace שממשיך רקע שחור והדר בעמודי המשך
+    const ensure = makeEnsureSpaceBlack(pdf, headerImg);
+
     /* ------------ עמוד 1 – דגשים ------------ */
-    let { PAGE_W, PAGE_H, Y } = startBlackPageWithHeader(pdf, headerImg);
+    let { PAGE_W, Y } = startBlackPageWithHeader(pdf, headerImg);
 
     // כותרת צהובה למעלה – "דגשים חשובים"
     Y = drawYellowTitle(pdf, "דגשים חשובים לתהליך", PAGE_W, Y);
@@ -244,52 +297,39 @@ export default function PersonalMenu({ traineeData }) {
       "1) חשוב לשתות לפחות 3 ליטר מים ביום",
       "2) חשוב שיהיה לנו משקל מזון!",
       "3) חשוב להחליף שמן בספרי שמן",
-      "4) חלב לשתות 1% (עד כוס חד פעמי ביום)  \n עדיף סויה ללא סוכר כך תשתי יותר מכוס ביום",
+      "4) חלב לשתות 1% (עד כוס חד פעמי ביום) עדיף סויה ללא סוכר כך תשתי יותר מכוס ביום",
       "5) משקאות זירו ניתן לשתות ללא הגבלה קלורית ופטל יכין לייט",
-      "6) רטבים לא לאכול אם לא כתוב לך \n גם לא טחינה או רוטב לייט כלשהו ",
+      "6) רטבים לא לאכול אם לא כתוב לך – גם לא טחינה או רוטב לייט כלשהו",
       "7) אבוקדו עד חצי ביום לא יותר",
-      "8) ירקות שצריך להגביל ביום הם - \n עד בצל בינוני אחד ביום, עד 100 גרם גזר ביום, עד חצי חציל ביום, \n תירס לייט לאכול עד 100 גרם ביום. \n כל שאר הירקות תאכלי חופשי עדיפות לירוקים. ",
-      "9) סוכר נחליף באבקת סוכרזית/נוזל סוכרלוז זה יסגור לך הרבה פינות שיש לך חשק למתוק",
-      "10) המלצה! להוסיף לכל ארוחה שעועית ירקוה או ברוקולי \n או ירוקים מבושלים כמרק או צלויים בתנור בכדי לנפח את הארוחה",
-      "11) סקיני פסטה זה כמו פסטה במרקם אחר, את יכולה לאכול ללא הגבלה ",
+      "8) ירקות שצריך להגביל ביום הם: עד בצל בינוני אחד ביום, עד 100 גרם גזר ביום, עד חצי חציל ביום, תירס לייט לאכול עד 100 גרם ביום. כל שאר הירקות תאכלי חופשי, עדיפות לירוקים.",
+      "9) סוכר נחליף באבקת סוכרזית/נוזל סוכרלוז – זה יסגור לך הרבה פינות כשיש חשק למתוק",
+      "10) המלצה! להוסיף לכל ארוחה שעועית ירוקה או ברוקולי או ירוקים מבושלים כמרק או צלויים בתנור בכדי לנפח את הארוחה",
+      "11) סקיני פסטה זה כמו פסטה במרקם אחר – את יכולה לאכול ללא הגבלה",
     ];
 
     Y += 8;
-    Y = drawCenteredLines(pdf, tipsLines, PAGE_W, Y);
+    Y = drawCenteredLines(pdf, tipsLines, PAGE_W, Y, ensure);
 
-    /* ------------ פונקציה פנימית: בניית טקסט דינאמי לארוחה ------------ */
+    /* ------------ פונקציה פנימית: בניית טקסט דינמי לארוחה ------------ */
     function buildMealLines(meal) {
       const lines = [];
       if (!meal) return lines;
 
-      // מאקרו של הארוחה
-      const t = meal.targets;
-      if (t) {
-        lines.push(
-          `חלבון: ${fmt(t.protein)}ג׳ · פחמימות: ${fmt(
-            t.carbs
-          )}ג׳ · שומן: ${fmt(t.fat)}ג׳`
-        );
-        lines.push(""); // רווח שורה
-      }
-
       (meal.groups || []).forEach((group) => {
         const title = group.title || group.key;
-        if (title) {
-          lines.push(`— ${title} —`);
-        }
+        if (title) lines.push(`— ${title} —`);
 
         if (group.fixed) {
           const f = group.fixed;
           const parts = [];
-          if (f.displayText) parts.push(f.displayText);
+          if (f.displayText) parts.push(normalizeAmount(f.displayText));
           if (f.food?.name) parts.push(f.food.name);
           if (parts.length) lines.push("• " + parts.join(" "));
         }
 
         (group.options || []).forEach((opt) => {
           const parts = [];
-          if (opt.displayText) parts.push(opt.displayText);
+          if (opt.displayText) parts.push(normalizeAmount(opt.displayText));
           if (opt.food?.name) parts.push(opt.food.name);
           const line = parts.join(" ");
           if (line) lines.push("• " + line);
@@ -310,19 +350,14 @@ export default function PersonalMenu({ traineeData }) {
       const isVegan = !!appliedPrefs?.isVegan;
       const isVegetarian = !!appliedPrefs?.isVegetarian;
 
-      if (isVegan) {
-        return veggieStyle || dairyStyle || meatStyle || meal;
-      }
-      if (isVegetarian) {
-        return dairyStyle || veggieStyle || meatStyle || meal;
-      }
+      if (isVegan) return veggieStyle || dairyStyle || meatStyle || meal;
+      if (isVegetarian) return dairyStyle || veggieStyle || meatStyle || meal;
       // אוכלת הכל – נעדיף בשרית
       return meatStyle || dairyStyle || veggieStyle || meal;
     }
 
     /* ------------ עמודים 2–5: הארוחות ------------ */
     const meals = mealPlan?.meals || {};
-
     const mealOrder = [
       { key: "breakfast", label: "ארוחת בוקר" },
       { key: "lunch", label: "ארוחת צהריים" },
@@ -337,13 +372,13 @@ export default function PersonalMenu({ traineeData }) {
       // לארוחת ערב בוחרים וריאנט מתאים
       if (key === "dinner") {
         const variant = pickDinnerVariant(meal);
-        if (variant) meal = variant;
+        if (!variant) return;
+        meal = variant;
       }
 
       // עמוד חדש לכל ארוחה
       pdf.addPage();
-      ({ PAGE_W, PAGE_H, Y } = startBlackPageWithHeader(pdf, headerImg));
-
+      ({ PAGE_W, Y } = startBlackPageWithHeader(pdf, headerImg));
       // כותרת צהובה – שם הארוחה + מאקרו (אם יש)
       let titleText = label;
       if (meal.targets) {
@@ -357,7 +392,9 @@ export default function PersonalMenu({ traineeData }) {
       // טקסט הארוחה – דינאמי לפי ה-meal שנבנה מהשרת
       const mealLines = buildMealLines(meal);
       Y += 8;
-      drawCenteredLines(pdf, mealLines, PAGE_W, Y);
+
+      // יישור לימין, עם ensure להמשכיות רקע שחור+הדר
+      drawRightAlignedLines(pdf, mealLines, PAGE_W, Y, ensure);
     });
 
     pdf.save("תפריט-אישי.pdf");
@@ -730,11 +767,9 @@ export default function PersonalMenu({ traineeData }) {
         {showDairy && (
           <BreakfastLike meal={dairyStyle} title="ארוחת ערב — גרסה חלבית" />
         )}
-
         {showVeggie && (
           <LunchBlock meal={veggieStyle} title="ארוחת ערב — גרסה צמחונית" />
         )}
-
         {showMeat && (
           <LunchBlock meal={meatStyle} title="ארוחת ערב — גרסה בשרית" />
         )}
@@ -757,6 +792,7 @@ export default function PersonalMenu({ traineeData }) {
     <div className="menu-container" dir="rtl">
       <div>
         <InstructionsCard />
+
         {appliedPrefs && Object.values(appliedPrefs).some(Boolean) && (
           <p className="menu-subtitle" style={{ marginTop: 8 }}>
             <b>נלקחו בחשבון:</b>{" "}
@@ -797,7 +833,7 @@ export default function PersonalMenu({ traineeData }) {
 function InstructionsCard() {
   return (
     <div className="instructions-card" dir="rtl">
-      <h1 className="instructions-title">דגשים חשובים לתזונה</h1>
+      <h1 className="instructions-title">דגשים חשובים לאורך חיים בריא</h1>
 
       <ol className="instructions-list">
         <li style={{ marginBottom: 8 }}>
@@ -810,7 +846,7 @@ function InstructionsCard() {
         </li>
         <li style={{ marginBottom: 8 }}>
           מים זה חלק מהתפריט. לשתות לפחות 3 ליטר ביום – לפני שאת מרגישה צמא. אם
-          קשה לך לשתות מים – אפשר להשתמש בפטל דל קלוריות של יכין.
+          קשה לשתות מים – אפשר להשתמש בפטל דל קלוריות של יכין.
         </li>
         <li style={{ marginBottom: 8 }}>
           חשוב לשקול את האוכל אחרי בישול, לפי משקל מזון מבושל – זה מה שקובע את
@@ -821,37 +857,34 @@ function InstructionsCard() {
         </li>
         <li style={{ marginBottom: 8 }}>
           פחמימות לא אויב. לבחור חכמות בלבד – כוסמת, בורגול, בטטה, קינואה, אורז
-          מלא או לחם/פיתה PRO, ולא לאכול לפי הכמויות הכתובות לך בתפריט. ממליצה
-          לשלב גם סקיני פסטה – תחליף מצוין ודל קלוריות.
+          מלא או לחם/פיתה PRO, ולאכול לפי הכמויות הכתובות בתפריט. מומלץ לשלב גם
+          סקיני פסטה – תחליף מצוין ודל קלוריות.
         </li>
         <li style={{ marginBottom: 8 }}>
-          ירקות בכל ארוחה עיקרית. הם מאזנים את רמות הסוכר בדם, תורמים לעיכול
-          ולתחושת שובע. מומלץ להוסיף שעועית ירוקה, ברוקולי וירוקים בכל יום – הם
+          ירקות בכל ארוחה עיקרית. מומלץ להוסיף שעועית ירוקה, ברוקולי וירוקים —
           תומכים בחילוף חומרים ומפחיתים חשקים.
         </li>
         <li style={{ marginBottom: 8 }}>
-          ניתן להחליף בין ארוחות במהלך היום, כל עוד נשמר מרווח של כ־4 שעות בין
+          אפשר להחליף בין ארוחות במהלך היום, כל עוד נשמר מרווח של כ־4 שעות בין
           ארוחה לארוחה.
         </li>
         <li style={{ marginBottom: 8 }}>
-          להחליף סוכר לממתיקים טבעיים בלבד – כמו סטיביה, סוויטנגו, או סוכרלוז
-          נוזלי / שקיות לפי הטעם.
+          להחליף סוכר לממתיקים טבעיים בלבד – כמו סטיביה/סוויטנגו/סוכרלוז
+          נוזלי/שקיות לפי הטעם.
         </li>
         <li style={{ marginBottom: 8 }}>
-          חלב לשתות 1% שומן בלבד – עד כוס חד־פעמית אחת ביום. לחלופין ניתן לעבור
-          לחלב סויה ללא סוכר או חלב שקדים ללא סוכר, אותם אפשר לשתות ללא הגבלה.
+          חלב 1% שומן בלבד – עד כוס חד־פעמית ביום. לחלופין חלב סויה/שקדים ללא
+          סוכר – ללא הגבלה.
         </li>
         <li style={{ marginBottom: 8 }}>
-          שינה = חילוף חומרים. לפחות 7 שעות בלילה – הגוף שלך נבנה ונשרף בזמן
-          המנוחה.
+          שינה = חילוף חומרים. לפחות 7 שעות בלילה.
         </li>
         <li style={{ marginBottom: 8 }}>
-          לא לדלג על ארוחות. הגוף צריך רצף אנרגיה קבוע כדי לשרוף טוב יותר. אם את
-          לא רעבה – תכניסי לפחות את מנת החלבון של אותה ארוחה.
+          לא לדלג על ארוחות. אם לא רעבים – לאכול לפחות את מנת החלבון של אותה
+          ארוחה.
         </li>
         <li style={{ marginBottom: 8 }}>
-          אין דבר כזה “חטאתי”. אם יצאת מהמסגרת – פשוט לחזור לתפריט בארוחה הבאה,
-          בלי רגשות אשמה.
+          אין “חטאתי”. יצאת מהמסגרת? פשוט חוזרים לתפריט בארוחה הבאה.
         </li>
       </ol>
 

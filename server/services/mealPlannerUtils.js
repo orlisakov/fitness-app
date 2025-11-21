@@ -1126,9 +1126,22 @@ class RuleBasedPlanner {
   }
 
   pool(filterFn) {
-    return this.foods
-      .filter(filterFn)
-      .filter((f) => matchesPrefs(f, this.prefs));
+    return (
+      this.foods
+        // ✅ חוסם veges_Protein רק למי שלא צמחוני *וגם* לא טבעוני
+        .filter((f) => {
+          const isVeg = this.prefs?.isVegetarian || this.prefs?.isVegan;
+          if (!isVeg) {
+            return (
+              !Array.isArray(f.categories) ||
+              !f.categories.includes("veges_Protein")
+            );
+          }
+          return true; // צמחונית/טבעונית — מותר
+        })
+        .filter(filterFn)
+        .filter((f) => matchesPrefs(f, this.prefs))
+    );
   }
 
   /* ======== POOLS ======== */

@@ -171,6 +171,10 @@ export default function TraineeHomePage() {
           <img src={require("../assets/gallery6.jpg")} alt="שינוי מתאמנת" />
           <img src={require("../assets/gallery7.jpg")} alt="שינוי מתאמנת" />
           <img src={require("../assets/gallery8.jpg")} alt="שינוי מתאמנת" />
+          <img src={require("../assets/gallery10.jpg")} alt="שינוי מתאמנת" />
+          <img src={require("../assets/gallery11.jpg")} alt="שינוי מתאמנת" />
+          <img src={require("../assets/gallery12.jpg")} alt="שינוי מתאמנת" />
+          <img src={require("../assets/gallery13.jpg")} alt="שינוי מתאמנת" />
         </div>
       </section>
 

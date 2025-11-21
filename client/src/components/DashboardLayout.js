@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate, Outlet } from "react-router-dom";
 import "../styles/theme.css";
-import logo from "../assets/logo.jpg";
+import logo from "../logo.jpg";
 
 export default function DashboardLayout({ onLogout, user }) {
   const navigate = useNavigate();
@@ -100,7 +100,7 @@ export default function DashboardLayout({ onLogout, user }) {
                 className={linkCls}
                 onClick={handleNavClick}
               >
-                תפריט אישי
+                אורך חיים בריא
               </NavLink>
             )}
 

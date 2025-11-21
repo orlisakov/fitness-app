@@ -1,37 +1,37 @@
 /* =========================
-   ROOT – DARK GLAM THEME
+   ROOT – BLACKPINK THEME
    ========================= */
 :root {
-  /* בסיס דארק נקי – שחור עם נגיעה ורודה */
-  --bg-page: #050008;
-  --bg-panel: #07040a; /* פאנלים כהים, כמעט שחור */
-  --bg-panel-soft: #0f0b14; /* טיפה פחות כהה */
+  /* רקעים */
+  --bg-page: #050008; /* שחור נקי */
+  --bg-panel: #0a0a0d; /* כרטיסים/פאנלים כהים */
+  --bg-panel-soft: #111114; /* שדות / אזורים פנימיים */
 
-  /* אקסנטים – ורוד בלבד */
-  --accent-pink: #ff477e;
-  --accent-pink-soft: #ff7aa5;
-  --accent-purple: #ff7aa5; /* כבר לא סגול, רק עוד גוון ורוד */
-  --accent-pill: #ff005c;
+  /* ורודים מהתמונה */
+  --accent-pink: #ff5fa2; /* ורוד ראשי (כפתורים/כותרות) */
+  --accent-pink-strong: #ff2d86; /* היי־לייט חזק */
+  --accent-pink-soft: #ffd1e6; /* בייבי־פינק לרקעים בהירים */
+  --accent-pink-line: rgba(255, 95, 162, 0.6);
 
   /* טקסט */
-  --text-main: #fdfbff;
-  --text-muted: #b9b4c8;
-  --text-soft: #8e869f;
+  --text-main: #ffffff;
+  --text-muted: #d9d4df;
+  --text-soft: #a7a0ad;
 
   /* קווים וצל */
-  --border-soft: rgba(255, 255, 255, 0.06);
-  --border-strong: rgba(255, 71, 126, 0.9);
-  --shadow-strong: 0 26px 60px rgba(0, 0, 0, 0.96);
+  --border-soft: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 95, 162, 0.95);
+  --shadow-strong: 0 22px 55px rgba(0, 0, 0, 0.9);
 
-  /* שמות "מורשת" כדי לא לשבור קוד קיים */
+  /* “מורשת” כדי לא לשבור קוד */
   --primary-pink: var(--accent-pink);
   --secondary-pink: var(--accent-pink-soft);
-  --deep-rose: var(--accent-pink-soft);
-  --accent-gold: #ffc857;
+  --deep-rose: var(--accent-pink-strong);
+  --accent-gold: #ffffff; /* בתמונה אין זהב – נשאיר לבן */
 
   --background: var(--bg-page);
   --background-dark: var(--bg-page);
-  --background-light: #050008;
+  --background-light: var(--bg-page);
 
   --text: var(--text-main);
   --text-light: #ffffff;
@@ -40,15 +40,13 @@
   --border-color: var(--border-soft);
   --shadow-color: rgba(0, 0, 0, 0.9);
 
-  --success: #ff80ab;
-  --error: #f44336;
-  --info: #2196f3;
+  --success: #7dffca;
+  --error: #ff6b6b;
+  --info: #7ab7ff;
 
-  /* מאקרו */
   --macro-input-w: 90px;
   --macro-input-h: 40px;
 
-  /* רספונסיביות */
   --container-pad: 2.5rem;
 }
 
@@ -74,13 +72,13 @@ body {
   color: var(--text-main);
   background: radial-gradient(
       circle at top center,
-      rgba(255, 71, 126, 0.4) 0,
+      rgba(255, 95, 162, 0.35) 0,
       transparent 55%
     ),
     radial-gradient(
-      circle at bottom right,
-      rgba(255, 71, 126, 0.3) 0,
-      transparent 55%
+      circle at bottom center,
+      rgba(255, 95, 162, 0.2) 0,
+      transparent 60%
     ),
     #050008; /* בסיס שחור */
 }
@@ -117,8 +115,8 @@ h2 {
 .dashboard-header,
 .top-nav {
   background: rgba(5, 0, 12, 0.98);
-  border-bottom: 1px solid rgba(255, 31, 113, 0.6);
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.9);
+  border-bottom: 2px solid var(--accent-pink-line);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.9);
   color: var(--text-main);
   padding: 0; /* ✅ בלי padding – הוא יעבור ל-inner */
   position: sticky;
@@ -143,7 +141,7 @@ h2 {
   object-fit: cover;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 12px rgba(255, 0, 92, 0.45);
+  box-shadow: 0 0 12px rgba(237, 75, 135, 0.863);
 }
 
 .site-title {

@@ -1,7 +1,7 @@
 // src/Login.jsx
 import React, { useState } from "react";
 import "./styles/auth.css"; // ← קובץ סגנונות חדש ומבודד
-import logo from "./assets/logo.jpg";
+import logo from "./logo.jpg";
 import config from "./config";
 
 export default function Login({ onLogin }) {
@@ -51,6 +51,11 @@ export default function Login({ onLogin }) {
     <div className="auth2-container" dir="rtl">
       {/* צד שמאל – תמונת אווירה + כותרת */}
       <aside className="auth2-hero">
+        <img
+          className="auth2-hero-img"
+          src={require("./assets/couch.jpg")}
+          alt=""
+        />
         <div className="auth2-hero-overlay">
           <h1 className="auth2-hero-title">ברוכה הבאה</h1>
           <p className="auth2-hero-subtitle">
