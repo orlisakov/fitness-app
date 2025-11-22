@@ -250,13 +250,11 @@ export default function TraineeDetailsForm() {
   if (error) return <div className="error">{error}</div>;
 
   const MealRow = ({ mealKey, title, disabled }) => {
-    const value = formData.customMeals[mealKey]; // או editData בהתאמה
+    const value = formData.customMeals[mealKey];
 
-    // מנקה כל מה שלא "ספרה יוניקודית" ומגביל ל-3 ספרות
     const onNumericChange = (field) => (e) => {
-      const cleaned = (e.target.value || "")
-        .replace(/\D/g, "") // מסיר כל מה שלא ספרה 0-9
-        .slice(0, 3);
+      const cleaned = (e.target.value || "").replace(/\D/g, "").slice(0, 20);
+
       setFormData((p) => ({
         ...p,
         customMeals: {
@@ -267,76 +265,68 @@ export default function TraineeDetailsForm() {
     };
 
     return (
-      <div className="meal-row" style={styles.mealRow}>
-        <div className="meal-cell" style={styles.mealCell}>
-          <label htmlFor={`${mealKey}-protein`}>
+      <div className="meal-row">
+        <div className="meal-cell">
+          <label>
             חלבון
             <br />
-            <span style={styles.unitSub}>(גרם)</span>
+            <span className="unit">(גרם)</span>
           </label>
           <input
             id={`${mealKey}-protein`}
             type="text"
             inputMode="numeric"
             pattern="[0-9]*"
-            dir="ltr"
             autoComplete="off"
             value={value.protein ?? ""}
             onChange={onNumericChange("protein")}
             disabled={disabled}
             className="meal-input"
-            style={{ ...styles.mealInput, direction: "ltr", textAlign: "left" }}
             placeholder="0"
           />
         </div>
 
-        <div className="meal-cell" style={styles.mealCell}>
-          <label htmlFor={`${mealKey}-carbs`}>
+        <div className="meal-cell">
+          <label>
             פחמימה
             <br />
-            <span style={styles.unitSub}>(גרם)</span>
+            <span className="unit">(גרם)</span>
           </label>
           <input
             id={`${mealKey}-carbs`}
             type="text"
             inputMode="numeric"
             pattern="[0-9]*"
-            dir="ltr"
             autoComplete="off"
             value={value.carbs ?? ""}
             onChange={onNumericChange("carbs")}
             disabled={disabled}
             className="meal-input"
-            style={{ ...styles.mealInput, direction: "ltr", textAlign: "left" }}
             placeholder="0"
           />
         </div>
 
-        <div className="meal-cell" style={styles.mealCell}>
-          <label htmlFor={`${mealKey}-fat`}>
+        <div className="meal-cell">
+          <label>
             שומן
             <br />
-            <span style={styles.unitSub}>(גרם)</span>
+            <span className="unit">(גרם)</span>
           </label>
           <input
             id={`${mealKey}-fat`}
             type="text"
             inputMode="numeric"
             pattern="[0-9]*"
-            dir="ltr"
             autoComplete="off"
             value={value.fat ?? ""}
             onChange={onNumericChange("fat")}
             disabled={disabled}
             className="meal-input"
-            style={{ ...styles.mealInput, direction: "ltr", textAlign: "left" }}
             placeholder="0"
           />
         </div>
 
-        <div className="meal-title" style={styles.mealTitle}>
-          {title}:
-        </div>
+        <div className="meal-title">{title}:</div>
       </div>
     );
   };
@@ -481,8 +471,8 @@ export default function TraineeDetailsForm() {
           {/* ——— חלוקת מאקרו לארוחות ——— */}
           <h3>חלוקת מאקרו לארוחות</h3>
 
-          <div className="split-card" style={styles.splitCard}>
-            <div className="split-header" style={styles.splitHeader}>
+          <div className="split-card">
+            <div className="split-header">
               <label className="check">
                 <input
                   type="radio"
@@ -509,13 +499,13 @@ export default function TraineeDetailsForm() {
             </div>
 
             {formData.customSplitMode === "auto" && (
-              <p className="muted" style={styles.muted}>
+              <p className="muted">
                 במצב אוטומטי החלוקה תחושב לפי סה״כ המאקרו/קלוריות שהזנת. כדי
                 להזין ידנית, בחרי “מצב ידני”.
               </p>
             )}
 
-            <div className="meal-split" style={styles.mealSplit}>
+            <div className="meal-split">
               <MealRow
                 mealKey="breakfast"
                 title="בוקר"

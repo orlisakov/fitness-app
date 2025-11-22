@@ -1,5 +1,5 @@
 // src/pages/ResourcesManage.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import config from "../config";
 
 export default function ResourcesManage() {
@@ -22,51 +22,95 @@ export default function ResourcesManage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const headers = {
-    Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-  };
+  const headers = useMemo(
+    () => ({
+      Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+    }),
+    []
+  );
 
-  const loadCategories = () =>
-    fetch(`${api}/api/resources/categories/list`, { headers })
-      .then((r) => r.json())
-      .then((arr) => setCategories(arr.filter(Boolean))) // בלי ריק
-      .catch(() => {});
+  const loadCategories = useCallback(async () => {
+    try {
+      const res = await fetch(`${api}/api/resources/categories/list`, {
+        headers,
+      });
+      const arr = await res.json();
+      setCategories((arr || []).filter(Boolean));
+    } catch {
+      // לא חייבים להפיל UI אם קטגוריות לא נטענו
+    }
+  }, [api, headers]);
 
-  const load = () => {
-    const p = new URLSearchParams();
-    if (q.trim()) p.set("q", q.trim());
-    if (catFilter.trim()) p.set("category", catFilter.trim());
-    fetch(`${api}/api/resources${p.toString() ? `?${p}` : ""}`, { headers })
-      .then((r) => (r.ok ? r.json() : r.json().then((e) => Promise.reject(e))))
-      .then(setList)
-      .catch((e) => setError(e?.message || "שגיאה בטעינת קבצים"));
-  };
+  const load = useCallback(async () => {
+    try {
+      setError("");
+      const p = new URLSearchParams();
+      if (q.trim()) p.set("q", q.trim());
+      if (catFilter.trim()) p.set("category", catFilter.trim());
+
+      const res = await fetch(
+        `${api}/api/resources${p.toString() ? `?${p}` : ""}`,
+        { headers }
+      );
+
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e?.message || "שגיאה בטעינת קבצים");
+      }
+
+      const data = await res.json();
+      setList(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setError(e?.message || "שגיאה בטעינת קבצים");
+      setList([]);
+    }
+  }, [api, headers, q, catFilter]);
 
   useEffect(() => {
     load();
     loadCategories();
-  }, [q, catFilter]); // eslint-disable-line
+  }, [load, loadCategories]);
 
-  const remove = (id) => {
+  const remove = async (id) => {
     if (!window.confirm("למחוק את המשאב?")) return;
-    fetch(`${api}/api/resources/${id}`, { method: "DELETE", headers })
-      .then((r) =>
-        r.ok
-          ? (load(), loadCategories())
-          : r.json().then((e) => Promise.reject(e))
-      )
-      .catch((e) => alert(e?.message || "שגיאה במחיקה"));
+    try {
+      const res = await fetch(`${api}/api/resources/${id}`, {
+        method: "DELETE",
+        headers,
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e?.message || "שגיאה במחיקה");
+      }
+      await load();
+      await loadCategories();
+    } catch (e) {
+      alert(e?.message || "שגיאה במחיקה");
+    }
+  };
+
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setTagsText("");
+    setVisibility("all");
+    setCategory("");
+    setFile(null);
+    setError("");
+    setSuccess("");
   };
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+
     if (!title.trim()) return setError("חסרה כותרת");
     if (!file) return setError("בחרי קובץ להעלאה");
 
     try {
       setUploading(true);
+
       const fd = new FormData();
       fd.append("title", title.trim());
       fd.append("description", description.trim());
@@ -80,46 +124,31 @@ export default function ResourcesManage() {
         headers,
         body: fd,
       });
+
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
         throw new Error(e?.message || "שגיאה בהעלאה");
       }
 
       setSuccess("הקובץ הועלה בהצלחה!");
-      setTitle("");
-      setDescription("");
-      setTagsText("");
-      setVisibility("all");
-      setCategory("");
-      setFile(null);
-      load();
-      loadCategories();
+      resetForm();
+      await load();
+      await loadCategories();
     } catch (err) {
-      setError(err.message || "שגיאה בהעלאה");
+      setError(err?.message || "שגיאה בהעלאה");
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div dir="rtl" style={{ padding: "2rem" }}>
-      <h1 style={{ marginBottom: 16 }}>ניהול קבצים</h1>
+    <div dir="rtl" className="resources-manage-page">
+      <h1 className="page-title">ניהול קבצים</h1>
 
-      {/* טופס העלאה בתוך המסגרת הורודה בלבד */}
-      <form
-        onSubmit={onSubmit}
-        className="card-pink"
-        style={{ marginBottom: 24, maxWidth: 900 }}
-      >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "140px 1fr",
-            gap: "10px 12px",
-            alignItems: "center",
-          }}
-        >
-          <label>כותרת *</label>
+      {/* טופס העלאה */}
+      <form onSubmit={onSubmit} className="card-pink resources-upload-card">
+        <div className="resources-upload-grid">
+          <label className="form-label">כותרת *</label>
           <input
             className="ui-input"
             value={title}
@@ -127,7 +156,7 @@ export default function ResourcesManage() {
             placeholder="שם המשאב (למשל: איך לבנות צלחת מאוזנת)"
           />
 
-          <label>תיאור</label>
+          <label className="form-label">תיאור</label>
           <textarea
             className="ui-textarea"
             value={description}
@@ -135,7 +164,7 @@ export default function ResourcesManage() {
             placeholder="תיאור קצר למתאמנת"
           />
 
-          <label>תגיות</label>
+          <label className="form-label">תגיות</label>
           <input
             className="ui-input"
             value={tagsText}
@@ -143,7 +172,7 @@ export default function ResourcesManage() {
             placeholder="למשל: תפריט, התחלה, צלחת-מאוזנת"
           />
 
-          <label>קטגוריה</label>
+          <label className="form-label">קטגוריה</label>
           <input
             className="ui-input"
             value={category}
@@ -157,7 +186,7 @@ export default function ResourcesManage() {
             ))}
           </datalist>
 
-          <label>נראות</label>
+          <label className="form-label">נראות</label>
           <select
             className="ui-select"
             value={visibility}
@@ -168,7 +197,7 @@ export default function ResourcesManage() {
             <option value="coach">למאמנת בלבד</option>
           </select>
 
-          <label>קובץ *</label>
+          <label className="form-label">קובץ *</label>
           <input
             className="ui-file"
             type="file"
@@ -177,12 +206,12 @@ export default function ResourcesManage() {
         </div>
 
         {file && (
-          <div style={{ marginTop: 8, color: "#7a4860" }}>
+          <div className="muted" style={{ marginTop: 8 }}>
             נבחר: <b>{file.name}</b> — {Math.round(file.size / 1024)}KB
           </div>
         )}
 
-        <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+        <div className="resources-actions">
           <button
             className="btn-link secondary"
             type="submit"
@@ -193,38 +222,28 @@ export default function ResourcesManage() {
           <button
             type="button"
             className="btn-link"
-            onClick={() => {
-              setTitle("");
-              setDescription("");
-              setTagsText("");
-              setVisibility("all");
-              setCategory("");
-              setFile(null);
-              setError("");
-              setSuccess("");
-            }}
+            onClick={resetForm}
+            disabled={uploading}
           >
             איפוס
           </button>
         </div>
 
-        {error && (
-          <div style={{ marginTop: 10, color: "#c62828", fontWeight: 600 }}>
-            {error}
-          </div>
-        )}
+        {error && <div className="dashboard-error">{error}</div>}
         {success && (
-          <div style={{ marginTop: 10, color: "#2e7d32", fontWeight: 600 }}>
+          <div
+            className="dashboard-message"
+            style={{ borderColor: "var(--accent-pink)" }}
+          >
             {success}
           </div>
         )}
       </form>
 
-      {/* חיפוש + קטגוריות – באותה שורה ובאותו גובה */}
-      <div className="filter-row" style={{ marginBottom: 12 }}>
+      {/* חיפוש + סינון */}
+      <div className="filter-row resources-filter-row">
         <input
           className="ui-input"
-          style={{ minWidth: 320 }}
           placeholder="חיפוש לפי כותרת/תיאור/תגיות…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -241,14 +260,11 @@ export default function ResourcesManage() {
             </option>
           ))}
         </select>
-        <button className="btn-link" onClick={load}>
-          סנן
-        </button>
       </div>
 
       {/* טבלה */}
-      <div className="table-wrap">
-        <table className="table">
+      <div className="table-wrapper">
+        <table className="history-table">
           <thead>
             <tr>
               <th>כותרת</th>
@@ -260,6 +276,7 @@ export default function ResourcesManage() {
               <th>פעולות</th>
             </tr>
           </thead>
+
           <tbody>
             {list.map((r) => (
               <tr key={r._id}>
@@ -308,9 +325,12 @@ export default function ResourcesManage() {
                 </td>
               </tr>
             ))}
+
             {!list.length && (
               <tr>
-                <td colSpan="7">אין תוצאות.</td>
+                <td colSpan="7" style={{ textAlign: "center" }}>
+                  אין תוצאות.
+                </td>
               </tr>
             )}
           </tbody>

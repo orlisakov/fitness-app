@@ -252,7 +252,7 @@ function inCats(food, cats = []) {
   return cats.some((k) => c.includes(k));
 }
 
-function bySuitability(mealType, min = 5) {
+function bySuitability(mealType, min = 10) {
   return (f) => {
     const v = Number(f?.mealSuitability?.[mealType]);
     return Number.isFinite(v) ? v >= min : true;
@@ -1321,24 +1321,24 @@ class RuleBasedPlanner {
   }
 
   // חלבון/חטיפים ביניים
-  getProteinSnack(minSuit = 0) {
+  getProteinSnack(minSuit = 3) {
     return this.pool(
       (f) => inCats(f, ["protein_snack"]) && bySuitability("snack", minSuit)(f)
     );
   }
-  getSweetSnack(minSuit = 4) {
+  getSweetSnack(minSuit = 5) {
     return this.pool(
       (f) =>
         bySuitability("snack", minSuit)(f) &&
         inCats(f, ["sweet_snack", "carbs_snack"])
     );
   }
-  getFruitSnack(minSuit = 3) {
+  getFruitSnack(minSuit = 6) {
     return this.pool(
       (f) => bySuitability("snack", minSuit)(f) && inCats(f, ["fruit_snack"])
     );
   }
-  getFatSnack(minSuit = 3) {
+  getFatSnack(minSuit = 6) {
     return this.pool(
       (f) => bySuitability("snack", minSuit)(f) && inCats(f, ["fat_snack"])
     );
@@ -1360,7 +1360,7 @@ class RuleBasedPlanner {
       "protein",
       totalTargets.protein,
       fatCeil,
-      60
+      80
     );
     const carbs = this.buildGroupOptionsDominantWithFatCeil(
       carbsPool,
@@ -1534,36 +1534,50 @@ class RuleBasedPlanner {
 
     // מאגרים
     const proteinPool = this.getProteinSnack(0);
-    const sweetsPool = this.getSweetSnack();
-    const fruitsPool = this.getFruitSnack();
-    const FatsPool = this.getFatSnack();
+    const sweetsPool = this.getSweetSnack(0);
+    const fruitsPool = this.getFruitSnack(0);
+    const FatsPool = this.getFatSnack(0);
 
     // אופציות לפי מאקרו יחיד
     const proteins = buildSingleMacroOptions(
       proteinPool,
       "protein",
       totalTargets.protein,
-      60
+      80
     );
     const sweetsAsCarb = buildSingleMacroOptions(
       sweetsPool,
       "carbs",
       totalTargets.carbs,
-      20
+      35
     );
     const fruitsAsAlt = buildSingleMacroOptions(
       fruitsPool,
       "carbs",
       totalTargets.carbs,
-      20
+      30
     );
 
     const FatsAsAlt = buildSingleMacroOptions(
       FatsPool,
       "fat",
       totalTargets.fat,
-      20
+      30
     );
+
+    console.log("SNACK POOLS SIZE", {
+      proteinPool: proteinPool.length,
+      sweetsPool: sweetsPool.length,
+      fruitsPool: fruitsPool.length,
+      fatsPool: FatsPool.length,
+    });
+
+    console.log("SNACK OPTIONS SIZE", {
+      proteins: proteins.length,
+      sweetsAsCarb: sweetsAsCarb.length,
+      fruitsAsAlt: fruitsAsAlt.length,
+      fatsAsAlt: FatsAsAlt.length,
+    });
 
     return {
       mode: "variety",

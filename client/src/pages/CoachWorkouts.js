@@ -17,7 +17,7 @@ export default function CoachWorkouts() {
   const [file, setFile] = useState(null);
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
-  const [uploadPct, setUploadPct] = useState(0); // ← פרוגרס
+  const [uploadPct, setUploadPct] = useState(0);
 
   const token = getToken();
 
@@ -58,16 +58,14 @@ export default function CoachWorkouts() {
     try {
       await axios.post(`${config.apiBaseUrl}/api/workouts/upload`, fd, {
         headers: { Authorization: `Bearer ${token}` },
-        // אל תקבעי Content-Type ידנית—axios יוסיף boundary לבד
         onUploadProgress: (evt) => {
-          if (!evt.total) return; // בדפדפנים מסוימים total לא קיים
+          if (!evt.total) return;
           const pct = Math.round((evt.loaded * 100) / evt.total);
           setUploadPct(pct);
         },
         timeout: 0,
       });
 
-      // ניקוי שדות
       setTitle("");
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -77,7 +75,6 @@ export default function CoachWorkouts() {
     } catch (e) {
       alert(e.response?.data?.message || "שגיאה בהעלאה");
     } finally {
-      // השהייה קצרה כדי לראות 100% ואז לאפס
       setTimeout(() => setUploadPct(0), 600);
       setLoading(false);
     }
@@ -98,13 +95,10 @@ export default function CoachWorkouts() {
     }
   }
 
-  // פתיחת PDF דרך Authorization Header (בלי ?token=)
   async function openPlan(plan, asDownload = false) {
     const tk = getToken();
-    if (!tk) {
-      alert("נדרש להתחבר מחדש (לא נמצא טוקן)");
-      return;
-    }
+    if (!tk) return alert("נדרש להתחבר מחדש (לא נמצא טוקן)");
+
     const url = `${config.apiBaseUrl}/api/workouts/file/${plan._id}`;
     const resp = await axios.get(url, {
       headers: { Authorization: `Bearer ${tk}` },
@@ -131,133 +125,118 @@ export default function CoachWorkouts() {
   }
 
   return (
-    <div
-      dir="rtl"
-      className="container"
-      style={{ maxWidth: 900, margin: "24px auto" }}
-    >
-      <h1>תכניות אימונים שלי</h1>
+    <div dir="rtl" className="coach-workouts-page">
+      <h1 className="page-title">תכניות אימונים שלי</h1>
 
-      {/* כפתורי דרגות עם הדגשה ל-active */}
-      <div
-        className="tabs"
-        style={{ display: "flex", gap: 8, margin: "12px 0" }}
-      >
+      {/* Tabs / Levels */}
+      <div className="workouts-tabs">
         {LVLS.map((l) => (
           <button
             key={l.key}
+            className={`tab-btn ${level === l.key ? "active" : ""}`}
             onClick={() => setLevel(l.key)}
             disabled={loading && level !== l.key}
-            style={{
-              padding: "8px 16px",
-              borderRadius: "20px",
-              border: "1px solid #ccc",
-              cursor: "pointer",
-              backgroundColor: level === l.key ? "#c2185b" : "#f3f3f3",
-              color: level === l.key ? "white" : "black",
-              fontWeight: level === l.key ? 700 : 500,
-              transition: "background-color 0.3s, color 0.3s",
-            }}
+            type="button"
           >
             {l.label}
           </button>
         ))}
       </div>
 
-      {/* טופס העלאה + פס התקדמות */}
-      <form
-        onSubmit={uploadPdf}
-        style={{
-          display: "flex",
-          gap: 8,
-          alignItems: "center",
-          flexWrap: "wrap",
-          margin: "8px 0 16px",
-        }}
-      >
-        <input
-          type="text"
-          placeholder="כותרת (אופציונלי)"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          disabled={loading}
-        />
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="application/pdf"
-          onChange={(e) =>
-            setFile((e.target.files && e.target.files[0]) || null)
-          }
-          disabled={loading}
-        />
-        <button type="submit" disabled={loading || !file}>
-          {loading ? "מעלה…" : "העלאת PDF"}
-        </button>
+      {/* Upload Card */}
+      <form onSubmit={uploadPdf} className="card-pink upload-card">
+        <div className="upload-row">
+          <input
+            className="ui-input"
+            type="text"
+            placeholder="כותרת (אופציונלי)"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            disabled={loading}
+          />
 
-        {/* פס התקדמות */}
-        {uploadPct > 0 && (
-          <div
-            style={{
-              width: 260,
-              height: 8,
-              background: "#eee",
-              borderRadius: 999,
-              overflow: "hidden",
-            }}
+          <input
+            ref={fileInputRef}
+            className="ui-file"
+            type="file"
+            accept="application/pdf"
+            onChange={(e) =>
+              setFile((e.target.files && e.target.files[0]) || null)
+            }
+            disabled={loading}
+          />
+
+          <button
+            className="btn-link"
+            type="submit"
+            disabled={loading || !file}
           >
-            <div
-              style={{
-                width: `${uploadPct}%`,
-                height: 8,
-                borderRadius: 999,
-                background: "#c2185b",
-                transition: "width .15s linear",
-              }}
-            />
-          </div>
-        )}
+            {loading ? "מעלה…" : "העלאת PDF"}
+          </button>
+        </div>
+
+        {/* Progress */}
         {uploadPct > 0 && (
-          <span style={{ fontSize: 12, color: "#666" }}>{uploadPct}%</span>
+          <div className="progress-wrap">
+            <div className="progress-bar" style={{ width: `${uploadPct}%` }} />
+            <span className="progress-text">{uploadPct}%</span>
+          </div>
         )}
       </form>
 
-      {loading && plans.length === 0 ? (
-        <div>טוען…</div>
-      ) : plans.length ? (
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {plans.map((p) => (
-            <li
-              key={p._id}
-              className="card"
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                padding: "10px 12px",
-                marginBottom: 8,
-              }}
-            >
-              <div>
-                <div style={{ fontWeight: 600 }}>{p.title}</div>
-                <div style={{ fontSize: 12, color: "#666" }}>
+      {/* Plans Table */}
+      <div className="table-wrap">
+        <table className="history-table workouts-table">
+          <thead>
+            <tr>
+              <th>שם התוכנית</th>
+              <th>תאריך העלאה</th>
+              <th>פעולות</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading && plans.length === 0 && (
+              <tr>
+                <td colSpan="3">טוען…</td>
+              </tr>
+            )}
+
+            {!loading && plans.length === 0 && (
+              <tr>
+                <td colSpan="3">אין קבצים לרמה הזו עדיין.</td>
+              </tr>
+            )}
+
+            {plans.map((p) => (
+              <tr key={p._id}>
+                <td>{p.title}</td>
+                <td>
                   {p.createdAt
                     ? new Date(p.createdAt).toLocaleString("he-IL")
-                    : ""}
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => openPlan(p, false)}>פתיחה</button>
-                {/* <button onClick={() => openPlan(p, true)}>הורדה</button> */}
-                <button onClick={() => remove(p._id)} className="danger">
-                  מחיקה
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <div>אין קבצים לרמה הזו עדיין.</div>
-      )}
+                    : "—"}
+                </td>
+                <td className="actions-cell">
+                  <button
+                    type="button"
+                    className="btn-link secondary"
+                    onClick={() => openPlan(p, false)}
+                  >
+                    פתיחה
+                  </button>
+                  {/* <button type="button" className="btn-link" onClick={() => openPlan(p, true)}>הורדה</button> */}
+                  <button
+                    type="button"
+                    className="btn-link danger"
+                    onClick={() => remove(p._id)}
+                  >
+                    מחיקה
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

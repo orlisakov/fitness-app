@@ -738,15 +738,19 @@ export default function PersonalMenu({ traineeData }) {
       meal.groups.find((g) => g.key === "fruit_snack")?.options || [];
     const fats = meal.groups.find((g) => g.key === "fat_snack")?.options || [];
 
+    // ✅ פחמימות בסנאק = מתוקים + פירות + שומנים
+    const carbsWithFats = [...sweets, ...fruits, ...fats];
+
     return (
       <div className="meal-card stacked">
         <SectionTitle>ארוחת ביניים</SectionTitle>
         <TargetsRow t={t} />
-        <QuadGroupTable
+
+        <DualGroupTable
+          proteinTitle="חלבון - בחרי אחד"
+          carbTitle="בחרי אחד"
           proteinOptions={prot}
-          sweetsOptions={sweets}
-          fruitsOptions={fruits}
-          fatsOptions={fats}
+          carbOptions={carbsWithFats}
         />
       </div>
     );

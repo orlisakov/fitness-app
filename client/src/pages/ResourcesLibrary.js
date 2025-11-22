@@ -80,7 +80,7 @@ export default function ResourcesLibrary() {
       <h1 style={{ margin: "0 0 24px 0", textAlign: "right" }}>קבצים להורדה</h1>
 
       {/* 🔹 שורת סינון בלבד */}
-      <div className="filter-row" style={{ marginBottom: 20 }}>
+      <div className="resources-filter-block" style={{ marginBottom: 20 }}>
         <select
           className="ui-select"
           value={catFilter}
@@ -96,7 +96,7 @@ export default function ResourcesLibrary() {
         </select>
 
         <input
-          className="ui-input"
+          className="search-input"
           placeholder="חיפוש…"
           value={q}
           onChange={(e) => setQ(e.target.value)}

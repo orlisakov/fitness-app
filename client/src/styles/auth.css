@@ -4,14 +4,14 @@
    ============================ */
 
 :root {
-  --auth-bg: #050008; /* רקע ראשי כמו האתר */
-  --auth-card: #0b0615; /* פאנל כהה כמו כרטיסי האתר */
-  --auth-card-soft: #130a22;
+  --auth-bg: #000000; /* רקע ראשי כמו האתר */
+  --auth-card: #000000; /* פאנל כהה כמו כרטיסי האתר */
+  --auth-card-soft: #000000;
 
   --auth-text: #f7f5ff; /* טקסט ראשי */
   --auth-muted: #a8a2c0; /* טקסט משני */
 
-  --auth-border: rgba(207, 55, 121, 0.4); /* ורוד עדין */
+  --auth-border: #ff477e; /* ורוד עדין */
 
   --auth-accent: #ff477e; /* כפתור ורוד חדש */
   --auth-accent-2: #efe2f7; /* סגלגל — שילוב יפה */
@@ -27,16 +27,8 @@
   display: grid;
   grid-template-columns: 1.2fr 1fr;
   min-height: 100vh;
-  background: radial-gradient(
-      circle at top left,
-      rgba(176, 35, 255, 0.4),
-      transparent 55%
-    ),
-    radial-gradient(
-      circle at bottom right,
-      rgba(255, 0, 92, 0.45),
-      transparent 55%
-    ),
+  background: radial-gradient(circle at top left, #ff477e, transparent 55%),
+    radial-gradient(circle at bottom right, #ff477e, transparent 55%),
     var(--auth-bg);
   color: var(--auth-text);
   font-family: "Alef", system-ui, sans-serif;
@@ -52,7 +44,7 @@
   background-size: contain; /* ✅ לא חותך */
   background-repeat: no-repeat; /* ✅ שלא יחזור */
   background-position: center; /* ✅ באמצע */
-  background-color: #050008; /* כדי שהרווחים יהיו יפים */
+  background-color: #000000; /* כדי שהרווחים יהיו יפים */
   filter: saturate(1.05);
   min-height: 100vh;
 }
@@ -61,11 +53,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(37, 0, 83, 0.25),
-    rgba(0, 0, 0, 0.75)
-  );
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.75));
 }
 
 .auth2-hero-overlay {
@@ -83,7 +71,7 @@
   margin: 0 0 10px;
   letter-spacing: 0.3px;
   color: #ffffff;
-  text-shadow: 0 0 14px rgba(255, 71, 126, 0.4);
+  text-shadow: 0 0 14px #ff477e;
 }
 
 .auth2-hero-subtitle {
@@ -108,7 +96,6 @@
   border: 1px solid var(--auth-border);
   border-radius: 18px;
   padding: clamp(20px, 4vw, 28px);
-  box-shadow: var(--auth-shadow);
 }
 
 /* לוגו */
@@ -146,7 +133,7 @@
   height: 44px;
   background: var(--auth-card-soft);
   color: var(--auth-text);
-  border: 1px solid rgba(255, 79, 155, 0.3);
+  border: 1px solid #ff477e;
   border-radius: 12px;
   padding: 0 12px;
   outline: none;
@@ -159,7 +146,6 @@
 
 .auth2-input:focus {
   border-color: #ff4f9b;
-  box-shadow: 0 0 0 3px rgba(255, 71, 126, 0.25);
 }
 
 /* ============================
@@ -177,13 +163,11 @@
   letter-spacing: 0.3px;
   color: white;
   background: linear-gradient(90deg, var(--auth-accent), var(--auth-accent-2));
-  box-shadow: 0 6px 16px rgba(255, 71, 126, 0.45);
   transition: transform 0.06s ease, filter 0.2s ease, box-shadow 0.2s ease;
 }
 
 .auth2-button:hover {
   filter: brightness(1.15);
-  box-shadow: 0 10px 24px rgba(255, 71, 126, 0.55);
 }
 
 .auth2-button:active {
@@ -233,8 +217,8 @@
 
 .auth2-alert-error {
   color: #ffc2cf;
-  background: rgba(255, 79, 155, 0.15);
-  border: 1px solid rgba(255, 79, 155, 0.4);
+  background: #ff477e;
+  border: 1px solid #ff477e;
 }
 
 .auth2-alert-ok {
@@ -343,17 +327,17 @@
    ============================ */
 
 :root {
-  --auth-bg: #050008; /* שחור רקע */
-  --auth-card: #0b0615; /* כרטיס כהה */
-  --auth-card-soft: #130a22; /* רקע שדות */
+  --auth-bg: #000000; /* שחור רקע */
+  --auth-card: #000000; /* כרטיס כהה */
+  --auth-card-soft: #000000; /* רקע שדות */
 
   --auth-text: #ffffff; /* טקסט לבן */
   --auth-muted: #d4ccda; /* טקסט משני */
 
-  --auth-border: rgba(183, 31, 90, 0.45); /* ורוד כהה שקוף */
+  --auth-border: #ff477e; /* ורוד כהה שקוף */
 
-  --auth-accent: #b71f5a; /* כפתור ורוד חדש */
-  --auth-accent-2: #b71f5a; /* צבע אחיד — אין מעבר צבע */
+  --auth-accent: #ff477e; /* כפתור ורוד חדש */
+  --auth-accent-2: #ff477e; /* צבע אחיד — אין מעבר צבע */
 
   --auth-shadow: 0 18px 45px rgba(0, 0, 0, 0.85);
 }
@@ -361,31 +345,25 @@
 /* HERO TITLE/SHADOW – שינוי צבע לסגול → ורוד */
 .auth2-hero-title {
   color: #ffffff;
-  text-shadow: 0 0 14px rgba(183, 31, 90, 0.55);
+  text-shadow: 0 0 14px #ff477e;
 }
 
 /* גרדיאנט של צד תמונה – החלפנו סגול לורוד נקי */
 .auth2-hero::after {
-  background: linear-gradient(
-    180deg,
-    rgba(183, 31, 90, 0.25),
-    rgba(0, 0, 0, 0.75)
-  );
+  background: linear-gradient(180deg, #ff477e, rgba(0, 0, 0, 0.75));
 }
 
 /* INPUT BORDER */
 .auth2-input {
-  border: 1px solid rgba(183, 31, 90, 0.45);
+  border: 1px solid #ff477e;
 }
 .auth2-input:focus {
   border-color: #b71f5a;
-  box-shadow: 0 0 0 3px rgba(183, 31, 90, 0.25);
 }
 
 /* BUTTON – ורוד בלבד */
 .auth2-button {
   background: #b71f5a !important;
-  box-shadow: 0 6px 16px rgba(183, 31, 90, 0.45);
 }
 .auth2-button:hover {
   background: #a81952 !important;
@@ -408,8 +386,8 @@
 /* הודעת שגיאה */
 .auth2-alert-error {
   color: #ffd5df;
-  background: rgba(183, 31, 90, 0.18);
-  border: 1px solid rgba(183, 31, 90, 0.45);
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid #ff477e;
 }
 
 /* רקע עליון של הדף (הסרנו סגולים מהגרדיאנט) */

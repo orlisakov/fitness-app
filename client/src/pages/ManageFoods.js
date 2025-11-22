@@ -15,8 +15,6 @@ const dietaryFlagsList = [
   { label: "צמחוני", value: "isVegetarian" },
   { label: "ללא גלוטן", value: "isGlutenFree" },
   { label: "ללא לקטוז", value: "isLactoseFree" },
-  { label: "קטו", value: "isKeto" },
-  { label: "דל פחמימה", value: "isLowCarb" },
 ];
 
 /** מיפוי להצגה בטבלה (לא קשור להצגה ללקוח) */
@@ -423,6 +421,7 @@ function FoodModal({ title, onClose, onSave, food = {} }) {
             <label>
               פעיל?
               <select
+                className="text-input"
                 value={form.isActive ? "1" : "0"}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, isActive: e.target.value === "1" }))
@@ -536,6 +535,7 @@ function FoodModal({ title, onClose, onSave, food = {} }) {
               <label>
                 יחידת בסיס:
                 <select
+                  className="text-input"
                   value={form.servingInfo.baseUnit}
                   onChange={(e) =>
                     setNested(["servingInfo", "baseUnit"], e.target.value)

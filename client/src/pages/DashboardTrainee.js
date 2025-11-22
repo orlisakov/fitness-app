@@ -530,7 +530,7 @@ export default function DashboardTrainee() {
             >
               דרגת אימון: {LEVEL_LABELS[trainee.trainingLevel] || "מתחילות"}
             </div>
-
+            <h1></h1>
             <h3 className="section-title">חישוב מאמן</h3>
             <div className="form-grid four">
               <div className="field">

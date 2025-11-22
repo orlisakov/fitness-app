@@ -3,50 +3,48 @@
    ========================= */
 :root {
   /* רקעים */
-  --bg-page: #050008; /* שחור נקי */
-  --bg-panel: #0a0a0d; /* כרטיסים/פאנלים כהים */
-  --bg-panel-soft: #111114; /* שדות / אזורים פנימיים */
+  --backgroundBlack: #000000; /* כרטיסים/פאנלים כהים */
 
-  /* ורודים מהתמונה */
-  --accent-pink: #ff5fa2; /* ורוד ראשי (כפתורים/כותרות) */
-  --accent-pink-strong: #ff2d86; /* היי־לייט חזק */
-  --accent-pink-soft: #ffd1e6; /* בייבי־פינק לרקעים בהירים */
-  --accent-pink-line: rgba(255, 95, 162, 0.6);
+  /* ורודים */
+  --accent-pink: #ff477e;
+  --accent-pink-lite: #fd2767;
+  --accent-pink-line: rgba(255, 71, 126, 0.6);
 
   /* טקסט */
   --text-main: #ffffff;
-  --text-muted: #d9d4df;
-  --text-soft: #a7a0ad;
+  --text-soft: rgba(255, 255, 255, 0.7);
 
   /* קווים וצל */
-  --border-soft: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 95, 162, 0.95);
+  --border-black: rgba(0, 0, 0, 0.08);
+  --border-pink: #ff477e;
   --shadow-strong: 0 22px 55px rgba(0, 0, 0, 0.9);
 
-  /* “מורשת” כדי לא לשבור קוד */
+  /* מורשת */
   --primary-pink: var(--accent-pink);
-  --secondary-pink: var(--accent-pink-soft);
-  --deep-rose: var(--accent-pink-strong);
-  --accent-gold: #ffffff; /* בתמונה אין זהב – נשאיר לבן */
+  --secondary-pink: var(--accent-pink);
+  --accent-gold: #ffffff;
 
-  --background: var(--bg-page);
-  --background-dark: var(--bg-page);
-  --background-light: var(--bg-page);
+  --background: var(--backgroundBlack);
+  --background-dark: var(--backgroundBlack);
+  --background-light: var(--backgroundBlack);
 
   --text: var(--text-main);
   --text-light: #ffffff;
   --text-dark: var(--text-main);
 
-  --border-color: var(--border-soft);
+  --border-color: var(--border-black);
   --shadow-color: rgba(0, 0, 0, 0.9);
 
-  --success: #7dffca;
-  --error: #ff6b6b;
-  --info: #7ab7ff;
+  --success: #ffffff;
+  --error: #ff477e;
+  --info: #ffffff;
+  --lite-pink: #552230;
+  --lite-pink2: rgb(84, 19, 37) 0;
+  --lite-pink-soft: rgba(255, 71, 126, 0.2); /* ורוד שקוף ועדין */
+  --lite-pink-soft2: rgba(255, 71, 126, 0.12); /* ורוד שקוף עוד יותר */
 
   --macro-input-w: 90px;
   --macro-input-h: 40px;
-
   --container-pad: 2.5rem;
 }
 
@@ -70,17 +68,7 @@ body {
   padding: 0;
   direction: rtl;
   color: var(--text-main);
-  background: radial-gradient(
-      circle at top center,
-      rgba(255, 95, 162, 0.35) 0,
-      transparent 55%
-    ),
-    radial-gradient(
-      circle at bottom center,
-      rgba(255, 95, 162, 0.2) 0,
-      transparent 60%
-    ),
-    #050008; /* בסיס שחור */
+  background: var(--backgroundBlack); /* שחור נקי לפי ה-ROOT */
 }
 
 h1,
@@ -115,8 +103,7 @@ h2 {
 .dashboard-header,
 .top-nav {
   background: rgba(5, 0, 12, 0.98);
-  border-bottom: 2px solid var(--accent-pink-line);
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.9);
+  border-bottom: 2px solid var(--accent-pink);
   color: var(--text-main);
   padding: 0; /* ✅ בלי padding – הוא יעבור ל-inner */
   position: sticky;
@@ -141,7 +128,6 @@ h2 {
   object-fit: cover;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 12px rgba(237, 75, 135, 0.863);
 }
 
 .site-title {
@@ -153,7 +139,7 @@ h2 {
 }
 
 .site-title:hover {
-  color: var(--accent-pink-soft);
+  color: var(--accent-pink);
 }
 
 .nav-left {
@@ -173,7 +159,7 @@ h2 {
 .nav-links span,
 .nav-link {
   cursor: pointer;
-  color: var(--text-muted);
+  color: var(--text-main);
   font-weight: 600;
   text-decoration: none;
   transition: color 0.3s;
@@ -210,24 +196,6 @@ h2 {
 /* =========================
    BUTTONS – FF477E
    ========================= */
-button,
-.btn,
-.logout-button,
-.resource-btn,
-.btn-link,
-.gradient-button {
-  background: #b71f5a !important;
-  color: #ffffff !important;
-  border: none !important;
-  border-radius: 999px;
-  padding: 10px 22px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 6px 16px rgba(255, 71, 126, 0.35) !important;
-  text-decoration: none;
-  font-family: "Alef", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
-}
 
 button:hover,
 .btn:hover,
@@ -235,8 +203,7 @@ button:hover,
 .resource-btn:hover,
 .btn-link:hover,
 .gradient-button:hover {
-  background: #d4246b !important;
-  box-shadow: 0 8px 22px rgba(255, 71, 126, 0.55) !important;
+  background: var(--accent-pink) !important;
   transform: translateY(-2px);
 }
 
@@ -244,8 +211,7 @@ button:hover,
   padding: 6px 14px;
   font-size: 13px;
   border-radius: 999px;
-  background: var(--accent-pill);
-  box-shadow: 0 6px 18px rgba(255, 0, 92, 0.7);
+  background: var(--background);
 }
 
 /* =========================
@@ -265,8 +231,8 @@ select,
   padding: 10px 12px;
   margin: 0;
   border-radius: 10px;
-  border: 1px solid #2f163e;
-  background: #120720;
+  border: 1px solid #000000;
+  background: #000000;
   color: var(--text-main);
   box-sizing: border-box;
   font-family: inherit;
@@ -278,8 +244,7 @@ select:focus,
 .ui-input:focus,
 .ui-select:focus {
   outline: none;
-  border-color: var(--accent-pink-soft);
-  box-shadow: 0 0 0 2px rgba(255, 31, 113, 0.45);
+  border-color: var(--accent-pink);
 }
 
 label,
@@ -288,7 +253,7 @@ label,
   font-weight: 700;
   display: block;
   margin-bottom: 8px;
-  color: var(--text-muted);
+  color: var(--text-main);
 }
 
 /* =========================
@@ -302,7 +267,7 @@ label,
   background: linear-gradient(
     135deg,
     var(--primary-pink) 0%,
-    var(--deep-rose) 100%
+    var(--accent-pink) 100%
   );
   color: var(--text-light);
 }
@@ -327,7 +292,7 @@ label,
   content: "";
   position: absolute;
   inset: 0;
-  background: rgba(136, 14, 79, 0.35);
+  background: var(--background);
   z-index: 1;
 }
 
@@ -341,7 +306,7 @@ label,
   font-size: 48px;
   margin-bottom: 20px;
   color: var(--accent-gold);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 4px var(--background);
 }
 
 .login-left p,
@@ -369,8 +334,7 @@ label,
   background: var(--text-light);
   padding: 2.5rem;
   border-radius: 20px;
-  color: #2b1525;
-  box-shadow: 0 10px 30px var(--shadow-color);
+  color: var(--background);
 }
 
 .login-logo,
@@ -396,13 +360,13 @@ label,
   border-radius: 12px;
   border: 1px solid var(--border-color);
   background-color: var(--text-light);
-  color: #2b1525;
+  color: var(--background);
   box-sizing: border-box;
 }
 
 .auth-form h2 {
   margin-bottom: 20px;
-  color: var(--deep-rose);
+  color: var(--accent-pink);
   font-weight: 800;
   font-size: 28px;
 }
@@ -417,7 +381,7 @@ label,
 
 .auth-options a,
 .forgot-password {
-  color: var(--deep-rose);
+  color: var(--accent-pink);
   text-decoration: none;
   font-weight: 600;
 }
@@ -481,23 +445,17 @@ label,
 .trainee-dashboard .trainee-form {
   max-width: 1000px;
   margin: 0 auto;
-  background: linear-gradient(
-      145deg,
-      rgba(255, 255, 255, 0.04),
-      transparent 40%
-    ),
-    var(--bg-panel);
+  background: linear-gradient(145deg, var(--background)), var(--background);
   padding: 2rem;
   border-radius: 20px;
-  border: 1px solid var(--border-soft);
-  box-shadow: var(--shadow-strong);
+  border: 1px solid var(--accent-pink);
 }
 
 .trainee-dashboard .field label {
   font-size: 14px;
   margin-bottom: 5px;
   font-weight: 700;
-  color: var(--text-muted);
+  color: var(--text-main);
 }
 
 .trainee-dashboard .field input,
@@ -511,7 +469,7 @@ label,
   border-radius: 10px;
   border: 1px solid var(--border-color);
   background: #ffffff;
-  color: #2b1525;
+  color: var(--background);
   box-sizing: border-box;
 }
 
@@ -536,8 +494,7 @@ label,
   border-radius: 16px;
   padding: 20px;
   margin: 15px 0 25px;
-  background: rgba(8, 2, 25, 0.95);
-  box-shadow: 0 4px 15px rgba(136, 14, 79, 0.1);
+  background: var(--background);
 }
 
 .split-header {
@@ -557,21 +514,6 @@ label,
 .meal-split {
   display: grid;
   gap: 15px;
-}
-
-/* 80px כותרת ארוחה + 3 עמודות ערכים */
-.meal-row {
-  display: grid;
-  grid-template-columns: 80px repeat(3, minmax(120px, 1fr));
-  gap: 15px;
-  align-items: center;
-}
-
-.meal-title {
-  text-align: center;
-  font-weight: 800;
-  font-size: 22px;
-  color: var(--text-main);
 }
 
 .meal-cell {
@@ -598,13 +540,12 @@ label,
   font-size: 0.95rem;
   box-sizing: border-box;
   background: #ffffff;
-  color: #2b1525;
+  color: var(--background);
 }
 
 .meal-input:focus {
   outline: none;
   border-color: var(--primary-pink);
-  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
 }
 
 .meal-input:disabled {
@@ -678,10 +619,10 @@ label,
   flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 15px;
-  background: rgba(8, 2, 25, 0.95);
+  background: var(--background);
   border-radius: 16px;
   padding: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--background);
 }
 
 .targets-row {
@@ -692,8 +633,8 @@ label,
 }
 
 .chip {
-  background: rgba(255, 79, 155, 0.12);
-  border: 1px solid rgba(255, 79, 155, 0.6);
+  background: var(--background);
+  border: 1px solid var(--accent-pink);
   border-radius: 999px;
   padding: 4px 8px;
   font-size: 13px;
@@ -707,24 +648,16 @@ label,
 
 .chip-strong {
   background: var(--accent-pink);
-  border-color: var(--accent-pink-soft);
+  border-color: var(--accent-pink);
   color: #ffffff;
   font-weight: 700;
   padding: 4px 8px;
 }
 
 .meal-card {
-  background: linear-gradient(
-      145deg,
-      rgba(255, 255, 255, 0.04),
-      transparent 40%
-    ),
-    var(--bg-panel);
-  border-radius: 20px;
-  border: 1px solid var(--border-soft);
-  box-shadow: var(--shadow-strong);
-  color: var(--text-main);
-  padding: 20px;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
 }
 
 .meal-notes {
@@ -733,14 +666,14 @@ label,
   color: var(--text-soft);
   display: grid;
   gap: 5px;
-  border-top: 1px solid var(--border-soft);
+  border-top: 1px solid var(--border-black);
   padding-top: 10px;
 }
 
 /* תקלות / לודינג */
 .menu-error {
   color: var(--error);
-  background: #ffebee;
+  background: #ffffff;
   border: 1px solid var(--error);
   padding: 15px 20px;
   border-radius: 15px;
@@ -767,12 +700,11 @@ label,
 }
 
 .option-line {
-  background: var(--bg-panel-soft);
-  border: 1px solid var(--border-soft);
+  background: var(--backgroundBlack);
+  border: 1px solid var(--border-black);
   border-radius: 15px;
   padding: 0.8rem 1rem;
   margin: 0.6rem 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   line-height: 1.6;
 }
 
@@ -829,11 +761,10 @@ label,
    DRAWER + INSTRUCTIONS
    ========================= */
 .drawer {
-  border: 1px solid var(--border-soft);
+  border: 1px solid var(--border-black);
   border-radius: 15px;
   margin: 10px 0;
-  background: var(--bg-panel);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background: var(--backgroundBlack);
 }
 
 .drawer-summary {
@@ -860,7 +791,7 @@ label,
 }
 
 .drawer[open] .drawer-summary {
-  border-bottom: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-black);
 }
 
 .drawer-content {
@@ -868,19 +799,14 @@ label,
 }
 
 .instructions-card {
-  background: linear-gradient(
-      145deg,
-      rgba(255, 255, 255, 0.04),
-      transparent 40%
-    ),
-    var(--bg-panel);
+  background: linear-gradient(145deg, var(--background), transparent 40%),
+    var(--backgroundBlack);
   color: var(--text-main);
   padding: 25px 20px;
   border-radius: 16px;
   margin: 15px 0;
   line-height: 1.7;
   border: 1px solid var(--secondary-pink);
-  box-shadow: var(--shadow-strong);
 }
 
 .instructions-card .menu-title.highlight {
@@ -931,119 +857,13 @@ label,
   overflow-x: auto;
 }
 
-table.history-table,
-.menu-table,
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  background: linear-gradient(135deg, rgba(255, 0, 92, 0.08), transparent 60%),
-    #070210;
-  color: var(--text-main);
-  border: 2px solid #ff4f9b;
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.history-table thead,
-.menu-table thead tr:first-child,
-.table thead tr {
-  background: linear-gradient(135deg, #08040b, #ff477e);
-  color: #ffffff;
-}
-
-/* תאים */
-.history-table th,
-.history-table td,
-.menu-table th,
-.menu-table td,
-.table th,
-.table td {
-  border: 1px solid rgba(255, 79, 155, 0.6);
-  padding: 12px 10px;
-  font-size: 14px;
-  text-align: center;
-  vertical-align: middle;
-}
-
-/* זברה כהה */
-.history-table tbody tr:nth-child(even),
-.menu-table tbody tr:nth-child(even),
-.table tbody tr:nth-child(even) {
-  background: #200d3f;
-}
-
-.history-table tbody tr:nth-child(odd),
-.menu-table tbody tr:nth-child(odd),
-.table tbody tr:nth-child(odd) {
-  background: #2b213c;
-}
-
-/* Hover */
-.history-table tbody tr:hover,
-.menu-table tbody tr:hover,
-.table tbody tr:hover {
-  background: linear-gradient(
-    90deg,
-    rgba(176, 35, 255, 0.25),
-    rgba(255, 31, 113, 0.25)
-  );
-  transition: 0.25s ease-in-out;
-  box-shadow: inset 0 0 0 1px rgba(255, 79, 155, 0.65);
-}
-
-/* MENU TABLE – כותרת קבוצה */
-.menu-table thead th.grp {
-  background: linear-gradient(90deg, #9000a2, #e0039d);
-  color: #ffffff;
-  padding: 16px;
-  font-size: 18px;
-  font-weight: 800;
-  text-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
-  border-bottom: 2px solid #ff4f9b;
-}
-
-/* MENU TABLE – כותרות שורה שנייה */
-.menu-table thead tr:nth-child(2) th {
-  background: #b0006c;
-  color: #ffe8ff;
-  font-weight: 700;
-  padding: 12px;
-  border-bottom: 2px solid rgba(255, 79, 155, 0.5);
-}
-
-/* MENU TABLE – עמודות כמות */
-.menu-table td.amount {
-  color: #ffb6e6;
-  font-weight: 700;
-  text-shadow: 0 0 6px rgba(255, 31, 113, 0.4);
-}
-
-/* טבלת מדידות צהרה */
-.history-table.narrow th,
-.history-table.narrow td {
-  padding: 10px 12px;
-  font-size: 14px;
-}
-
-/* כפתורי טבלה */
-.history-table button,
-.action-btn {
-  padding: 8px 16px;
-  margin: 4px;
-  border: none;
-  border-radius: 15px;
-  font-weight: bold;
-  cursor: pointer;
-  font-family: inherit;
-}
-
 .action-btn.delete-btn {
-  background: #f44336 !important;
+  background: #a90b00 !important;
 }
 
 .action-btn.view-btn {
   background: var(--accent-gold) !important;
-  color: #2b1525 !important;
+  color: var(--background) !important;
 }
 
 @media (max-width: 720px) {
@@ -1064,7 +884,7 @@ table.history-table,
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(136, 14, 79, 0.2);
+  background-color: var(--background);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1072,22 +892,27 @@ table.history-table,
 }
 
 .modal {
-  background: linear-gradient(
-      145deg,
-      rgba(255, 255, 255, 0.04),
-      transparent 40%
-    ),
-    var(--bg-panel);
-  border-radius: 20px;
-  padding: 40px;
-  max-width: 650px;
+  /* פנים שחור */
+  background: #000000 !important;
+  color: var(--text-main);
+
+  /* מסגרת ורודה עבה */
+  border: 3px solid var(--accent-pink) !important;
+  border-radius: 24px;
+
+  /* ריווח וגודל */
+  padding: 36px 32px;
+  max-width: 800px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: var(--shadow-strong);
+
+  /* עומק / מקצועיות */
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(255, 71, 126, 0.25);
+
   position: relative;
   animation: fadeInScale 0.3s ease;
-  color: var(--text-main);
 }
 
 @keyframes fadeInScale {
@@ -1106,7 +931,7 @@ table.history-table,
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  border-bottom: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-black);
   padding-bottom: 10px;
 }
 
@@ -1115,11 +940,43 @@ table.history-table,
   border: none;
   font-size: 30px;
   cursor: pointer;
-  color: var(--text-muted);
+  color: var(--text-main);
 }
 
 .close-btn:hover {
-  color: var(--accent-pink-soft);
+  color: var(--accent-pink);
+}
+
+/* שדות המדידה */
+.modal input[type="number"],
+.modal input[type="date"],
+.modal input[type="text"] {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  font-size: 16px;
+
+  /* מסגרת ורודה קבועה */
+  border: 2px solid var(--accent-pink) !important;
+  border-radius: 12px;
+
+  /* רקע שחור יפה */
+  background: #0d0d0d !important;
+  color: var(--text-main);
+
+  box-sizing: border-box;
+  transition: 0.25s ease;
+}
+
+/* בפוקוס – רק הילה קטנה, לא משנה צבע מסגרת */
+.modal input[type="number"]:focus,
+.modal input[type="date"]:focus,
+.modal input[type="text"]:focus {
+  outline: none !important;
+  border-color: var(--accent-pink) !important;
+
+  /* הילה ורודה מקצועית */
+  box-shadow: 0 0 8px rgba(255, 71, 126, 0.7);
 }
 
 /* =========================
@@ -1141,7 +998,7 @@ table.history-table,
   margin-bottom: 8px;
   font-size: 15px;
   line-height: 1.2;
-  color: var(--text-muted);
+  color: var(--text-main);
 }
 
 .add-trainee-modal .text-input,
@@ -1155,14 +1012,13 @@ table.history-table,
   font-size: 16px;
   box-sizing: border-box;
   background: #ffffff;
-  color: #2b1525;
+  color: var(--background);
 }
 
 .add-trainee-modal .text-input:focus,
 .add-trainee-modal input[type="text"]:focus,
 .add-trainee-modal input[type="tel"]:focus {
   border-color: var(--primary-pink);
-  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
 }
 
 @media (max-width: 820px) {
@@ -1177,17 +1033,15 @@ table.history-table,
 .card-pink,
 .resource-card {
   background: linear-gradient(145deg, rgba(255, 0, 92, 0.12), transparent 55%),
-    var(--bg-panel-soft);
-  border: 1px solid rgba(255, 31, 113, 0.6);
+    var(--backgroundBlack);
+  border: 1px solid var(--accent-pink);
   border-radius: 18px;
   padding: 16px;
-  box-shadow: var(--shadow-strong);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .resource-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 6px 18px rgba(136, 14, 79, 0.7);
 }
 
 .resource-header {
@@ -1258,7 +1112,6 @@ table.history-table,
   background: #ffe5ea !important;
   border-color: #f2a0b0 !important;
   color: #7a4860 !important;
-  box-shadow: none !important;
 }
 
 .btn-link.danger:hover {
@@ -1288,12 +1141,10 @@ table.history-table,
   direction: rtl;
   text-align: right;
   border-color: var(--border-color) !important;
-  box-shadow: none !important;
 }
 
 .react-select__control--is-focused {
   border-color: var(--primary-pink) !important;
-  box-shadow: 0 0 0 2px rgba(233, 30, 99, 0.1) !important;
 }
 
 .react-select__option--is-selected {
@@ -1332,7 +1183,7 @@ table.history-table,
   direction: rtl;
   text-align: right;
   box-sizing: border-box;
-  background: #120720;
+  background: var(--background);
   color: var(--text-main);
 }
 
@@ -1363,7 +1214,7 @@ table.history-table,
 
 .field-horizontal label {
   font-weight: 700;
-  color: var(--text-muted);
+  color: var(--text-main);
   min-width: 70px;
 }
 
@@ -1375,7 +1226,7 @@ table.history-table,
   border-radius: 10px;
   border: 1px solid var(--border-color);
   background-color: #ffffff;
-  color: #2b1525;
+  color: var(--background);
   box-sizing: border-box;
 }
 
@@ -1483,16 +1334,23 @@ body,
   justify-content: center;
 }
 
-.coach-hero-image,
-.coach-hero-placeholder {
+.coach-hero-image-wrap {
+  display: flex;
+  justify-content: center;
+  overflow: hidden; /* חשוב! שלא יגלוש מחוץ לרדיוס */
+  border-radius: 28px; /* שיתאים למסגרת */
+}
+
+.coach-hero-image {
   width: 100%;
   max-width: 320px;
   aspect-ratio: 4 / 5;
+  object-fit: contain; /* ✅ לא חותך צדדים */
+  object-position: center;
+  background: var(--background); /* שלא יראו “לבן” אם יש שוליים */
   border-radius: 28px;
-  border: 2px solid rgba(255, 79, 155, 0.7);
-  box-shadow: 0 26px 60px rgba(0, 0, 0, 0.95);
-  object-fit: cover;
-  background: radial-gradient(circle at top, #ff4f9b, #130a22);
+  border: 2px solid var(--accent-pink);
+  display: block;
 }
 
 .coach-hero-placeholder {
@@ -1542,18 +1400,13 @@ body,
 }
 
 .coach-card {
-  background: linear-gradient(
-      145deg,
-      rgba(255, 255, 255, 0.04),
-      transparent 40%
-    ),
-    var(--bg-panel);
-  border-radius: 20px;
-  border: 1px solid var(--border-soft);
-  box-shadow: var(--shadow-strong);
-  padding: 20px 18px;
+  background: #000000; /* פנים שחור מלא */
+  border: 3px solid var(--accent-pink); /* מסגרת ורודה עבה ויפה */
+  border-radius: 26px; /* פינות יפות ומעוגלות */
+  padding: 24px 22px;
   line-height: 1.8;
   font-size: 15px;
+  box-shadow: 0 0 18px rgba(255, 71, 126, 0.25); /* הילה ורודה קלילה - מהמם */
 }
 
 .coach-card p {
@@ -1584,13 +1437,30 @@ body,
   align-items: center;
 }
 
-.coach-before-after-image,
+.coach-before-after {
+  overflow: hidden;
+  border-radius: 22px;
+}
+
+.coach-before-after-image {
+  width: 100%;
+  border-radius: 22px;
+  object-fit: contain; /* ✅ כל התמונה נכנסת */
+  object-position: center;
+  background: var(--background);
+  border: 1px solid var(--accent-pink);
+  display: block;
+}
+
 .coach-before-after-placeholder {
   width: 100%;
   border-radius: 22px;
-  border: 1px solid rgba(255, 79, 155, 0.8);
-  box-shadow: var(--shadow-strong);
-  background: radial-gradient(circle at top, #ff4f9b, #130a22);
+  border: 1px solid var(--accent-pink);
+  background: radial-gradient(
+    circle at top,
+    var(--accent-pink),
+    var(--background)
+  );
 }
 
 .coach-before-after-placeholder {
@@ -1679,18 +1549,17 @@ body,
 
 .coach-gallery-grid img {
   width: 100%;
-  aspect-ratio: 3 / 4;
-  object-fit: cover;
+  height: auto; /* 🚀 נותן לתמונה להיות בגודל המקורי */
+  object-fit: cover; /* 🚀 ממלא בדיוק את המסגרת ללא שחור */
+  object-position: center;
   border-radius: 18px;
-  border: 2px solid rgba(255, 79, 155, 0.6);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-  background: radial-gradient(circle at top, #ff4f9b, #130a22);
+  border: 2px solid var(--accent-pink);
+  display: block;
+  background: none; /* 🚀 מסיר את השחור */
 }
 
 .coach-gallery-grid img:hover {
   transform: translateY(-6px) scale(1.03);
-  box-shadow: 0 18px 40px rgba(255, 79, 155, 0.5);
 }
 
 /* מובייל */
@@ -1705,13 +1574,12 @@ body,
   }
 }
 .menu-table thead th.grp {
-  background: linear-gradient(90deg, #08040b, #ff477e);
+  background: linear-gradient(90deg, var(--accent-pink), var(--accent-pink));
   color: #ffffff;
   padding: 16px;
   font-size: 18px;
   font-weight: 800;
-  text-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
-  border-bottom: 2px solid #ff4f9b;
+  border-bottom: 2px solid var(--accent-pink);
 }
 /* =========================
    TABLES – HISTORY + MENU
@@ -1727,36 +1595,37 @@ table.history-table,
 .table {
   width: 100%;
   border-collapse: collapse;
-  background: #050008;
+  background: var(--background);
   color: var(--text-main);
   border-radius: 26px;
   overflow: hidden;
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.85);
+}
+
+/* מסגרת ורודה מלאה לטבלת מדידות */
+table.history-table {
+  border: 2px solid var(--accent-pink) !important;
+  border-radius: 20px;
+  overflow: hidden;
+  border-collapse: separate; /* חשוב שהרדיוס ייראה */
+  border-spacing: 0;
+}
+
+table.history-table th,
+table.history-table td {
+  border: 1px solid var(--accent-pink-line);
 }
 
 /* כותרות כלליות */
 .history-table thead,
 .table thead tr {
-  background: linear-gradient(135deg, #08040b, #ff477e);
+  background: linear-gradient(135deg, var(--background), var(--accent-pink));
   color: #ffffff;
-}
-
-/* תאים כלליים */
-.history-table th,
-.history-table td,
-.table th,
-.table td {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 10px 12px;
-  font-size: 14px;
-  text-align: center;
-  vertical-align: middle;
 }
 
 /* זברה עדינה להיסטוריה/טבלאות כלליות */
 .history-table tbody tr:nth-child(even),
 .table tbody tr:nth-child(even) {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--background);
 }
 
 .history-table tbody tr:nth-child(odd),
@@ -1766,44 +1635,64 @@ table.history-table,
 
 .history-table tbody tr:hover,
 .table tbody tr:hover {
-  background: rgba(255, 71, 126, 0.08);
+  background: var(--background);
 }
 
 /* ===== תפריט (menu-table) – לוק מיוחד ===== */
 
 /* רקע כרטיס */
 .menu-table {
-  background: radial-gradient(circle at top, rgba(255, 71, 126, 0.2), #050008);
-  border: 1px solid rgba(255, 71, 126, 0.7);
+  background: radial-gradient(
+    circle at top,
+    var(--lite-pink),
+    var(--lite-pink)
+  );
+  border: 1px solid var(--lite-pink);
 }
 
 /* כותרות עליונות – חלבון / פחמימה */
 .menu-table thead tr:first-child th {
-  background: #6a0b27; /* ורוד אחיד */
+  background: var(--lite-pink-soft); /* ורוד אחיד */
   color: #ffffff;
   padding: 16px 12px;
   font-size: 18px;
   font-weight: 800;
-  text-shadow: none; /* בלי עננות */
-  border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+  text-shadow: none;
 }
 
 /* שורת כותרת שנייה – "מוצר / כמות" */
 .menu-table thead tr:nth-child(2) th {
-  background: #b71f5a; /* ורוד בהיר יותר, אחיד */
+  background: var(--lite-pink-soft2); /* ורוד בהיר יותר, אחיד */
   color: #ffffff;
-  font-weight: 800;
   padding: 15px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 16px;
+  font-weight: 800;
   text-shadow: none;
 }
 
-/* תאים בגוף הטבלה */
+/* מסגרת חיצונית ורודה + רדיוס יפה */
+.menu-table {
+  width: 100%;
+  border: 2px solid var(--accent-pink);
+  border-radius: 26px;
+  overflow: hidden;
+
+  /* כדי שהרדיוס והמסגרת ייראו טוב */
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* קווים פנימיים אנכיים + אופקיים */
 .menu-table th,
 .menu-table td {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 71, 126, 0.35);
   padding: 10px 14px;
   font-size: 14px;
+}
+
+/* שלא יהיה קו כפול בתחתית האחרונה */
+.menu-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 /* יישור טקסט: עמודת מוצר – ימין, עמודת כמות – מרכז */
@@ -1822,23 +1711,23 @@ table.history-table,
 
 /* זברה עדינה לגוף הטבלה */
 .menu-table tbody tr:nth-child(odd) {
-  background: rgba(255, 255, 255, 0.01);
+  background: var(--background);
 }
 
 .menu-table tbody tr:nth-child(even) {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--background);
 }
 
 /* Hover מודגש יותר */
 .menu-table tbody tr:hover {
-  background: rgba(255, 71, 126, 0.1);
+  background: var(--background);
 }
 
 /* עמודות כמות בורוד מודגש */
 .menu-table td.amount {
   color: #ffb6e6;
   font-weight: 700;
-  text-shadow: 0 0 4px rgba(255, 71, 126, 0.6);
+  text-shadow: 0 0 4px var(--accent-pink);
 }
 
 /* שורה אחרונה – בלי קו תחתון חזק מדי */
@@ -1864,14 +1753,13 @@ button,
 .action-btn,
 .history-table button,
 .table button {
-  background: #b71f5a !important; /* ורוד כהה אחיד */
+  background: var(--accent-pink) !important; /* ורוד כהה אחיד */
   color: #ffffff !important;
   border: none !important;
   border-radius: 999px;
   padding: 10px 22px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(183, 31, 90, 0.35) !important;
   text-decoration: none;
   font-family: "Alef", sans-serif;
   transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
@@ -1883,8 +1771,7 @@ button:hover,
 .btn-link:hover,
 .gradient-button:hover,
 .action-btn:hover {
-  background: #a01851 !important;
-  box-shadow: 0 8px 22px rgba(183, 31, 90, 0.55) !important;
+  background: var(--accent-pink) !important;
   transform: translateY(-2px);
 }
 
@@ -1893,21 +1780,19 @@ button:hover,
 .btn-delete,
 button.delete,
 button.delete-btn {
-  background: #e53935 !important;
-  box-shadow: 0 6px 16px rgba(229, 57, 53, 0.4) !important;
+  background: #d90c09 !important;
   color: #fff !important;
 }
 
 .action-btn.delete-btn:hover {
-  background: #c62828 !important;
-  box-shadow: 0 8px 24px rgba(229, 57, 53, 0.6) !important;
+  background: #d90c09 !important;
 }
 
 /* ===== כפתור הוספת מאכל חדש ===== */
 .add-btn,
 .add-food-btn,
 button.add-food {
-  background: #b71f5a !important;
+  background: var(--accent-pink) !important;
   color: #ffffff !important;
   border-radius: 30px !important;
   padding: 12px 26px !important;
@@ -1915,28 +1800,26 @@ button.add-food {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 6px 16px rgba(183, 31, 90, 0.35) !important;
 }
 
 .add-btn:hover,
 .add-food-btn:hover {
-  background: #a01851 !important;
+  background: var(--accent-pink) !important;
 }
 /* ===== כותרת ראשית אחידה לכל הטבלאות ===== */
 
 .history-table thead tr:first-child,
 .menu-table thead tr:first-child,
 .table thead tr:first-child {
-  background: #b71f5a !important; /* ורוד אחיד */
+  background: var(--accent-pink) !important; /* ורוד אחיד */
 }
 
 .history-table thead th,
-.menu-table thead th,
 .table thead th {
-  background: #b71f5a !important;
+  background: var(--accent-pink) !important;
   color: #ffffff !important;
   font-weight: 800;
-  border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+  border-bottom: 2px solid var(--background);
 }
 @media (max-width: 600px) {
   .auth2-panel {
@@ -2015,7 +1898,6 @@ button.add-food {
     border-radius: 999px;
     background: transparent !important;
     border: 1px solid rgba(255, 255, 255, 0.5) !important;
-    box-shadow: none !important;
     color: #ffffff !important;
   }
 
@@ -2176,12 +2058,12 @@ button.add-food {
 
 /* כרטיס הדגשים למעלה */
 .instructions-card {
-  background: rgba(10, 6, 20, 0.9);
+  background: var(--background-light);
   border-radius: 16px;
   padding: 20px 22px;
   max-width: 900px;
   margin: 0 auto 18px;
-  border: 1px solid rgba(255, 71, 126, 0.35);
+  border: 1px solid var(--accent-pink);
 }
 
 .instructions-title {
@@ -2350,5 +2232,984 @@ button.add-food {
 
   .trainee-history-btn {
     width: 100%;
+  }
+}
+.fit-top {
+  object-position: center top;
+}
+.fit-bottom {
+  object-position: center bottom;
+}
+/* כותרת אתר ורודה קבועה */
+.site-title {
+  background: var(--accent-pink) !important; /* ורוד */
+  color: #ffffff !important; /* טקסט לבן */
+  border-radius: 999px !important;
+  padding: 8px 18px !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  border: none !important;
+}
+
+/* שלא יחליף צבע ב-hover */
+.site-title:hover {
+  background: var(--accent-pink) !important;
+  color: #ffffff !important;
+  opacity: 0.9;
+}
+
+/* גם כשהוא active */
+.nav-link.active .site-title,
+.site-title.active {
+  background: var(--accent-pink) !important;
+  color: #ffffff !important;
+}
+
+/* מסגרת מלאה לטבלה */
+.history-table {
+  border: 2px solid var(--accent-pink);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+/* שורת כותרת */
+.history-table thead th {
+  background: var(--accent-pink);
+  color: #fff;
+  padding: 12px;
+  font-weight: 800;
+}
+
+.history-table th,
+.history-table td {
+  border-bottom: 1px solid var(--lite-pink);
+  padding: 10px 12px;
+  text-align: center;
+}
+
+/* אם את לא רוצה קו תחתון כפול בשורה אחרונה */
+.history-table tbody tr:last-child td {
+  border-bottom: 1px solid var(--lite-pink);
+}
+/* ========================= BLOCK של חיפוש + קטגוריות ========================= */
+
+.resources-filter-block {
+  background: rgba(255, 71, 126, 0.1); /* ורוד שקוף יפה */
+  border: 1px solid rgba(255, 71, 126, 0.35);
+  border-radius: 18px;
+  padding: 18px 22px;
+  margin: 20px auto 35px;
+  max-width: 900px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+
+  backdrop-filter: blur(6px); /* יוצר אפקט פרוסטי */
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+}
+
+/* שדה חיפוש */
+.resources-filter-block .search-input {
+  height: 48px;
+  padding: 0 18px;
+  border-radius: 30px;
+  border: 1px solid var(--accent-pink);
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 16px;
+  width: 260px;
+
+  transition: 0.25s ease;
+}
+
+.resources-filter-block .search-input:focus {
+  background: rgba(255, 71, 126, 0.15);
+  border-color: var(--accent-pink);
+  box-shadow: 0 0 10px rgba(255, 71, 126, 0.45);
+}
+
+.resources-filter-block .ui-select:hover,
+.resources-filter-block .ui-select:focus {
+  background: rgba(255, 71, 126, 0.15);
+  box-shadow: 0 0 10px rgba(255, 71, 126, 0.45);
+}
+
+/* למובייל */
+@media (max-width: 650px) {
+  .resources-filter-block {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .resources-filter-block .search-input {
+    width: 100%;
+  }
+}
+
+.ui-select {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--accent-pink);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 12px;
+}
+/* ===== Dropdown קטגוריות – כהה, חד, מקצועי ===== */
+.resources-filter-block select.ui-select {
+  background: rgba(0, 0, 0, 0.85) !important; /* שחור שקוף חזק */
+  border: 1px solid rgba(255, 71, 126, 0.9) !important;
+  color: #fff !important;
+  font-weight: 800;
+  height: 48px;
+  padding: 0 16px;
+  border-radius: 999px !important;
+  transition: 0.25s ease;
+  appearance: none; /* מבטל סטייל מערכת */
+  -webkit-appearance: none;
+}
+
+/* hover/focus */
+.resources-filter-block select.ui-select:hover,
+.resources-filter-block select.ui-select:focus {
+  background: rgba(0, 0, 0, 0.95) !important;
+  border-color: var(--accent-pink) !important;
+  outline: none;
+}
+
+/* צבע של הרשימה שנפתחת (האופציות) */
+.resources-filter-block select.ui-select option {
+  background: #0b0b0b; /* רקע כהה */
+  color: #ffffff; /* טקסט לבן ברור */
+}
+/* === כניסה יותר מקצועית לשורת חיפוש === */
+.foods-toolbar .search-input {
+  height: 50px;
+  padding: 0 18px;
+  border-radius: 28px;
+  font-size: 16px;
+  text-align: right;
+
+  /* רקע ורדרד שקוף */
+  background: rgba(255, 71, 126, 0.1);
+
+  /* מסגרת ורודה עדינה */
+  border: 1.5px solid var(--accent-pink);
+
+  /* טקסט */
+  color: var(--text-main);
+
+  /* אפקט מקצועי */
+  backdrop-filter: blur(4px);
+  transition: 0.25s ease;
+}
+
+.foods-toolbar .search-input:focus {
+  border-color: var(--accent-pink-strong);
+  box-shadow: 0 0 10px rgba(255, 71, 126, 0.4);
+  background: rgba(255, 71, 126, 0.18);
+  outline: none;
+}
+.add-btn {
+  background: var(--accent-pink) !important;
+  color: #ffffff !important;
+  border-radius: 28px;
+  font-weight: 600;
+  height: 50px;
+  transition: 0.25s ease;
+}
+
+.add-btn:hover {
+  background: var(--accent-pink-strong) !important;
+  box-shadow: 0 0 10px rgba(255, 71, 126, 0.45);
+}
+/* =========================
+   PREFERENCES MODAL (Disliked Foods)
+   ========================= */
+
+/* כרטיס מודאל: פנים שחור + מסגרת ורודה עבה */
+.modal.preferences-modal {
+  background: #000 !important; /* פנים שחור */
+  border: 3px solid var(--accent-pink) !important; /* מסגרת ורודה עבה */
+  border-radius: 26px !important;
+  box-shadow: 0 18px 50px rgba(255, 71, 126, 0.25),
+    0 22px 55px rgba(0, 0, 0, 0.9);
+  padding: 32px 28px;
+}
+
+/* כותרת מודאל */
+.modal.preferences-modal .modal-header {
+  border-bottom: 1px solid var(--accent-pink-line);
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+}
+
+.modal.preferences-modal .modal-header h2 {
+  color: #fff;
+  font-weight: 900;
+  font-size: 22px;
+}
+
+/* כותרות סקשן בתוך המודאל (כל המזונות / מזונות שנבחרו) */
+.modal.preferences-modal h4 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--accent-pink); /* ורוד חזק */
+  text-shadow: 0 0 6px rgba(255, 71, 126, 0.25);
+  border-right: 4px solid var(--accent-pink);
+  padding-right: 10px;
+}
+
+/* ===== Toolbar / Search ===== */
+.modal.preferences-modal .foods-toolbar {
+  width: 100%;
+  margin: 6px 0 18px;
+  padding: 10px;
+  background: rgba(255, 71, 126, 0.08);
+  border: 1px solid var(--accent-pink-line);
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px rgba(255, 71, 126, 0.08);
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* שורת חיפוש “נורמלית” כמו הקודמת */
+.modal.preferences-modal .foods-toolbar .search-input {
+  width: 100%;
+  max-width: 320px;
+  height: 46px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 2px solid var(--accent-pink);
+  background: #000;
+  color: #fff;
+  font-size: 16px;
+  outline: none;
+  transition: 0.2s ease;
+  box-shadow: 0 0 0 0 rgba(255, 71, 126, 0.55);
+}
+
+.modal.preferences-modal .foods-toolbar .search-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.modal.preferences-modal .foods-toolbar .search-input:focus {
+  border-color: var(--accent-pink);
+  box-shadow: 0 0 0 3px rgba(255, 71, 126, 0.28);
+}
+
+/* ===== Tables inside preferences modal ===== */
+.modal.preferences-modal table.history-table {
+  background: #000;
+  border: 2px solid var(--accent-pink) !important; /* מסגרת ורודה */
+  border-radius: 18px;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+}
+
+/* כותרות טבלה */
+.modal.preferences-modal table.history-table thead th {
+  background: var(--accent-pink) !important;
+  color: #fff !important;
+  font-weight: 900;
+  padding: 12px 10px;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+/* גוף טבלה */
+.modal.preferences-modal table.history-table tbody td {
+  padding: 10px 10px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--accent-pink-line);
+  color: #fff;
+}
+
+/* קווים אנכיים עדינים */
+.modal.preferences-modal table.history-table th,
+.modal.preferences-modal table.history-table td {
+  border-left: 1px solid rgba(255, 71, 126, 0.25);
+}
+
+/* זברה עדינה */
+.modal.preferences-modal table.history-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* hover שורה */
+.modal.preferences-modal table.history-table tbody tr:hover {
+  background: rgba(255, 71, 126, 0.08);
+}
+
+/* checkbox – ורוד */
+.modal.preferences-modal input[type="checkbox"] {
+  transform: scale(1.05);
+  accent-color: var(--accent-pink);
+}
+
+/* כפתור שמירה באזור הימני */
+.modal.preferences-modal .action-btn.add-btn {
+  min-width: 140px;
+  font-size: 15px;
+  box-shadow: 0 8px 20px rgba(255, 71, 126, 0.35);
+}
+
+/* ריווח בין שני הטבלאות */
+.modal.preferences-modal .table-wrapper {
+  margin-top: 6px;
+}
+
+/* מובייל */
+@media (max-width: 780px) {
+  .modal.preferences-modal {
+    padding: 20px 16px;
+  }
+
+  .modal.preferences-modal .foods-toolbar {
+    justify-content: center;
+  }
+
+  .modal.preferences-modal .foods-toolbar .search-input {
+    max-width: 100%;
+  }
+
+  .modal.preferences-modal h4 {
+    text-align: center;
+    border-right: none;
+    border-bottom: 3px solid var(--accent-pink);
+    padding-right: 0;
+    padding-bottom: 6px;
+  }
+}
+/* BLOCK של הטופס בתוך המודאל */
+.trainee-form {
+  width: 100%;
+  margin: 0;
+  padding: 18px;
+  background: rgba(255, 71, 126, 0.06);
+  border: 1.5px solid var(--accent-pink-line);
+  border-radius: 18px;
+}
+
+/* כותרות אזור */
+.trainee-form .section-title {
+  margin: 18px 0 10px;
+  padding: 6px 12px;
+  display: inline-block;
+  border-radius: 999px;
+  background: rgba(255, 71, 126, 0.12);
+  color: var(--accent-pink);
+  font-weight: 900;
+  border: 1px solid var(--accent-pink-line);
+}
+
+/* גרידים (כי אצלך הם מוגדרים רק תחת trainee-dashboard) */
+.trainee-form .form-grid {
+  display: grid;
+  gap: 12px 16px;
+  margin-bottom: 10px;
+}
+.trainee-form .form-grid.one {
+  grid-template-columns: 1fr;
+}
+.trainee-form .form-grid.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.trainee-form .form-grid.four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .trainee-form .form-grid.three,
+  .trainee-form .form-grid.four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 520px) {
+  .trainee-form .form-grid.three,
+  .trainee-form .form-grid.four {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Labels ורודים חזקים */
+.trainee-form .form-label {
+  color: var(--accent-pink) !important;
+  font-weight: 800;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+/* Inputs לבנים עם גבול ורוד */
+.trainee-form input[type="text"],
+.trainee-form input[type="number"],
+.trainee-form input[type="tel"],
+.trainee-form input[type="date"],
+.trainee-form select,
+.trainee-form textarea {
+  background: #fff !important;
+  color: #111 !important;
+  border: 1.5px solid var(--accent-pink-line) !important;
+  border-radius: 12px;
+  height: 44px;
+  padding: 0 12px;
+  font-size: 15px;
+}
+
+.trainee-form input:focus,
+.trainee-form select:focus,
+.trainee-form textarea:focus {
+  border-color: var(--accent-pink) !important;
+  box-shadow: 0 0 0 3px rgba(255, 71, 126, 0.18);
+}
+
+/* 체크/העדפות – שורה ורודה עדינה */
+.trainee-form .checks-grid {
+  display: grid;
+  grid-template-columns: repeat(4, max-content);
+  gap: 10px 14px;
+  margin: 10px 0 16px;
+}
+@media (max-width: 900px) {
+  .trainee-form .checks-grid {
+    grid-template-columns: repeat(2, max-content);
+  }
+}
+@media (max-width: 520px) {
+  .trainee-form .checks-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.trainee-form .check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--accent-pink-line);
+  background: rgba(255, 71, 126, 0.08);
+  color: #fff;
+  font-weight: 700;
+}
+.trainee-form .check input {
+  accent-color: var(--accent-pink);
+  transform: scale(1.05);
+}
+.disliked-foods-modal .foods-toolbar {
+  margin: 10px 0 16px;
+  justify-content: flex-start;
+}
+
+.disliked-foods-modal .foods-toolbar .search-input {
+  width: 100%;
+  max-width: 320px;
+  height: 48px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1.5px solid var(--accent-pink);
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 16px;
+  box-shadow: none;
+}
+
+.disliked-foods-modal .foods-toolbar .search-input:focus {
+  border-color: var(--accent-pink);
+  background: rgba(255, 71, 126, 0.12);
+  box-shadow: 0 0 0 3px rgba(255, 71, 126, 0.18);
+}
+.resources-filter-block .ui-select,
+.ui-select {
+  box-shadow: none !important;
+}
+
+.coach-dashboard {
+  margin: 0 auto !important;
+  padding: 0 !important;
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+}
+.modal {
+  max-width: 60vw !important;
+  overflow-x: hidden !important;
+}
+/* עיצוב אחיד למגירת React-Select */
+.react-select-container {
+  width: 100%;
+  direction: rtl;
+  text-align: right;
+}
+
+/* הקופסה הראשית */
+.react-select__control {
+  background: #000000 !important;
+  border: 2px solid var(--accent-pink) !important;
+  border-radius: 12px !important;
+  min-height: 48px !important;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+
+/* פוקוס – מסגרת ורודה בוהקת */
+.react-select__control--is-focused {
+  border-color: var(--accent-pink) !important;
+  box-shadow: 0 0 8px rgba(255, 71, 126, 0.6) !important;
+}
+
+/* טקסט בתיבת הבחירה */
+.react-select__single-value,
+.react-select__placeholder {
+  color: #ffffff !important;
+}
+
+/* חצים */
+.react-select__indicator {
+  color: var(--accent-pink) !important;
+}
+.react-select__indicator:hover {
+  color: #fff !important;
+}
+
+/* תפריט הבחירה */
+.react-select__menu {
+  background: #000000 !important;
+  border: 2px solid var(--accent-pink) !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  z-index: 9999;
+}
+
+/* פריטים ברשימה */
+.react-select__option {
+  background: #000 !important;
+  color: #ffffff !important;
+  padding: 10px;
+  text-align: right;
+  cursor: pointer;
+}
+
+/* פריט בהובר */
+.react-select__option:hover {
+  background: rgba(255, 71, 126, 0.2) !important;
+}
+
+/* פריט שנבחר */
+.react-select__option--is-selected {
+  background: var(--accent-pink) !important;
+  color: #000 !important;
+}
+
+/* תגיות של multi-select */
+.react-select__multi-value {
+  background: rgba(255, 71, 126, 0.2) !important;
+  border: 1px solid var(--accent-pink);
+  border-radius: 8px;
+}
+
+.react-select__multi-value__label {
+  color: #fff !important;
+}
+
+.react-select__multi-value__remove:hover {
+  background: var(--accent-pink) !important;
+  color: #000 !important;
+}
+/* =========================
+   FORM INPUTS / SELECTS – MODAL
+   ========================= */
+
+/* כל השדות בתוך המודאל */
+.modal .form-content label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+/* input ו-select באותו עיצוב */
+.modal .form-content input,
+.modal .form-content select {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border: 2px solid var(--accent-pink);
+  border-radius: 12px;
+  background: #000 !important;
+  color: #fff !important;
+  font-size: 16px;
+  box-sizing: border-box;
+  outline: none;
+  transition: 0.2s ease;
+  direction: rtl;
+  text-align: right;
+}
+
+/* placeholder */
+.modal .form-content input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* focus אחיד */
+.modal .form-content input:focus,
+.modal .form-content select:focus {
+  border-color: var(--accent-pink);
+  box-shadow: 0 0 8px rgba(255, 71, 126, 0.55);
+}
+
+/* חץ של select */
+.modal .form-content select {
+  appearance: none;
+  background-image: linear-gradient(
+      45deg,
+      transparent 50%,
+      var(--accent-pink) 50%
+    ),
+    linear-gradient(135deg, var(--accent-pink) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 20px, calc(100% - 12px) 20px;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 38px;
+}
+
+/* option dropdown */
+.modal .form-content select option {
+  background: #000;
+  color: #fff;
+}
+/* ======== CHECKBOX STYLE – UNIFORM SMALL & PINK ======== */
+
+.modal input[type="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+
+  border: 2px solid var(--accent-pink);
+  border-radius: 4px;
+  background: #000;
+  display: inline-block;
+  position: relative;
+  transition: 0.2s ease;
+}
+
+.modal input[type="checkbox"]:hover {
+  border-color: #ff6b9c;
+  box-shadow: 0 0 6px rgba(255, 71, 126, 0.6);
+}
+
+.modal input[type="checkbox"]:checked {
+  background: var(--accent-pink);
+  border-color: var(--accent-pink);
+}
+
+.modal input[type="checkbox"]:checked::after {
+  content: "✔";
+  color: white;
+  font-size: 13px;
+  position: absolute;
+  top: -2px;
+  right: 1px;
+}
+.resources-manage-page {
+  padding: var(--container-pad);
+}
+
+.resources-upload-card {
+  margin-bottom: 24px;
+  max-width: 900px;
+}
+
+.resources-upload-grid {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 10px 12px;
+  align-items: center;
+}
+
+.resources-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.resources-filter-row {
+  margin-bottom: 12px;
+}
+/* =========================
+   NIAUL KAVTZIM – FIXED BORDER STYLE
+   ========================= */
+
+/* כל השדות בתוך card-pink / resource management */
+.card-pink input,
+.card-pink select,
+.card-pink textarea,
+.filter-row .ui-input,
+.filter-row .ui-select,
+.filter-row input[type="text"],
+.filter-row select,
+.resources-filter-block .search-input {
+  border: 2px solid var(--accent-pink) !important; /* מסגרת ורודה קבועה */
+  background: #000 !important; /* רקע שחור מלא */
+  color: #fff !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+
+/* placeholder */
+.card-pink input::placeholder,
+.card-pink textarea::placeholder,
+.filter-row input::placeholder,
+.resources-filter-block .search-input::placeholder {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+/* פוקוס – הילה עדינה */
+.card-pink input:focus,
+.card-pink select:focus,
+.card-pink textarea:focus,
+.filter-row .ui-input:focus,
+.filter-row .ui-select:focus,
+.resources-filter-block .search-input:focus {
+  outline: none;
+  border-color: var(--accent-pink) !important;
+  box-shadow: 0 0 8px rgba(255, 71, 126, 0.45) !important;
+}
+/* =========================
+   COACH WORKOUTS PAGE
+   ========================= */
+
+.coach-workouts-page {
+  max-width: 900px;
+  margin: 24px auto;
+  padding: var(--container-pad);
+}
+
+/* Tabs */
+.workouts-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0 16px;
+}
+
+.tab-btn {
+  background: #000 !important;
+  color: #fff !important;
+  border: 2px solid var(--accent-pink) !important;
+  border-radius: 999px !important;
+  padding: 8px 18px !important;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.tab-btn.active {
+  background: var(--accent-pink) !important;
+  color: #fff !important;
+  box-shadow: 0 0 10px rgba(255, 71, 126, 0.45);
+}
+
+.tab-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Upload Card */
+.upload-card {
+  margin-bottom: 16px;
+}
+
+.upload-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .upload-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Progress */
+.progress-wrap {
+  margin-top: 10px;
+  position: relative;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--accent-pink-line);
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--accent-pink);
+  transition: width 0.15s linear;
+}
+
+.progress-text {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-soft);
+  font-weight: 700;
+  text-align: left;
+}
+
+/* Table actions */
+.workouts-table .actions-cell {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  white-space: nowrap;
+}
+/* === תיקון אינפוטים במודאלים === */
+.add-trainee-modal input[type="text"],
+.add-trainee-modal input[type="tel"],
+.add-trainee-modal .text-input {
+  background: #000000 !important; /* שחור */
+  color: var(--text-main) !important; /* טקסט לבן */
+  border: 2px solid var(--accent-pink) !important; /* ורוד */
+  border-radius: 12px;
+  height: 44px;
+  padding: 0 14px;
+}
+
+.add-trainee-modal input:focus {
+  border-color: var(--accent-pink) !important;
+  outline: none;
+}
+
+/* עטיפה של כל "חלבון / פחמימה / שומן" */
+.meal-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+/* טקסט תחתון קטן (גרם) */
+.meal-unit-sub {
+  font-size: 0.75rem;
+  color: #ffb6d9;
+}
+
+/* תיבת קלט */
+.meal-input {
+  width: 110px;
+  height: 38px;
+  border: 2px solid #ff4fa8;
+  background: #000;
+  color: white;
+  text-align: center;
+  border-radius: 10px;
+  font-size: 1rem;
+}
+
+.meal-input:disabled {
+  opacity: 0.4;
+}
+.meal-row {
+  display: grid;
+  grid-template-columns: 120px repeat(3, 1fr);
+  gap: 18px;
+  align-items: center;
+}
+
+.meal-title {
+  font-weight: 700;
+  color: #ff4da6; /* ורוד */
+  text-align: right;
+}
+
+.meal-row {
+  display: grid;
+  grid-template-columns: 120px repeat(3, 1fr);
+  gap: 18px;
+  align-items: center;
+}
+.meal-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meal-input {
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #ff4da6;
+  background: #000;
+  color: #fff;
+  border-radius: 8px;
+}
+/* ===== FIX: Macro split rows RTL ===== */
+
+.meal-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) 120px; /* הכותרת בסוף = בצד ימין */
+  gap: 18px;
+  align-items: center;
+  direction: rtl;
+}
+
+.meal-title {
+  font-weight: 800;
+  color: var(--accent-pink);
+  text-align: right;
+  justify-self: end; /* להצמיד ממש לקצה ימין של הטור */
+  white-space: nowrap;
+}
+
+/* כל תא של מאקרו */
+.meal-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  direction: rtl;
+}
+
+.meal-cell label {
+  text-align: center;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.meal-unit-sub {
+  font-size: 0.75rem;
+  color: #ffb6d9;
+}
+
+.meal-input {
+  width: 110px;
+  height: 38px;
+  border: 2px solid var(--accent-pink);
+  background: #000;
+  color: #fff;
+  text-align: center;
+  border-radius: 10px;
+  font-size: 1rem;
+}
+
+.meal-input:disabled {
+  opacity: 0.4;
+}
+
+/* מובייל */
+@media (max-width: 700px) {
+  .meal-row {
+    grid-template-columns: repeat(2, 1fr); /* 2 בשורה */
+    grid-auto-rows: auto;
+  }
+  .meal-title {
+    grid-column: 1 / -1; /* הכותרת על כל הרוחב */
+    justify-self: end; /* עדיין ימין */
+    margin-top: 6px;
   }
 }

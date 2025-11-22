@@ -453,11 +453,8 @@ export default function DashboardCoach() {
     const value = editData.customMeals[mealKey];
     const disabled = editData.customSplitMode !== "custom";
 
-    // מנקה כל מה שלא ספרה יוניקודית ומגביל ל-3 ספרות
     const onNumericChange = (field) => (e) => {
-      const cleaned = (e.target.value || "")
-        .replace(/\D/g, "") // מסיר כל מה שלא ספרה 0-9
-        .slice(0, 3);
+      const cleaned = (e.target.value || "").replace(/\D/g, "").slice(0, 20);
 
       setEditData((p) => ({
         ...p,
@@ -471,57 +468,63 @@ export default function DashboardCoach() {
     return (
       <div className="meal-row">
         <div className="meal-cell">
+          <label htmlFor={`${mealKey}-protein`}>
+            חלבון
+            <br />
+            <span className="meal-unit-sub">(גרם)</span>
+          </label>
           <input
             id={`${mealKey}-protein`}
             type="text"
             inputMode="numeric"
             pattern="[0-9]*"
-            dir="ltr"
             autoComplete="off"
             value={value.protein ?? ""}
             onChange={onNumericChange("protein")}
             disabled={disabled}
             className="meal-input"
             placeholder="0"
-            style={{ direction: "ltr", textAlign: "left" }}
           />
-          <span className="meal-label">חלבון</span>
         </div>
 
         <div className="meal-cell">
+          <label htmlFor={`${mealKey}-carbs`}>
+            פחמימה
+            <br />
+            <span className="meal-unit-sub">(גרם)</span>
+          </label>
           <input
             id={`${mealKey}-carbs`}
             type="text"
             inputMode="numeric"
             pattern="[0-9]*"
-            dir="ltr"
             autoComplete="off"
             value={value.carbs ?? ""}
             onChange={onNumericChange("carbs")}
             disabled={disabled}
             className="meal-input"
             placeholder="0"
-            style={{ direction: "ltr", textAlign: "left" }}
           />
-          <span className="meal-label">פחמימה</span>
         </div>
 
         <div className="meal-cell">
+          <label htmlFor={`${mealKey}-fat`}>
+            שומן
+            <br />
+            <span className="meal-unit-sub">(גרם)</span>
+          </label>
           <input
             id={`${mealKey}-fat`}
             type="text"
             inputMode="numeric"
             pattern="[0-9]*"
-            dir="ltr"
             autoComplete="off"
             value={value.fat ?? ""}
             onChange={onNumericChange("fat")}
             disabled={disabled}
             className="meal-input"
             placeholder="0"
-            style={{ direction: "ltr", textAlign: "left" }}
           />
-          <span className="meal-label">שומן</span>
         </div>
 
         <div className="meal-title">{title}:</div>
@@ -564,7 +567,7 @@ export default function DashboardCoach() {
                   <label className="form-label">טלפון</label>
                   <input
                     className="text-input input-sm"
-                    type="tel"
+                    type="text"
                     value={newPhone}
                     onChange={(e) => setNewPhone(e.target.value)}
                   />
@@ -616,7 +619,7 @@ export default function DashboardCoach() {
                       מחק
                     </button>
                     <button
-                      className="action-btn add-btn"
+                      className="action-btn"
                       onClick={() => openMeasurementModal(t)}
                     >
                       מדידה
@@ -847,7 +850,7 @@ export default function DashboardCoach() {
                 </div>
               </div>
 
-              {/* -------- חלוקת מאקרו לארוחות (UI חדש) -------- */}
+              {/* -------- חלוקת מאקרו לארוחות -------- */}
               <h3 className="section-title">חלוקת מאקרו לארוחות</h3>
 
               <div className="split-card">
@@ -863,6 +866,7 @@ export default function DashboardCoach() {
                     />
                     מצב אוטומטי (אלגוריתם)
                   </label>
+
                   <label className="check">
                     <input
                       type="radio"
