@@ -428,12 +428,9 @@ export default function PersonalMenu({ traineeData }) {
 
   /* ---------- קומפוננטות למסך (כמו אצלך) ---------- */
   function SectionTitle({ children }) {
-    return (
-      <h3 className="meal-title" style={{ margin: "0 0 8px" }}>
-        {children}
-      </h3>
-    );
+    return <h3 className="menu-meal-title">{children}</h3>;
   }
+
   function TargetsRow({ t }) {
     return (
       <div className="targets-row" style={{ margin: "4px 0 10px" }}>

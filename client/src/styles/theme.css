@@ -3213,3 +3213,31 @@ button.add-food {
     margin-top: 6px;
   }
 }
+/* כותרות ארוחות במסך התפריט בלבד */
+.menu-meal-title {
+  width: 100%;
+  text-align: center !important;
+  direction: rtl;
+  font-weight: 900;
+  font-size: 22px;
+  color: var(--accent-pink);
+  margin: 0 0 8px 0;
+}
+.meal-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) 120px; /* שם הארוחה אחרון = הכי ימין ב-RTL */
+  gap: 18px;
+  align-items: start;
+  direction: rtl;
+}
+
+.meal-title {
+  text-align: center;
+  font-weight: 800;
+  color: var(--accent-pink);
+  padding-top: 6px; /* שלא “יעלה” מול האינפוטים */
+}
+.meal-cell label {
+  text-align: center;
+  line-height: 1.2;
+}
