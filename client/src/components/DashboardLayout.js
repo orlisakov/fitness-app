@@ -100,7 +100,7 @@ export default function DashboardLayout({ onLogout, user }) {
                 className={linkCls}
                 onClick={handleNavClick}
               >
-                אורך חיים בריא
+                אורח חיים בריא
               </NavLink>
             )}
 

@@ -109,42 +109,43 @@ function drawRightAlignedLines(pdf, lines, PAGE_W, Y, ensure, lineGap = 7) {
   pdf.setFontSize(12);
   pdf.setTextColor(255, 255, 255);
 
-  const xRight = PAGE_W - 20;
+  const xRight = PAGE_W - 20; // גבול ימין לטקסט
+  const bulletX = xRight; // מיקום התבליט
+  const textRight = xRight - 4.5; // הטקסט ייעצר 4.5 מ"מ משמאל לתבליט
 
   (lines || []).forEach((raw) => {
-    const text = raw ?? "";
-    if (!text) {
+    let line = (raw ?? "").trim();
+    if (!line) {
       Y += lineGap;
       return;
     }
 
-    const wrapped = pdf.splitTextToSize(text, PAGE_W - 40);
-    wrapped.forEach((line) => {
-      Y = ensure(Y);
+    // האם יש תבליט בתחילת השורה?
+    let hasBullet = false;
+    if (/^(\*|•|-)\s+/.test(line)) {
+      hasBullet = true;
+      line = line.replace(/^(\*|•|-)\s+/, ""); // מורידים את התו – נצייר אותו בעצמנו
+    }
 
-      // Check for lines that start with a bullet, then a number, then text
-      const match = line.match(/^(\s*•\s*)([0-9.,/()%+-]+)(.*)$/);
+    // גלישת שורות רגילה
+    const wrapped = pdf.splitTextToSize(line, PAGE_W - 40);
 
-      if (match) {
-        const [, bullet, number, restOfText] = match;
-        const cleanRest = restOfText.trim();
+    wrapped.forEach((wline, idx) => {
+      Y = ensure ? ensure(Y) : Y;
 
-        // Construct the final visual string in the correct logical order for RTL rendering
-        // The library will reverse it, so we build it visually backwards.
-        const finalString = `${cleanRest} ${number} ${bullet.trim()}`;
-        pdf.text(rtlFix(finalString), xRight, Y, { align: "right" });
-      } else {
-        // For lines without the number pattern, just reverse them
-        const cleanLine = line.startsWith("• ")
-          ? `- ${line.substring(2)}`
-          : line;
-        pdf.text(rtlFix(cleanLine), xRight, Y, { align: "right" });
+      // מציירים את התבליט רק בשורה הראשונה של הפריט
+      if (hasBullet && idx === 0) {
+        // עיגול קטן מלא כתבליט
+        pdf.circle(bulletX, Y - 2.1, 0.85, "F");
       }
 
+      // טקסט מיושר לימין, לאחר עיבוד RTL
+      pdf.text(rtlFix(wline), textRight, Y, { align: "right" });
       Y += lineGap;
     });
-    Y += 2;
+    Y += 2; // רווח קטן בין פריטים
   });
+
   return Y;
 }
 
@@ -152,6 +153,13 @@ function drawRightAlignedLines(pdf, lines, PAGE_W, Y, ensure, lineGap = 7) {
 
 // ===== Main Component =====
 export default function PersonalMenu({ traineeData }) {
+  const traineeName =
+    traineeData?.displayName ||
+    traineeData?.fullName ||
+    [traineeData?.firstName, traineeData?.lastName].filter(Boolean).join(" ") ||
+    traineeData?.name ||
+    "מתאמנת";
+
   const [mealPlan, setMealPlan] = useState(null);
   const [appliedPrefs, setAppliedPrefs] = useState(null);
   const [error, setError] = useState("");
@@ -281,6 +289,15 @@ export default function PersonalMenu({ traineeData }) {
     console.log(pdf.getFontList());
     pdf.setFont("Rubik", "normal");
 
+    const traineeName =
+      traineeData?.displayName ||
+      traineeData?.fullName ||
+      [traineeData?.firstName, traineeData?.lastName]
+        .filter(Boolean)
+        .join(" ") ||
+      traineeData?.name ||
+      "מתאמנת";
+
     // תמונת ההדר מתוך client/public/header-eiv.png
     const headerImg = await loadImage("/header-eiv.png");
 
@@ -290,8 +307,22 @@ export default function PersonalMenu({ traineeData }) {
     /* ------------ עמוד 1 – דגשים ------------ */
     let { PAGE_W, Y } = startBlackPageWithHeader(pdf, headerImg);
 
+    // פתיח אישי
+    pdf.setFont("Rubik", "bold");
+    pdf.setFontSize(22);
+    pdf.setTextColor(255, 255, 255);
+    pdf.text(rtlFix(`היי, ${traineeName}`), PAGE_W / 2, Y, { align: "center" });
+    Y += 10;
+
+    pdf.setFont("Rubik", "normal");
+    pdf.setFontSize(14);
+    pdf.text(rtlFix("המלצות התזונה מותאמות לך באופן אישי"), PAGE_W / 2, Y, {
+      align: "center",
+    });
+    Y += 14;
+
     // כותרת צהובה למעלה – "דגשים חשובים"
-    Y = drawYellowTitle(pdf, "דגשים חשובים לתהליך", PAGE_W, Y);
+    Y = drawYellowTitle(pdf, " כמה דגשים חשובים לתהליך", PAGE_W, Y);
 
     const tipsLines = [
       "1) חשוב לשתות לפחות 3 ליטר מים ביום",
@@ -308,8 +339,7 @@ export default function PersonalMenu({ traineeData }) {
     ];
 
     Y += 8;
-    Y = drawCenteredLines(pdf, tipsLines, PAGE_W, Y, ensure);
-
+    Y = drawRightAlignedLines(pdf, tipsLines, PAGE_W, Y, ensure);
     /* ------------ פונקציה פנימית: בניית טקסט דינמי לארוחה ------------ */
     function buildMealLines(meal) {
       const lines = [];
@@ -725,6 +755,27 @@ export default function PersonalMenu({ traineeData }) {
     );
   }
 
+  // ---- הוסיפי מחוץ לקומפוננטה (למעלה בקובץ) ----
+  function shapeBulletLine(line) {
+    if (!line) return line;
+
+    // • [מספר/כמות/אנגלית] [טקסט]
+    const m1 = line.match(/^\s*•\s*([0-9A-Za-z.,/()%+\-]+)\s+(.*)$/);
+    if (m1) {
+      const [, amount, rest] = m1;
+      // בונים "טקסט כמות •" כדי שאחרי rtlFix התבליט יופיע בצד ימין
+      return `${rest.trim()} ${amount.trim()} •`;
+    }
+
+    // • [טקסט בלבד]
+    const m2 = line.match(/^\s*•\s*(.*)$/);
+    if (m2) {
+      return `${m2[1].trim()} •`;
+    }
+
+    return line;
+  }
+
   function SnackBlock({ meal }) {
     const t = meal.targets;
     const prot =
@@ -791,9 +842,15 @@ export default function PersonalMenu({ traineeData }) {
 
   return (
     <div className="menu-container" dir="rtl">
+      {/* === ברכת פתיחה במסך === */}
+      <div className="menu-hello">
+        <h1 className="menu-hello-title">היי, {traineeName}</h1>
+        <div className="menu-hello-sub">
+          המלצות התזונה מותאמות לך באופן אישי
+        </div>
+      </div>
       <div>
         <InstructionsCard />
-
         {appliedPrefs && Object.values(appliedPrefs).some(Boolean) && (
           <p className="menu-subtitle" style={{ marginTop: 8 }}>
             <b>נלקחו בחשבון:</b>{" "}

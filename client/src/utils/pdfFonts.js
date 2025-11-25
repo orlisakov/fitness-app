@@ -32,10 +32,32 @@ export async function loadRubikFonts(pdf) {
 }
 
 export function rtlFix(input = "") {
-  // פונקציה פשוטה שתפקידה רק להפוך מחרוזת
-  return String(input).split("").reverse().join("");
+  const s = String(input);
+
+  // 1) החלפת סוגריים כדי שלא יצאו במראה אחרי ההיפוך
+  const swap = {
+    "(": ")",
+    ")": "(",
+    "[": "]",
+    "]": "[",
+    "{": "}",
+    "}": "{",
+    "<": ">",
+    ">": "<",
+  };
+  const brFixed = s.replace(/[()\[\]{}<>]/g, (ch) => swap[ch] || ch);
+
+  // 2) היפוך כללי של המחרוזת
+  const rev = [...brFixed].reverse().join("");
+
+  // 3) שמירה על "איים" לטיניים/מספריים בכיוון LTR (היפוך חוזר רק להם)
+  // כולל אותיות, ספרות, %, מעלות, נקודותיים, קו נטוי, מקף, פלוס, פסיק, נקודה, מרכאות, גרש, כוכבית, &.
+  return rev.replace(/[A-Za-z0-9@#%°\u00B0:\/\\.\-_,+&"'*]+/g, (seg) =>
+    [...seg].reverse().join("")
+  );
 }
 
+// אם את משתמשת ב-rtlWrap – השאירי כתAlias:
 export function rtlWrap(s = "") {
   return rtlFix(s ?? "");
 }

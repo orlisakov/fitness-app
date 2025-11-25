@@ -3241,3 +3241,68 @@ button.add-food {
   text-align: center;
   line-height: 1.2;
 }
+.menu-hello {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.85));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  padding: 18px 16px;
+  border-radius: 16px;
+  text-align: center;
+  margin: 12px 0 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.menu-hello-title {
+  font-family: "Rubik", system-ui, -apple-system, "Segoe UI", "Alef", sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  margin: 0 0 6px;
+  letter-spacing: 0.2px;
+}
+
+.menu-hello-sub {
+  font-family: "Rubik", system-ui, -apple-system, "Segoe UI", "Alef", sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  opacity: 0.95;
+}
+/* יישור כללי לימין בתוך דף התפריט */
+.menu-container {
+  direction: rtl;
+  text-align: right;
+}
+
+/* ברכת פתיחה */
+.menu-hello-title,
+.menu-hello-sub,
+.menu-subtitle,
+.menu-meal-title,
+.instructions-title {
+  text-align: right;
+}
+
+/* טבלאות */
+.menu-table {
+  direction: rtl;
+  text-align: right;
+}
+.menu-table th,
+.menu-table td {
+  text-align: right;
+  vertical-align: top;
+}
+
+/* רשימת הדגשים במסך */
+.instructions-card {
+  text-align: right;
+}
+.instructions-card ol {
+  direction: rtl;
+  text-align: right;
+  list-style-position: inside; /* המספור יופיע בצד ימין */
+  padding-inline-start: 0;
+  margin: 0;
+}
+.instructions-card li {
+  margin: 0 0 8px 0;
+}
