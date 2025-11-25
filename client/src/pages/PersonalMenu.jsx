@@ -10,6 +10,48 @@ import jsPDF from "jspdf";
 
 // ===== RTL helpers for PDF =====
 
+// --- Mirror (כתב מראה) ---
+const BRACKET_SWAP = {
+  "(": ")",
+  ")": "(",
+  "[": "]",
+  "]": "[",
+  "{": "}",
+  "}": "{",
+  "<": ">",
+  ">": "<",
+  "«": "»",
+  "»": "«",
+};
+
+function mirrorStr(str = "") {
+  // נסה הפיכה לפי גרפיומים כדי לא לשבור ניקוד/אמוג'י
+  const parts = window?.Intl?.Segmenter
+    ? [
+        ...new Intl.Segmenter("he", { granularity: "grapheme" }).segment(str),
+      ].map((s) => s.segment)
+    : Array.from(str); // נפילה חכמה אם אין Segmenter
+  return parts
+    .reverse()
+    .map((ch) => BRACKET_SWAP[ch] ?? ch)
+    .join("");
+}
+
+// ===== BiDi helpers for PDF (RTL base with LTR islands) =====
+const RLE = "\u202B"; // Right-to-Left Embedding
+const PDFM = "\u202C"; // Pop Directional Formatting
+const LRI = "\u2066"; // Left-to-Right Isolate
+const PDI = "\u2069"; // Pop Directional Isolate
+
+function bidiWrapRTL(str = "") {
+  // ממסגר את כל קטע האנגלית/מספרים כאיים LTR בתוך שורה RTL
+  const islanded = String(str).replace(
+    /[A-Za-z0-9][A-Za-z0-9%°/().,+\-]*/g,
+    (m) => LRI + m + PDI
+  );
+  return RLE + islanded + PDFM;
+}
+
 // טעינת תמונה מה-public כ-HTMLImageElement
 function loadImage(url) {
   return new Promise((resolve, reject) => {
@@ -49,20 +91,18 @@ function makeEnsureSpaceBlack(pdf, headerImg, bottomMargin = 20) {
   };
 }
 
-// כותרת צהובה – משתמשים ב-rtl()
 function drawYellowTitle(pdf, text, PAGE_W, Y) {
   pdf.setFont("Rubik", "bold");
   pdf.setFontSize(18);
   pdf.setTextColor(255, 230, 0);
 
-  const visual = rtlFix(text);
-  const visualForWidth = visual;
-
+  const visual = mirrorStr(text);
   const xCenter = PAGE_W / 2;
+
   pdf.text(visual, xCenter, Y, { align: "center" });
 
   const lineMargin = 4;
-  const textWidth = pdf.getTextWidth(visualForWidth);
+  const textWidth = pdf.getTextWidth(visual);
   pdf.setDrawColor(255, 230, 0);
   pdf.setLineWidth(0.8);
   pdf.line(
@@ -92,7 +132,8 @@ function drawCenteredLines(pdf, lines, PAGE_W, Y, ensure, lineGap = 7) {
     const wrapped = pdf.splitTextToSize(text, PAGE_W - 40);
     wrapped.forEach((l) => {
       Y = ensure ? ensure(Y) : Y;
-      pdf.text(rtlFix(l), xCenter, Y, { align: "center" });
+      pdf.text(mirrorStr(l), xCenter, Y, { align: "center" });
+
       Y += lineGap;
     });
     Y += 2;
@@ -110,8 +151,6 @@ function drawRightAlignedLines(pdf, lines, PAGE_W, Y, ensure, lineGap = 7) {
   pdf.setTextColor(255, 255, 255);
 
   const xRight = PAGE_W - 20; // גבול ימין לטקסט
-  const bulletX = xRight; // מיקום התבליט
-  const textRight = xRight - 4.5; // הטקסט ייעצר 4.5 מ"מ משמאל לתבליט
 
   (lines || []).forEach((raw) => {
     let line = (raw ?? "").trim();
@@ -120,30 +159,20 @@ function drawRightAlignedLines(pdf, lines, PAGE_W, Y, ensure, lineGap = 7) {
       return;
     }
 
-    // האם יש תבליט בתחילת השורה?
-    let hasBullet = false;
+    // אם מתחיל בתבליט – נשאיר את התו בתוך השורה (שיתהפך יחד)
     if (/^(\*|•|-)\s+/.test(line)) {
-      hasBullet = true;
-      line = line.replace(/^(\*|•|-)\s+/, ""); // מורידים את התו – נצייר אותו בעצמנו
+      line = line.replace(/^(\*|•|-)\s+/, "• "); // מאחדים לתו •
     }
 
-    // גלישת שורות רגילה
     const wrapped = pdf.splitTextToSize(line, PAGE_W - 40);
 
-    wrapped.forEach((wline, idx) => {
+    wrapped.forEach((wline) => {
       Y = ensure ? ensure(Y) : Y;
-
-      // מציירים את התבליט רק בשורה הראשונה של הפריט
-      if (hasBullet && idx === 0) {
-        // עיגול קטן מלא כתבליט
-        pdf.circle(bulletX, Y - 2.1, 0.85, "F");
-      }
-
-      // טקסט מיושר לימין, לאחר עיבוד RTL
-      pdf.text(rtlFix(wline), textRight, Y, { align: "right" });
+      const mirrored = mirrorStr(wline);
+      pdf.text(mirrored, xRight, Y, { align: "right" });
       Y += lineGap;
     });
-    Y += 2; // רווח קטן בין פריטים
+    Y += 2; // רווח בין פריטים
   });
 
   return Y;
@@ -311,12 +340,14 @@ export default function PersonalMenu({ traineeData }) {
     pdf.setFont("Rubik", "bold");
     pdf.setFontSize(22);
     pdf.setTextColor(255, 255, 255);
-    pdf.text(rtlFix(`היי, ${traineeName}`), PAGE_W / 2, Y, { align: "center" });
+    pdf.text(mirrorStr(`היי, ${traineeName}`), PAGE_W / 2, Y, {
+      align: "center",
+    });
     Y += 10;
 
     pdf.setFont("Rubik", "normal");
     pdf.setFontSize(14);
-    pdf.text(rtlFix("המלצות התזונה מותאמות לך באופן אישי"), PAGE_W / 2, Y, {
+    pdf.text(mirrorStr("המלצות התזונה מותאמות לך באופן אישי"), PAGE_W / 2, Y, {
       align: "center",
     });
     Y += 14;

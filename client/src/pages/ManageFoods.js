@@ -4,6 +4,22 @@ import "../styles/theme.css";
 import Select from "react-select";
 import config from "../config";
 
+const FLAG_TO_SAFE_CAT = {
+  isVegan: "safe_vegan",
+  isVegetarian: "safe_vegetarian",
+  isGlutenFree: "safe_gluten_free",
+  isLactoseFree: "safe_lactose_free",
+};
+
+function syncFlagsToCategories(payload) {
+  const set = new Set(payload.categories || []);
+  for (const [flag, cat] of Object.entries(FLAG_TO_SAFE_CAT)) {
+    if (payload.dietaryFlags?.[flag]) set.add(cat);
+    else set.delete(cat);
+  }
+  return { ...payload, categories: Array.from(set) };
+}
+
 /** Utilities */
 const toNumber = (v, def = 0) => {
   const n = Number(v);
@@ -354,7 +370,7 @@ function FoodModal({ title, onClose, onSave, food = {} }) {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const payload = {
+    const payload = syncFlagsToCategories({
       ...form,
       // ודא מספרים:
       calories: toNumber(form.calories),
@@ -384,8 +400,7 @@ function FoodModal({ title, onClose, onSave, food = {} }) {
         snack: toNumber(form.mealSuitability.snack, 5),
       },
       dietaryFlags: { ...form.dietaryFlags },
-    };
-
+    });
     onSave(payload);
   };
 

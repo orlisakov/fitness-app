@@ -20,44 +20,46 @@ async function fetchB64(path) {
 export async function loadRubikFonts(pdf) {
   if (RUBIK_LOADED && pdf.getFontList()?.Rubik) return;
 
-  const regular = await fetchB64("/fonts/Rubik-Regular.ttf");
-  pdf.addFileToVFS("Rubik-Regular.ttf", regular);
-  pdf.addFont("Rubik-Regular.ttf", "Rubik", "normal");
+  try {
+    const regular = await fetchB64("/fonts/Rubik-Regular.ttf");
+    pdf.addFileToVFS("Rubik-Regular.ttf", regular);
+    pdf.addFont("Rubik-Regular.ttf", "Rubik", "normal");
 
-  const bold = await fetchB64("/fonts/Rubik-Bold.ttf");
-  pdf.addFileToVFS("Rubik-Bold.ttf", bold);
-  pdf.addFont("Rubik-Bold.ttf", "Rubik", "bold");
+    const bold = await fetchB64("/fonts/Rubik-Bold.ttf");
+    pdf.addFileToVFS("Rubik-Bold.ttf", bold);
+    pdf.addFont("Rubik-Bold.ttf", "Rubik", "bold");
 
-  RUBIK_LOADED = true;
+    RUBIK_LOADED = true;
+  } catch (error) {
+    console.error("Error loading Rubik fonts for PDF:", error);
+  }
 }
 
-export function rtlFix(input = "") {
-  const s = String(input);
+// ===== פונקציית התיקון החדשה לעברית =====
 
-  // 1) החלפת סוגריים כדי שלא יצאו במראה אחרי ההיפוך
-  const swap = {
-    "(": ")",
-    ")": "(",
-    "[": "]",
-    "]": "[",
-    "{": "}",
-    "}": "{",
-    "<": ">",
-    ">": "<",
-  };
-  const brFixed = s.replace(/[()\[\]{}<>]/g, (ch) => swap[ch] || ch);
+// תווי בקרה של יוניקוד לכיווניות
+const RLE = "\u202B"; // Right-to-Left Embedding
+const PDF = "\u202C"; // Pop Directional Formatting
+const LRI = "\u2066"; // Left-to-Right Isolate
+const PDI = "\u2069"; // Pop Directional Isolate
 
-  // 2) היפוך כללי של המחרוזת
-  const rev = [...brFixed].reverse().join("");
+/**
+ * מתקן מחרוזת עברית עם אנגלית/מספרים להצגה נכונה ב-PDF.
+ * עוטף את כל הטקסט בכיווניות RTL, ומבודד קטעי LTR (אנגלית, מספרים).
+ * @param {string} str הטקסט לתיקון
+ * @returns {string} טקסט מתוקן עם תווי בקרה
+ */
+export function rtlFix(str) {
+  if (typeof str !== "string" || !str) return "";
 
-  // 3) שמירה על "איים" לטיניים/מספריים בכיוון LTR (היפוך חוזר רק להם)
-  // כולל אותיות, ספרות, %, מעלות, נקודותיים, קו נטוי, מקף, פלוס, פסיק, נקודה, מרכאות, גרש, כוכבית, &.
-  return rev.replace(/[A-Za-z0-9@#%°\u00B0:\/\\.\-_,+&"'*]+/g, (seg) =>
-    [...seg].reverse().join("")
-  );
-}
+  // מזהה קטעים של אנגלית, מספרים ותווים מיוחדים ששייכים להם
+  const ltrRegex = /[A-Za-z0-9_@#%&()\-+=[\]{}.,!?:;"'$<>/\\]+/g;
 
-// אם את משתמשת ב-rtlWrap – השאירי כתAlias:
-export function rtlWrap(s = "") {
-  return rtlFix(s ?? "");
+  const fixedStr = str.replace(ltrRegex, (match) => {
+    // כל קטע LTR נעטף בתווי בידוד כדי להבטיח שהוא יוצג נכון
+    return LRI + match + PDI;
+  });
+
+  // עוטפים את כל המחרוזת בתווי RTL כדי לקבוע את הכיוון הראשי
+  return RLE + fixedStr + PDF;
 }

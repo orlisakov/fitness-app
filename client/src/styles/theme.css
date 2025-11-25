@@ -3148,161 +3148,56 @@ button.add-food {
   color: #fff;
   border-radius: 8px;
 }
-/* ===== FIX: Macro split rows RTL ===== */
-
-.meal-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) 120px; /* הכותרת בסוף = בצד ימין */
-  gap: 18px;
-  align-items: center;
-  direction: rtl;
-}
-
-.meal-title {
-  font-weight: 800;
-  color: var(--accent-pink);
-  text-align: right;
-  justify-self: end; /* להצמיד ממש לקצה ימין של הטור */
-  white-space: nowrap;
-}
-
-/* כל תא של מאקרו */
-.meal-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  direction: rtl;
-}
-
-.meal-cell label {
-  text-align: center;
-  line-height: 1.2;
-  font-weight: 700;
-}
-
-.meal-unit-sub {
-  font-size: 0.75rem;
-  color: #ffb6d9;
-}
-
-.meal-input {
-  width: 110px;
-  height: 38px;
-  border: 2px solid var(--accent-pink);
-  background: #000;
-  color: #fff;
-  text-align: center;
-  border-radius: 10px;
-  font-size: 1rem;
-}
-
-.meal-input:disabled {
-  opacity: 0.4;
-}
-
-/* מובייל */
-@media (max-width: 700px) {
-  .meal-row {
-    grid-template-columns: repeat(2, 1fr); /* 2 בשורה */
-    grid-auto-rows: auto;
-  }
-  .meal-title {
-    grid-column: 1 / -1; /* הכותרת על כל הרוחב */
-    justify-self: end; /* עדיין ימין */
-    margin-top: 6px;
-  }
-}
-/* כותרות ארוחות במסך התפריט בלבד */
-.menu-meal-title {
-  width: 100%;
-  text-align: center !important;
-  direction: rtl;
-  font-weight: 900;
-  font-size: 22px;
-  color: var(--accent-pink);
-  margin: 0 0 8px 0;
-}
-.meal-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr) 120px; /* שם הארוחה אחרון = הכי ימין ב-RTL */
-  gap: 18px;
-  align-items: start;
-  direction: rtl;
-}
-
-.meal-title {
-  text-align: center;
-  font-weight: 800;
-  color: var(--accent-pink);
-  padding-top: 6px; /* שלא “יעלה” מול האינפוטים */
-}
-.meal-cell label {
-  text-align: center;
-  line-height: 1.2;
-}
-.menu-hello {
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.85));
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #fff;
-  padding: 18px 16px;
-  border-radius: 16px;
-  text-align: center;
-  margin: 12px 0 16px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-}
-
-.menu-hello-title {
-  font-family: "Rubik", system-ui, -apple-system, "Segoe UI", "Alef", sans-serif;
-  font-weight: 700;
-  font-size: 22px;
-  margin: 0 0 6px;
-  letter-spacing: 0.2px;
-}
-
-.menu-hello-sub {
-  font-family: "Rubik", system-ui, -apple-system, "Segoe UI", "Alef", sans-serif;
-  font-weight: 400;
-  font-size: 15px;
-  opacity: 0.95;
-}
-/* יישור כללי לימין בתוך דף התפריט */
-.menu-container {
-  direction: rtl;
-  text-align: right;
-}
-
-/* ברכת פתיחה */
-.menu-hello-title,
-.menu-hello-sub,
-.menu-subtitle,
-.menu-meal-title,
-.instructions-title {
-  text-align: right;
-}
-
-/* טבלאות */
-.menu-table {
-  direction: rtl;
-  text-align: right;
-}
-.menu-table th,
-.menu-table td {
-  text-align: right;
-  vertical-align: top;
-}
-
-/* רשימת הדגשים במסך */
-.instructions-card {
-  text-align: right;
-}
-.instructions-card ol {
-  direction: rtl;
-  text-align: right;
-  list-style-position: inside; /* המספור יופיע בצד ימין */
-  padding-inline-start: 0;
-  margin: 0;
-}
+/* ==== FIX: מספרים לא הפוכים במסכים RTL ==== */
+.instructions-list,
+.instructions-card ol,
 .instructions-card li {
-  margin: 0 0 8px 0;
+  /* אל תכפי היפוך כיווניות */
+  unicode-bidi: normal; /* דריסה בטוחה */
+  direction: rtl;
+  text-align: right;
+}
+
+/* דפדפנים תומכים: שמירה חכמה על כיווניות בכל שורה */
+@supports (unicode-bidi: plaintext) {
+  .instructions-list,
+  .instructions-card ol,
+  .instructions-card li {
+    unicode-bidi: plaintext;
+  }
+}
+/* עמודות כמות – ספרות תמיד LTR */
+.menu-table td.amount,
+.menu-table thead tr:nth-child(2) th:nth-child(1),
+.menu-table thead tr:nth-child(2) th:nth-child(3) {
+  direction: ltr;
+  unicode-bidi: isolate; /* מבודד את המספר מהעברית */
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.chip,
+.targets-row .chip {
+  direction: rtl;
+}
+.chip b,
+.targets-row .chip b,
+.chip .num,
+.targets-row .chip .num {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+/* היה: unicode-bidi: bidi-override;  — גורם להפיכות */
+.instructions-list {
+  direction: rtl;
+  unicode-bidi: plaintext; /* ← קובע בסיס RTL אך שומר על אנגלית/מספרים LTR */
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: step;
+}
+.option-line,
+.alt-items,
+.alt-item {
+  direction: rtl;
+  unicode-bidi: plaintext;
 }
