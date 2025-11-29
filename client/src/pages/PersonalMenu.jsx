@@ -172,6 +172,21 @@ export default function PersonalMenu({ traineeData }) {
     await loadRubikFonts(pdf);
     pdf.setFont("Rubik", "normal");
 
+    // פונקציה שצובעת את כל הדף לשחור ומגדירה טקסט לבן
+    const paintPage = () => {
+      const w = pdf.internal.pageSize.getWidth();
+      const h = pdf.internal.pageSize.getHeight();
+      pdf.setFillColor(0, 0, 0);
+      pdf.rect(0, 0, w, h, "F");
+      pdf.setTextColor(255, 255, 255);
+    };
+
+    // לצבוע את העמוד הראשון
+    paintPage();
+
+    // לצבוע אוטומטית כל עמוד חדש—גם כאלה שנוצרים ע"י autoTable
+    pdf.internal.events.subscribe("addPage", paintPage);
+
     // דף שחור + הדר
     const startPage = () => {
       const PAGE_W = pdf.internal.pageSize.getWidth();
