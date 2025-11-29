@@ -1,9 +1,14 @@
 // client/src/pages/DashboardTrainee.jsx
-import { useNavigate } from "react-router-dom";
 
 import React, { useEffect, useState } from "react";
 import "../styles/theme.css";
 import config from "../config";
+
+const joinUrl = (base, path) =>
+  `${String(base).replace(/\/$/, "")}/${String(path || "").replace(/^\//, "")}`;
+
+const withBase = (p) =>
+  p && /^(https?:|data:|blob:)/.test(p) ? p : joinUrl(config.apiBaseUrl, p);
 
 // מיפוי שמות הדרגות לעברית
 const LEVEL_LABELS = {
@@ -20,10 +25,11 @@ export default function DashboardTrainee() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [allFoods, setAllFoods] = useState([]); // נשמר תמיד כמערך אחרי נרמול
+  const [allFoods, setAllFoods] = useState([]);
   const [dislikedFoods, setDislikedFoods] = useState([]);
   const [showDislikedFoodsModal, setShowDislikedFoodsModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [previewSrc, setPreviewSrc] = useState(null);
 
   // דגל נעילה כדי למנוע קריאה כפולה
   const [saving, setSaving] = useState(false);
@@ -32,9 +38,23 @@ export default function DashboardTrainee() {
   const toArray = (x) =>
     Array.isArray(x) ? x : x && Array.isArray(x.items) ? x.items : [];
 
+  // טעינת משתמש – פעם אחת
   useEffect(() => {
     fetchTraineeData();
   }, []);
+
+  // ניהול ESC ונעילת גלילה כשמודל פתוח
+  useEffect(() => {
+    if (!previewSrc) return;
+    const onKey = (e) => e.key === "Escape" && setPreviewSrc(null);
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [previewSrc]);
 
   const fetchTraineeData = async () => {
     setLoading(true);
@@ -595,6 +615,7 @@ export default function DashboardTrainee() {
                         <th>מותניים</th>
                         <th>אגן</th>
                         <th>חזה</th>
+                        <th>תמונה</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -608,6 +629,31 @@ export default function DashboardTrainee() {
                           <td>{m.ButtockCircumference}</td>
                           <td>{m.ThighCircumference}</td>
                           <td>{m.ArmCircumference}</td>
+                          <td>
+                            {(() => {
+                              const imgPath =
+                                m.imagePath || m.photoPath || m.photoUrl; // תמיכה בכמה שמות אפשריים
+                              return imgPath ? (
+                                <img
+                                  loading="lazy"
+                                  src={joinUrl(config.apiBaseUrl, imgPath)}
+                                  alt="מדידה"
+                                  style={{
+                                    width: 56,
+                                    height: 56,
+                                    objectFit: "cover",
+                                    borderRadius: 8,
+                                    cursor: "pointer",
+                                  }}
+                                  onClick={() =>
+                                    setPreviewSrc(withBase(imgPath))
+                                  }
+                                />
+                              ) : (
+                                "—"
+                              );
+                            })()}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -618,6 +664,36 @@ export default function DashboardTrainee() {
           )}
         </div>
       </div>
+      {previewSrc && (
+        <div className="modal-backdrop" onClick={() => setPreviewSrc(null)}>
+          <div
+            className="modal"
+            dir="rtl"
+            style={{ maxWidth: 800 }}
+            onClick={(e) => e.stopPropagation()} // שלא יסגר בלחיצה בתוך המודל
+          >
+            <div className="modal-header">
+              <h2>תצוגת תמונה</h2>
+              <button className="close-btn" onClick={() => setPreviewSrc(null)}>
+                ←
+              </button>
+            </div>
+            <div style={{ padding: 12, textAlign: "center" }}>
+              <img
+                loading="lazy"
+                src={previewSrc}
+                alt="מדידה"
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: "70vh",
+                  objectFit: "contain",
+                  borderRadius: 8,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

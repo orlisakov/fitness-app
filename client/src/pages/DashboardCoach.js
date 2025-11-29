@@ -10,14 +10,12 @@ export default function DashboardCoach() {
   const [trainees, setTrainees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   const [showModal, setShowModal] = useState(false);
   const [newFullName, setNewFullName] = useState("");
   const [newPhone, setNewPhone] = useState("");
-
   const [showTraineeModal, setShowTraineeModal] = useState(false);
   const [selectedTrainee, setSelectedTrainee] = useState(null);
-
+  const [measurementPhoto, setMeasurementPhoto] = useState(null);
   const [editData, setEditData] = useState({
     fullName: "",
     phone: "",
@@ -315,6 +313,7 @@ export default function DashboardCoach() {
       ThighCircumference: "",
       ArmCircumference: "",
     });
+    setMeasurementPhoto(null);
     setShowMeasurementsModal(true);
   };
 
@@ -341,21 +340,38 @@ export default function DashboardCoach() {
   const handleMeasurementSubmit = async (e) => {
     e.preventDefault();
     try {
+      const fd = new FormData();
+      fd.append("traineeId", selectedTrainee._id);
+      fd.append("date", measurementData.date);
+
+      fd.append(
+        "AbdominalCircumference",
+        measurementData.AbdominalCircumference || ""
+      );
+      fd.append("TopCircumference", measurementData.TopCircumference || "");
+      fd.append(
+        "ButtockCircumference",
+        measurementData.ButtockCircumference || ""
+      );
+      fd.append("ThighCircumference", measurementData.ThighCircumference || "");
+      fd.append("ArmCircumference", measurementData.ArmCircumference || "");
+
+      if (measurementPhoto) fd.append("photo", measurementPhoto); // ← מצרפים תמונה אם קיימת
+
       const res = await fetch(`${config.apiBaseUrl}/api/measurements`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          // שימי לב: לא להגדיר כאן Content-Type, הדפדפן יוסיף boundary נכון
         },
-        body: JSON.stringify({
-          ...measurementData,
-          traineeId: selectedTrainee._id,
-        }),
+        body: fd,
       });
+
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message || "שגיאה בשמירת המדידה");
       }
+
       showToast("המדידה נשמרה בהצלחה", "success");
       setShowMeasurementsModal(false);
     } catch (err) {
@@ -994,6 +1010,13 @@ export default function DashboardCoach() {
                   }))
                 }
               />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) =>
+                  setMeasurementPhoto(e.target.files?.[0] || null)
+                }
+              />
               <button type="submit" className="update-btn">
                 שמור מדידה
               </button>
@@ -1027,6 +1050,7 @@ export default function DashboardCoach() {
                       <th>מותניים (ס"מ)</th>
                       <th>אגן (ס"מ)</th>
                       <th>חזה (ס"מ)</th>
+                      <th>תמונה</th>
                       <th>הסר</th>
                     </tr>
                   </thead>
@@ -1039,6 +1063,22 @@ export default function DashboardCoach() {
                         <td>{m.ButtockCircumference}</td>
                         <td>{m.ThighCircumference}</td>
                         <td>{m.ArmCircumference}</td>
+                        <td>
+                          {m.imagePath ? (
+                            <img
+                              src={`${config.apiBaseUrl}/${m.imagePath}`}
+                              alt="מדידה"
+                              style={{
+                                width: 56,
+                                height: 56,
+                                objectFit: "cover",
+                                borderRadius: 8,
+                              }}
+                            />
+                          ) : (
+                            "—"
+                          )}
+                        </td>
                         <td>
                           <button
                             className="action-btn delete-btn"

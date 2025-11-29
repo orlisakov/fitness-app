@@ -627,23 +627,28 @@ label,
 
 .targets-row {
   display: flex;
-  justify-content: center;
-  gap: 6px;
+  justify-content: center; /* ממורכז לרוחב */
+  align-items: center;
+  gap: 8px;
   flex-wrap: wrap;
+  margin: 6px 0 12px;
+  direction: rtl;
 }
 
 .chip {
-  background: var(--background);
-  border: 1px solid var(--accent-pink);
-  border-radius: 999px;
-  padding: 4px 8px;
-  font-size: 13px;
-  color: #ffd5f2;
-  font-weight: 600;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  white-space: nowrap;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.9;
+  color: #fff;
+}
+
+.chip-outline {
+  border: 1.5px solid #fd2767; /* הורוד של האתר */
+  background: transparent;
 }
 
 .chip-strong {
@@ -884,11 +889,11 @@ label,
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background-color: var(--background);
+  background: rgba(0, 0, 0, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 1000;
 }
 
 .modal {
@@ -3200,4 +3205,20 @@ button.add-food {
 .alt-item {
   direction: rtl;
   unicode-bidi: plaintext;
+}
+/* כותרות כרטיסי הארוחות – למרכז */
+.menu-meal-title {
+  display: block;
+  width: 100%;
+  text-align: center; /* ממרכז טקסט */
+  margin: 0 0 8px;
+  font-weight: 700;
+  font-size: 20px;
+  color: #fff;
+}
+
+/* הכותרות בשורת הקבוצות של הטבלה (חלבון/פחמימה) – למרכז */
+.menu-table thead th,
+.menu-table thead th.grp {
+  text-align: center;
 }

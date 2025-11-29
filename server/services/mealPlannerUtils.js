@@ -1565,20 +1565,6 @@ class RuleBasedPlanner {
       30
     );
 
-    console.log("SNACK POOLS SIZE", {
-      proteinPool: proteinPool.length,
-      sweetsPool: sweetsPool.length,
-      fruitsPool: fruitsPool.length,
-      fatsPool: FatsPool.length,
-    });
-
-    console.log("SNACK OPTIONS SIZE", {
-      proteins: proteins.length,
-      sweetsAsCarb: sweetsAsCarb.length,
-      fruitsAsAlt: fruitsAsAlt.length,
-      fatsAsAlt: FatsAsAlt.length,
-    });
-
     return {
       mode: "variety",
       targets: totalTargets,

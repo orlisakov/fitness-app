@@ -13,6 +13,7 @@ const measurementSchema = new mongoose.Schema(
     ButtockCircumference: { type: Number },
     ThighCircumference: { type: Number },
     ArmCircumference: { type: Number },
+    imagePath: { type: String },
   },
   {
     timestamps: true,

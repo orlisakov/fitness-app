@@ -1,6 +1,5 @@
 // client/src/pages/PersonalMenu.jsx
-
-// ===== Imports =====
+import autoTable from "jspdf-autotable";
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import "../styles/theme.css";
@@ -37,146 +36,8 @@ function mirrorStr(str = "") {
     .join("");
 }
 
-// ===== BiDi helpers for PDF (RTL base with LTR islands) =====
-const RLE = "\u202B"; // Right-to-Left Embedding
-const PDFM = "\u202C"; // Pop Directional Formatting
 const LRI = "\u2066"; // Left-to-Right Isolate
 const PDI = "\u2069"; // Pop Directional Isolate
-
-function bidiWrapRTL(str = "") {
-  // ממסגר את כל קטע האנגלית/מספרים כאיים LTR בתוך שורה RTL
-  const islanded = String(str).replace(
-    /[A-Za-z0-9][A-Za-z0-9%°/().,+\-]*/g,
-    (m) => LRI + m + PDI
-  );
-  return RLE + islanded + PDFM;
-}
-
-// טעינת תמונה מה-public כ-HTMLImageElement
-function loadImage(url) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "Anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = url;
-  });
-}
-
-// התחלה של עמוד שחור + הוספת ההדר העליון (ללא שינוי אם זה כבר תקין)
-function startBlackPageWithHeader(pdf, headerImg) {
-  const PAGE_W = pdf.internal.pageSize.getWidth();
-  const PAGE_H = pdf.internal.pageSize.getHeight();
-
-  pdf.setFillColor(0, 0, 0);
-  pdf.rect(0, 0, PAGE_W, PAGE_H, "F");
-
-  const headerHeight = 70;
-  pdf.addImage(headerImg, "PNG", 0, 0, PAGE_W, headerHeight);
-  pdf.setTextColor(255, 255, 255);
-
-  const startY = headerHeight + 12;
-  return { PAGE_W, Y: startY };
-}
-
-function makeEnsureSpaceBlack(pdf, headerImg, bottomMargin = 20) {
-  const h = pdf.internal.pageSize.getHeight(); // גובה אמיתי
-  return function ensure(y) {
-    if (y > h - bottomMargin) {
-      pdf.addPage();
-      const { Y: newY } = startBlackPageWithHeader(pdf, headerImg);
-      return newY;
-    }
-    return y;
-  };
-}
-
-function drawYellowTitle(pdf, text, PAGE_W, Y) {
-  pdf.setFont("Rubik", "bold");
-  pdf.setFontSize(18);
-  pdf.setTextColor(255, 230, 0);
-
-  const visual = mirrorStr(text);
-  const xCenter = PAGE_W / 2;
-
-  pdf.text(visual, xCenter, Y, { align: "center" });
-
-  const lineMargin = 4;
-  const textWidth = pdf.getTextWidth(visual);
-  pdf.setDrawColor(255, 230, 0);
-  pdf.setLineWidth(0.8);
-  pdf.line(
-    xCenter - textWidth / 2,
-    Y + lineMargin,
-    xCenter + textWidth / 2,
-    Y + lineMargin
-  );
-
-  return Y + 12;
-}
-
-// טקסט ממורכז עם שבירת עמוד – שימי לב: משתמשים ב-ensure(Y) במקום ensureSpace(...)
-function drawCenteredLines(pdf, lines, PAGE_W, Y, ensure, lineGap = 7) {
-  pdf.setFont("Rubik", "normal");
-  pdf.setFontSize(12);
-  pdf.setTextColor(255, 255, 255);
-
-  const xCenter = PAGE_W / 2;
-  (lines || []).forEach((raw) => {
-    const text = raw ?? "";
-    if (!text) {
-      Y += lineGap;
-      return;
-    }
-
-    const wrapped = pdf.splitTextToSize(text, PAGE_W - 40);
-    wrapped.forEach((l) => {
-      Y = ensure ? ensure(Y) : Y;
-      pdf.text(mirrorStr(l), xCenter, Y, { align: "center" });
-
-      Y += lineGap;
-    });
-    Y += 2;
-  });
-  return Y;
-}
-
-/**
- * כתיבת טקסט מיושר לימין (עם ensure) — לעמודי הארוחות
- * *** גרסה מתוקנת עם סדר ויזואלי נכון: טקסט -> מספר -> • ***
- */
-function drawRightAlignedLines(pdf, lines, PAGE_W, Y, ensure, lineGap = 7) {
-  pdf.setFont("Rubik", "normal");
-  pdf.setFontSize(12);
-  pdf.setTextColor(255, 255, 255);
-
-  const xRight = PAGE_W - 20; // גבול ימין לטקסט
-
-  (lines || []).forEach((raw) => {
-    let line = (raw ?? "").trim();
-    if (!line) {
-      Y += lineGap;
-      return;
-    }
-
-    // אם מתחיל בתבליט – נשאיר את התו בתוך השורה (שיתהפך יחד)
-    if (/^(\*|•|-)\s+/.test(line)) {
-      line = line.replace(/^(\*|•|-)\s+/, "• "); // מאחדים לתו •
-    }
-
-    const wrapped = pdf.splitTextToSize(line, PAGE_W - 40);
-
-    wrapped.forEach((wline) => {
-      Y = ensure ? ensure(Y) : Y;
-      const mirrored = mirrorStr(wline);
-      pdf.text(mirrored, xRight, Y, { align: "right" });
-      Y += lineGap;
-    });
-    Y += 2; // רווח בין פריטים
-  });
-
-  return Y;
-}
 
 /* ---------------------- HELPERS FOR PDF ---------------------- */
 
@@ -200,16 +61,6 @@ export default function PersonalMenu({ traineeData }) {
     const x = Number(n);
     if (!Number.isFinite(x)) return "0";
     return x.toFixed(d).replace(/\.00$/, "");
-  }
-
-  // מנרמל טקסט כמות לפני שהוא נכנס למחרוזת
-  function normalizeAmount(text) {
-    if (!text) return "";
-    // תופס מספר/שבר/אחוזים בתחילת המחרוזת (פשוט, בלי מניפולציות כיוון)
-    const m = text.match(/^([0-9.,/()%+-]+)(\s*)(.*)$/);
-    if (!m) return text;
-    const [, num, , rest] = m;
-    return rest ? `${num} ${rest}` : num;
   }
 
   useEffect(() => {
@@ -313,10 +164,276 @@ export default function PersonalMenu({ traineeData }) {
   async function exportToPDF() {
     if (!mealPlan) return;
 
+    const PINK = [255, 46, 152]; // צבע כותרת הטבלאות (דומה לאתר)
+    const BLACK = [0, 0, 0];
+    const WHITE = [255, 255, 255];
+
     const pdf = new jsPDF("p", "mm", "a4");
     await loadRubikFonts(pdf);
-    console.log(pdf.getFontList());
     pdf.setFont("Rubik", "normal");
+
+    // דף שחור + הדר
+    const startPage = () => {
+      const PAGE_W = pdf.internal.pageSize.getWidth();
+      const PAGE_H = pdf.internal.pageSize.getHeight();
+      pdf.setFillColor(...BLACK);
+      pdf.rect(0, 0, PAGE_W, PAGE_H, "F");
+      pdf.setTextColor(...WHITE);
+      const TOP_PAD = 20;
+      return { x: 12, y: TOP_PAD, PAGE_W };
+    };
+
+    const mirror = (s = "") => mirrorStr(s);
+
+    // --- safe numbers & rounded rect ---
+    const N = (v, fb = 0) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : fb;
+    };
+
+    function roundedRectSafe(doc, x, y, w, h, rx = 4, ry = rx, style = "S") {
+      x = N(x);
+      y = N(y);
+      w = N(w);
+      h = N(h);
+      rx = N(rx, 0);
+      ry = N(ry, rx);
+
+      if (w <= 0 || h <= 0) return; // אין מה לצייר
+      const maxR = Math.max(0, Math.min(w, h) / 2 - 0.1);
+      rx = Math.min(Math.max(0, rx), maxR);
+      ry = Math.min(Math.max(0, ry), maxR);
+
+      doc.roundedRect(x, y, w, h, rx, ry, style);
+    }
+
+    // --- כרטיס דגשים כמו בתמונה ---
+    function drawTipsCard(yStart) {
+      const PAGE_W = pdf.internal.pageSize.getWidth();
+      const left = 12,
+        right = PAGE_W - 12;
+      const padX = 12,
+        padY = 12,
+        radius = 6;
+      const cardW = PAGE_W - left * 2;
+
+      let y = yStart + padY;
+
+      // כותרת הכרטיס
+      pdf.setFont("Rubik", "bold");
+      pdf.setFontSize(16);
+      pdf.setTextColor(...WHITE);
+      pdf.text(mirror("דגשים חשובים לאורך חיים בריא"), right - padX, y, {
+        align: "right",
+      });
+      y += 10;
+
+      // פריטים ממוספרים: מספר ורוד מימין + טקסט עטוף
+      pdf.setFont("Rubik", "normal");
+      pdf.setFontSize(12);
+
+      const xNum = right - padX; // איפה מציירים את המספר
+      const gap = 4; // רווח בין מספר לטקסט
+      const reserve = 10; // רוחב שמור למספר
+      const xText = xNum - reserve - gap;
+      const textWidth = cardW - padX * 2 - reserve - gap;
+
+      const items = [
+        "אין תפריט מושלם – יש התמדה מושלמת. כל בחירה מדויקת מצטברת לתוצאה גדולה.",
+        "חלבון הוא הבסיס: מגן על השריר, מגביר שובע, ותומך חילוף חומרים.",
+        "מים: לפחות 3 ליטר ביום – אם קשה לשתות מים אפשר פטל דל קלוריות של יכין.",
+        "לשקול אוכל אחרי בישול; דיוק לפי משקל מבושל.",
+        "להשתמש תמיד בספריי שמן בלבד – לא לשפוך שמן חופשי.",
+        "פחמימות חכמות בלבד ולפי הכמויות; מומלץ סקיני פסטה.",
+        "ירקות בכל ארוחה עיקרית; עדיפות לירוקים, ברוקולי ושעועית ירוקה.",
+        "אפשר להחליף בין ארוחות אם נשמר מרווח ~4 שעות.",
+        "להחליף סוכר בממתיקים (סטיביה/סוכרלוז וכו').",
+        "חלב 1% עד כוס ביום; תחליפי סויה/שקדים ללא סוכר – חופשי.",
+        "שינה: לפחות 7 שעות בלילה.",
+        "לא לדלג על ארוחות; לפחות מנת החלבון.",
+        "אין “חטאתי” – פשוט חוזרים לתפריט בארוחה הבאה.",
+      ];
+
+      items.forEach((t, i) => {
+        const num = `.${i + 1}`;
+        const numPaint = `${LRI}${num}${PDI}`;
+        // מספר בורוד
+        pdf.setTextColor(...PINK);
+        pdf.text(numPaint, xNum, y, { align: "right" });
+
+        pdf.setTextColor(...WHITE);
+        const lines = pdf.splitTextToSize(t, textWidth);
+        lines.forEach((ln, idx) => {
+          pdf.text(mirror(ln), xText, y, { align: "right" });
+          y += 7;
+        });
+        y += 3; // רווח בין פריטים
+      });
+
+      // שורת סיום קטנה (כמו בתמונה)
+      y += 2;
+      pdf.setTextColor(...WHITE);
+      pdf.text(
+        mirror(
+          "תזכרי – תהליך אמיתי לא קורה בשבוע. הוא קורה כשאת מפסיקה לוותר על עצמך כל פעם מחדש ❤️"
+        ),
+        right - padX,
+        y,
+        { align: "right" }
+      );
+
+      // מסגרת ורודה מעוגלת סביב כל הכרטיס
+      const cardTop = yStart;
+      const cardBottom = y + padY;
+      pdf.setDrawColor(...PINK);
+      pdf.setLineWidth(0.8);
+      roundedRectSafe(
+        pdf,
+        left,
+        cardTop,
+        cardW,
+        cardBottom - cardTop,
+        radius,
+        radius,
+        "S"
+      );
+
+      return cardBottom; // ה-Y הבא אחרי הכרטיס
+    }
+
+    // כותרת לבנה ממורכזת וללא קו
+    const drawWhiteTitle = (text, y) => {
+      pdf.setFont("Rubik", "bold");
+      pdf.setFontSize(18);
+      pdf.setTextColor(255, 255, 255);
+      const xCenter = pdf.internal.pageSize.getWidth() / 2;
+      pdf.text(mirror(text), xCenter, y, { align: "center" });
+      return y + 5; // ריווח מתחת לכותרת
+    };
+
+    // בניית שורות לטבלת "דו־קבוצה" (חלבון/פחמימה)
+    function buildDualRows(proteinOptions = [], carbOptions = []) {
+      const rows = [];
+      const max = Math.max(proteinOptions.length, carbOptions.length);
+      for (let i = 0; i < max; i++) {
+        const p = proteinOptions[i] || {};
+        const c = carbOptions[i] || {};
+        rows.push([
+          mirror(p?.displayText || ""),
+          mirror(p?.food?.name || ""),
+          mirror(c?.displayText || ""),
+          mirror(c?.food?.name || ""),
+        ]);
+      }
+      return rows;
+    }
+
+    function addTargetsChips(y, t) {
+      if (!t) return y;
+
+      pdf.setFont("Rubik", "normal");
+      pdf.setFontSize(12);
+
+      const chipTxt = (label, val) =>
+        `${label} ${LRI}${Number(val || 0).toFixed(1)}${PDI}ג׳`;
+
+      const chips = [
+        mirrorStr(chipTxt("חלבון:", t.protein)),
+        mirrorStr(chipTxt("פחמ׳:", t.carbs)),
+        mirrorStr(chipTxt("שומן:", t.fat)),
+      ];
+
+      const padX = 5; // ריפוד פנימי
+      const r = 8; // רדיוס "פין"
+      const gap = 6; // רווח בין צ'יפים
+      const h = 9; // גובה צ'יפ
+      const textYOffset = 6; // יישור טקסט לגובה הקפסולה
+
+      const widths = chips.map((txt) => pdf.getTextWidth(txt) + padX * 2);
+      const total =
+        widths.reduce((a, b) => a + b, 0) + gap * (chips.length - 1);
+
+      const PAGE_W = pdf.internal.pageSize.getWidth();
+      let x = (PAGE_W - total) / 2; // ממורכז לרוחב הדף
+      const top = y + 2; // קצת מתחת לכותרת
+
+      pdf.setLineWidth(0.3);
+      pdf.setDrawColor(253, 39, 103); // ורוד האתר
+      pdf.setTextColor(255, 255, 255);
+
+      widths.forEach((w, i) => {
+        roundedRectSafe(pdf, x, top, w, h, r, r, "S"); // מסגרת בלבד, רקע שקוף
+        pdf.text(chips[i], x + w / 2, top + textYOffset, { align: "center" });
+        x += w + gap;
+      });
+
+      return top + h + 6; // Y הבא
+    }
+
+    function drawTable({ headRows, body, startY }) {
+      const PINK_BG = [253, 39, 103]; // ורוד של האתר
+      const HEAD_DARK = [255, 71, 126]; // פס כהה לשורה השנייה
+      const GRID_LINE = [255, 71, 126]; // קווי טבלה
+
+      const PAGE_W = pdf.internal.pageSize.getWidth();
+      const tableW = PAGE_W - 24; // 12 מ״מ מכל צד
+      const amtW = 42; // עמודת "כמות"
+      const nameW = (tableW - amtW * 2) / 2;
+
+      autoTable(pdf, {
+        startY,
+        head: headRows,
+        body,
+        theme: "grid",
+        margin: { left: 12, right: 12 },
+        styles: {
+          font: "Rubik",
+          fontStyle: "normal",
+          textColor: [255, 255, 255],
+          fillColor: [0, 0, 0], // גוף הטבלה שחור
+          halign: "right",
+          valign: "middle",
+          cellPadding: 3,
+          lineColor: GRID_LINE,
+          lineWidth: 0.2,
+        },
+        headStyles: {
+          fontStyle: "bold",
+          halign: "center",
+          textColor: [255, 255, 255],
+          fillColor: false, // נצבע ידנית בכל שורה
+        },
+        columnStyles: {
+          0: { cellWidth: amtW, halign: "center", fontStyle: "bold" }, // כמות
+          1: { cellWidth: nameW, halign: "right" }, // מוצר
+          2: { cellWidth: amtW, halign: "center", fontStyle: "bold" }, // כמות
+          3: { cellWidth: nameW, halign: "right" }, // מוצר
+        },
+
+        // צביעה לפי שורה בכותרת + הדגשת עמודות "כמות" בגוף
+        didParseCell: (data) => {
+          if (data.section === "head") {
+            if (data.row.index === 0) {
+              // שורת כותרת עליונה — ורוד
+              data.cell.styles.fillColor = PINK_BG;
+            } else if (data.row.index === 1) {
+              // שורת כותרת שנייה — כהה
+              data.cell.styles.fillColor = HEAD_DARK;
+            }
+          }
+          if (
+            data.section === "body" &&
+            (data.column.index === 0 || data.column.index === 2)
+          ) {
+            data.cell.styles.textColor = PINK_BG; // ורוד לעמודות הכמות
+            data.cell.styles.fontStyle = "bold";
+          }
+        },
+      });
+
+      // אין מסגרת חיצונית, אין עיגול — כמו שביקשת
+      return pdf.lastAutoTable.finalY;
+    }
 
     const traineeName =
       traineeData?.displayName ||
@@ -327,135 +444,141 @@ export default function PersonalMenu({ traineeData }) {
       traineeData?.name ||
       "מתאמנת";
 
-    // תמונת ההדר מתוך client/public/header-eiv.png
-    const headerImg = await loadImage("/header-eiv.png");
-
-    // ensureSpace שממשיך רקע שחור והדר בעמודי המשך
-    const ensure = makeEnsureSpaceBlack(pdf, headerImg);
-
-    /* ------------ עמוד 1 – דגשים ------------ */
-    let { PAGE_W, Y } = startBlackPageWithHeader(pdf, headerImg);
-
-    // פתיח אישי
-    pdf.setFont("Rubik", "bold");
+    // ===== עמוד 1: פתיח ודגשים =====
+    let { y } = startPage();
     pdf.setFontSize(22);
-    pdf.setTextColor(255, 255, 255);
-    pdf.text(mirrorStr(`היי, ${traineeName}`), PAGE_W / 2, Y, {
-      align: "center",
-    });
-    Y += 10;
-
-    pdf.setFont("Rubik", "normal");
+    pdf.text(
+      mirror(`היי, ${traineeName}`),
+      pdf.internal.pageSize.getWidth() / 2,
+      y,
+      { align: "center" }
+    );
+    y += 10;
     pdf.setFontSize(14);
-    pdf.text(mirrorStr("המלצות התזונה מותאמות לך באופן אישי"), PAGE_W / 2, Y, {
-      align: "center",
-    });
-    Y += 14;
+    pdf.text(
+      mirror("המלצות התזונה מותאמות לך באופן אישי"),
+      pdf.internal.pageSize.getWidth() / 2,
+      y,
+      { align: "center" }
+    );
+    y += 14;
 
-    // כותרת צהובה למעלה – "דגשים חשובים"
-    Y = drawYellowTitle(pdf, " כמה דגשים חשובים לתהליך", PAGE_W, Y);
+    y = drawTipsCard(y);
 
-    const tipsLines = [
-      "1) חשוב לשתות לפחות 3 ליטר מים ביום",
-      "2) חשוב שיהיה לנו משקל מזון!",
-      "3) חשוב להחליף שמן בספרי שמן",
-      "4) חלב לשתות 1% (עד כוס חד פעמי ביום) עדיף סויה ללא סוכר כך תשתי יותר מכוס ביום",
-      "5) משקאות זירו ניתן לשתות ללא הגבלה קלורית ופטל יכין לייט",
-      "6) רטבים לא לאכול אם לא כתוב לך – גם לא טחינה או רוטב לייט כלשהו",
-      "7) אבוקדו עד חצי ביום לא יותר",
-      "8) ירקות שצריך להגביל ביום הם: עד בצל בינוני אחד ביום, עד 100 גרם גזר ביום, עד חצי חציל ביום, תירס לייט לאכול עד 100 גרם ביום. כל שאר הירקות תאכלי חופשי, עדיפות לירוקים.",
-      "9) סוכר נחליף באבקת סוכרזית/נוזל סוכרלוז – זה יסגור לך הרבה פינות כשיש חשק למתוק",
-      "10) המלצה! להוסיף לכל ארוחה שעועית ירוקה או ברוקולי או ירוקים מבושלים כמרק או צלויים בתנור בכדי לנפח את הארוחה",
-      "11) סקיני פסטה זה כמו פסטה במרקם אחר – את יכולה לאכול ללא הגבלה",
-    ];
-
-    Y += 8;
-    Y = drawRightAlignedLines(pdf, tipsLines, PAGE_W, Y, ensure);
-    /* ------------ פונקציה פנימית: בניית טקסט דינמי לארוחה ------------ */
-    function buildMealLines(meal) {
-      const lines = [];
-      if (!meal) return lines;
-
-      (meal.groups || []).forEach((group) => {
-        const title = group.title || group.key;
-        if (title) lines.push(`— ${title} —`);
-
-        if (group.fixed) {
-          const f = group.fixed;
-          const parts = [];
-          if (f.displayText) parts.push(normalizeAmount(f.displayText));
-          if (f.food?.name) parts.push(f.food.name);
-          if (parts.length) lines.push("• " + parts.join(" "));
-        }
-
-        (group.options || []).forEach((opt) => {
-          const parts = [];
-          if (opt.displayText) parts.push(normalizeAmount(opt.displayText));
-          if (opt.food?.name) parts.push(opt.food.name);
-          const line = parts.join(" ");
-          if (line) lines.push("• " + line);
-        });
-
-        if ((group.options || []).length || group.fixed) {
-          lines.push(""); // רווח קטן בין קבוצות
-        }
-      });
-
-      return lines;
-    }
-
-    // בחירת גרסה מתאימה לארוחת ערב (חלבית / בשרית / צמחונית) לפי העדפות
-    function pickDinnerVariant(meal) {
-      if (!meal) return null;
-      const { dairyStyle, meatStyle, veggieStyle } = meal;
-      const isVegan = !!appliedPrefs?.isVegan;
-      const isVegetarian = !!appliedPrefs?.isVegetarian;
-
-      if (isVegan) return veggieStyle || dairyStyle || meatStyle || meal;
-      if (isVegetarian) return dairyStyle || veggieStyle || meatStyle || meal;
-      // אוכלת הכל – נעדיף בשרית
-      return meatStyle || dairyStyle || veggieStyle || meal;
-    }
-
-    /* ------------ עמודים 2–5: הארוחות ------------ */
+    // ===== עמודים הבאים: טבלאות כמו באתר =====
     const meals = mealPlan?.meals || {};
-    const mealOrder = [
+    const order = [
       { key: "breakfast", label: "ארוחת בוקר" },
       { key: "lunch", label: "ארוחת צהריים" },
       { key: "snack", label: "ארוחת ביניים" },
       { key: "dinner", label: "ארוחת ערב" },
     ];
 
-    mealOrder.forEach(({ key, label }) => {
+    const findGroup = (meal, keys = []) =>
+      meal?.groups?.find((g) => keys.includes(g.key)) || null;
+
+    const pickDinnerVariant = (meal) => {
+      if (!meal) return null;
+      const { dairyStyle, meatStyle, veggieStyle } = meal;
+      const isVegan = !!appliedPrefs?.isVegan;
+      const isVegetarian = !!appliedPrefs?.isVegetarian;
+      if (isVegan) return veggieStyle || dairyStyle || meatStyle || meal;
+      if (isVegetarian) return dairyStyle || veggieStyle || meatStyle || meal;
+      return meatStyle || dairyStyle || veggieStyle || meal;
+    };
+
+    order.forEach(({ key, label }) => {
       let meal = meals[key];
       if (!meal) return;
-
-      // לארוחת ערב בוחרים וריאנט מתאים
       if (key === "dinner") {
-        const variant = pickDinnerVariant(meal);
-        if (!variant) return;
-        meal = variant;
+        const v = pickDinnerVariant(meal);
+        if (!v) return;
+        meal = v;
       }
 
-      // עמוד חדש לכל ארוחה
       pdf.addPage();
-      ({ PAGE_W, Y } = startBlackPageWithHeader(pdf, headerImg));
-      // כותרת צהובה – שם הארוחה + מאקרו (אם יש)
-      let titleText = label;
-      if (meal.targets) {
-        const t = meal.targets;
-        titleText = `${label}: חלבון ${fmt(t.protein)}ג׳ · פחמימות ${fmt(
-          t.carbs
-        )}ג׳ · שומן ${fmt(t.fat)}ג׳`;
+      ({ y } = startPage());
+      y = drawWhiteTitle(label, y);
+      y = addTargetsChips(y + 2, meal.targets); // ממורכז מתחת לכותרת
+      y += 4;
+
+      // בוקר/חלבית: שתי קבוצות – חלבון / פחמימה
+      if (
+        key === "breakfast" ||
+        (key === "dinner" &&
+          meal.groups?.some((g) => g.key === "prot_breakfast"))
+      ) {
+        const eggs = findGroup(meal, ["eggs"])?.fixed || null;
+        let prot = findGroup(meal, ["prot_breakfast"])?.options || [];
+        const breads = findGroup(meal, ["breads"])?.options || [];
+
+        if (eggs) {
+          prot = prot.concat([
+            { food: eggs.food, displayText: eggs.displayText },
+          ]);
+        }
+
+        y = drawTable({
+          headRows: [
+            [
+              { content: mirror("חלבון — בחרי אחד"), colSpan: 2 },
+              { content: mirror("פחמימה — בחרי אחד"), colSpan: 2 },
+            ],
+            [mirror("כמות"), mirror("מוצר"), mirror("כמות"), mirror("מוצר")],
+          ],
+          body: buildDualRows(prot, breads /* או mergedCarbs וכו' */),
+          startY: y + 2,
+        });
+
+        return;
       }
-      Y = drawYellowTitle(pdf, titleText, PAGE_W, Y);
 
-      // טקסט הארוחה – דינאמי לפי ה-meal שנבנה מהשרת
-      const mealLines = buildMealLines(meal);
-      Y += 8;
+      // צהריים/בשרית/צמחונית: חלבון מול פחמימות/קטניות מאוחדות
+      if (key === "lunch" || key === "dinner") {
+        const protein = findGroup(meal, ["protein"])?.options || [];
+        const carbs = findGroup(meal, ["carbs"])?.options || [];
+        const legumes =
+          findGroup(meal, ["legumes_lunch", "legumes"])?.options || [];
 
-      // יישור לימין, עם ensure להמשכיות רקע שחור+הדר
-      drawRightAlignedLines(pdf, mealLines, PAGE_W, Y, ensure);
+        // מאחדים פחמימות וקטניות
+        const mergedCarbs = [...carbs, ...legumes];
+
+        y = drawTable({
+          headRows: [
+            [
+              { content: mirror("חלבון — בחרי אחד"), colSpan: 2 },
+              { content: mirror("פחמימה — בחרי אחד"), colSpan: 2 },
+            ],
+            [mirror("כמות"), mirror("מוצר"), mirror("כמות"), mirror("מוצר")],
+          ],
+          body: buildDualRows(protein, mergedCarbs),
+          startY: y + 2,
+        });
+
+        return;
+      }
+
+      if (key === "snack") {
+        const prot = findGroup(meal, ["protein_snack"])?.options || [];
+        const sweets = findGroup(meal, ["sweet_snack"])?.options || [];
+        const fruits = findGroup(meal, ["fruit_snack"])?.options || [];
+        const fats = findGroup(meal, ["fat_snack"])?.options || [];
+        const carbsWithFats = [...sweets, ...fruits, ...fats];
+
+        y = drawTable({
+          headRows: [
+            [
+              { content: mirror("חלבון — בחרי אחד"), colSpan: 2 },
+              { content: mirror("בחרי אחד"), colSpan: 2 },
+            ],
+            [mirror("כמות"), mirror("מוצר"), mirror("כמות"), mirror("מוצר")],
+          ],
+          body: buildDualRows(prot, carbsWithFats),
+          startY: y + 2,
+        });
+
+        return;
+      }
     });
 
     pdf.save("תפריט-אישי.pdf");
@@ -494,10 +617,10 @@ export default function PersonalMenu({ traineeData }) {
 
   function TargetsRow({ t }) {
     return (
-      <div className="targets-row" style={{ margin: "4px 0 10px" }}>
-        <span className="chip">חלבון: {fmt(t.protein, 1)}ג׳</span>
-        <span className="chip">פחמ׳: {fmt(t.carbs, 1)}ג׳</span>
-        <span className="chip">שומן: {fmt(t.fat, 1)}ג׳</span>
+      <div className="targets-row">
+        <span className="chip chip-outline">חלבון: {fmt(t.protein, 1)}ג׳</span>
+        <span className="chip chip-outline">פחמ׳: {fmt(t.carbs, 1)}ג׳</span>
+        <span className="chip chip-outline">שומן: {fmt(t.fat, 1)}ג׳</span>
       </div>
     );
   }
@@ -837,6 +960,7 @@ export default function PersonalMenu({ traineeData }) {
 
   function DinnerBlock({ meal }) {
     const { dairyStyle, meatStyle, veggieStyle } = meal;
+
     const isVegan = !!appliedPrefs?.isVegan;
     const isVegetarian = !!appliedPrefs?.isVegetarian;
     const isVeg = isVegan || isVegetarian;
