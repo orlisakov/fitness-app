@@ -7,6 +7,9 @@ export default function DashboardCoach() {
   const navigate = useNavigate();
   const toStr = (v) => (v === 0 || Number.isFinite(Number(v)) ? String(v) : "");
 
+  const joinUrl = (base, p) =>
+    `${String(base).replace(/\/$/, "")}/${String(p || "").replace(/^\//, "")}`;
+
   const [trainees, setTrainees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -15,7 +18,8 @@ export default function DashboardCoach() {
   const [newPhone, setNewPhone] = useState("");
   const [showTraineeModal, setShowTraineeModal] = useState(false);
   const [selectedTrainee, setSelectedTrainee] = useState(null);
-  const [measurementPhoto, setMeasurementPhoto] = useState(null);
+  const MAX_PHOTOS = 3;
+  const [measurementPhotos, setMeasurementPhotos] = useState([]);
   const [editData, setEditData] = useState({
     fullName: "",
     phone: "",
@@ -122,6 +126,12 @@ export default function DashboardCoach() {
   useEffect(() => {
     fetchTrainees();
   }, []);
+
+  function normalizeDate(d) {
+    if (!d) return "";
+    const [year, month, day] = d.split("-");
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
 
   async function fetchTrainees() {
     setLoading(true);
@@ -313,8 +323,26 @@ export default function DashboardCoach() {
       ThighCircumference: "",
       ArmCircumference: "",
     });
-    setMeasurementPhoto(null);
+    setMeasurementPhotos([]);
     setShowMeasurementsModal(true);
+  };
+
+  const handleAddPhoto = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const ok = [];
+    for (const f of files) {
+      if (!/^image\/(png|jpe?g|webp|gif)$/i.test(f.type)) continue;
+      if (f.size > 5 * 1024 * 1024) continue; // עד 5MB
+      ok.push(f);
+    }
+    setMeasurementPhotos((prev) => [...prev, ...ok].slice(0, MAX_PHOTOS));
+    e.target.value = ""; // מאפשר בחירה מחדש
+  };
+
+  const removePhoto = (idx) => {
+    setMeasurementPhotos((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const openMeasurementHistory = async (trainee) => {
@@ -342,7 +370,7 @@ export default function DashboardCoach() {
     try {
       const fd = new FormData();
       fd.append("traineeId", selectedTrainee._id);
-      fd.append("date", measurementData.date);
+      fd.append("date", normalizeDate(measurementData.date));
 
       fd.append(
         "AbdominalCircumference",
@@ -356,7 +384,10 @@ export default function DashboardCoach() {
       fd.append("ThighCircumference", measurementData.ThighCircumference || "");
       fd.append("ArmCircumference", measurementData.ArmCircumference || "");
 
-      if (measurementPhoto) fd.append("photo", measurementPhoto); // ← מצרפים תמונה אם קיימת
+      // שולחים מערך 'photos' (וכדאי להשאיר גם 'photo' לתאימות אחורה אם השרת עוד מצפה לשם הזה)
+      if (measurementPhotos.length) {
+        measurementPhotos.forEach((f) => fd.append("photos", f));
+      }
 
       const res = await fetch(`${config.apiBaseUrl}/api/measurements`, {
         method: "POST",
@@ -918,7 +949,6 @@ export default function DashboardCoach() {
                 type="submit"
                 className="btn primary"
                 style={{ marginTop: 12 }}
-                onClick={saveTraineeDetails}
               >
                 שמור
               </button>
@@ -936,7 +966,7 @@ export default function DashboardCoach() {
       {/* מודאלים נוספים (מדידות, היסטוריה, מזונות) נשארו */}
       {showMeasurementsModal && (
         <div className="modal-backdrop">
-          <div className="modal" dir="rtl">
+          <div className="modal measurements-modal" dir="rtl">
             <div className="modal-header">
               <h2>הוספת מדידות עבור {selectedTrainee?.fullName}</h2>
               <button
@@ -1010,13 +1040,48 @@ export default function DashboardCoach() {
                   }))
                 }
               />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) =>
-                  setMeasurementPhoto(e.target.files?.[0] || null)
-                }
-              />
+              {/* תיבת העלאת תמונות – עד 3 */}
+              <div className="upload-tiles">
+                {measurementPhotos.map((file, i) => (
+                  <div key={i} className="upload-tile upload-preview">
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={`preview-${i}`}
+                      style={{
+                        width: 56,
+                        height: 56,
+                        objectFit: "cover",
+                        borderRadius: 8,
+                        border: "1px solid var(--pink,#fd2767)",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="remove-x"
+                      onClick={() => removePhoto(i)}
+                      aria-label="הסרת תמונה"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+                {Array.from({
+                  length: MAX_PHOTOS - measurementPhotos.length,
+                }).map((_, i) => (
+                  <label key={`slot-${i}`} className="upload-tile">
+                    <span className="small">הוספת תמונה</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="upload-input"
+                      onChange={handleAddPhoto}
+                    />
+                    <div className="upload-cta">בחרי קובץ</div>
+                  </label>
+                ))}
+              </div>
+
               <button type="submit" className="update-btn">
                 שמור מדידה
               </button>
@@ -1045,12 +1110,12 @@ export default function DashboardCoach() {
                   <thead>
                     <tr>
                       <th>תאריך</th>
-                      <th>משקל (ק"ג)</th>
-                      <th>אחוז שומן (%)</th>
-                      <th>מותניים (ס"מ)</th>
-                      <th>אגן (ס"מ)</th>
-                      <th>חזה (ס"מ)</th>
-                      <th>תמונה</th>
+                      <th>בטן/טבור (ס״מ)</th>
+                      <th>חזה/עליון (ס״מ)</th>
+                      <th>ישבן/אגן (ס״מ)</th>
+                      <th>ירך (ס״מ)</th>
+                      <th>זרוע (ס״מ)</th>
+                      <th>תמונות</th>
                       <th>הסר</th>
                     </tr>
                   </thead>
@@ -1064,21 +1129,36 @@ export default function DashboardCoach() {
                         <td>{m.ThighCircumference}</td>
                         <td>{m.ArmCircumference}</td>
                         <td>
-                          {m.imagePath ? (
-                            <img
-                              src={`${config.apiBaseUrl}/${m.imagePath}`}
-                              alt="מדידה"
-                              style={{
-                                width: 56,
-                                height: 56,
-                                objectFit: "cover",
-                                borderRadius: 8,
-                              }}
-                            />
-                          ) : (
-                            "—"
-                          )}
+                          {(() => {
+                            const imgs =
+                              Array.isArray(m.imagePaths) && m.imagePaths.length
+                                ? m.imagePaths
+                                : m.imagePath
+                                ? [m.imagePath]
+                                : [];
+                            return imgs.length ? (
+                              <div style={{ display: "flex", gap: 6 }}>
+                                {imgs.slice(0, 3).map((p, idx) => (
+                                  <img
+                                    key={idx}
+                                    src={joinUrl(config.apiBaseUrl, p)}
+                                    alt="מדידה"
+                                    style={{
+                                      width: 56,
+                                      height: 56,
+                                      objectFit: "cover",
+                                      borderRadius: 8,
+                                      border: "1px solid var(--pink, #fd2767)",
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            ) : (
+                              "—"
+                            );
+                          })()}
                         </td>
+
                         <td>
                           <button
                             className="action-btn delete-btn"

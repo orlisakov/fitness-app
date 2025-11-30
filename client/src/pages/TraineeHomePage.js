@@ -163,18 +163,66 @@ export default function TraineeHomePage() {
 
         <div className="coach-gallery-grid">
           {/* תני שם קבצים אמיתיים לתמונות האלה */}
-          <img src={require("../assets/gallery1.jpg")} alt="שינוי מתאמנת" />
-          <img src={require("../assets/gallery2.jpg")} alt="שינוי מתאמנת" />
-          <img src={require("../assets/gallery3.jpg")} alt="שינוי מתאמנת" />
-          <img src={require("../assets/gallery4.jpg")} alt="שינוי מתאמנת" />
-          <img src={require("../assets/gallery5.jpg")} alt="שינוי מתאמנת" />
-          <img src={require("../assets/gallery6.jpg")} alt="שינוי מתאמנת" />
-          <img src={require("../assets/gallery8.jpg")} alt="שינוי מתאמנת" />
-          <img src={require("../assets/gallery10.jpg")} alt="שינוי מתאמנת" />
-          <img src={require("../assets/gallery11.jpg")} alt="שינוי מתאמנת" />
-          <img src={require("../assets/gallery12.jpg")} alt="שינוי מתאמנת" />
-          <img src={require("../assets/gallery13.jpg")} alt="שינוי מתאמנת" />
-          <img src={require("../assets/gallery14.jpg")} alt="שינוי מתאמנת" />
+          <img
+            src={require("../assets/gallery1.jpg")}
+            alt="שינוי מתאמנת"
+            loading="lazy"
+          />
+          <img
+            src={require("../assets/gallery2.jpg")}
+            alt="שינוי מתאמנת"
+            loading="lazy"
+          />
+          <img
+            src={require("../assets/gallery3.jpg")}
+            alt="שינוי מתאמנת"
+            loading="lazy"
+          />
+          <img
+            src={require("../assets/gallery4.jpg")}
+            alt="שינוי מתאמנת"
+            loading="lazy"
+          />
+          <img
+            src={require("../assets/gallery5.jpg")}
+            alt="שינוי מתאמנת"
+            loading="lazy"
+          />
+          <img
+            src={require("../assets/gallery6.jpg")}
+            alt="שינוי מתאמנת"
+            loading="lazy"
+          />
+          <img
+            src={require("../assets/gallery8.jpg")}
+            alt="שינוי מתאמנת"
+            loading="lazy"
+          />
+          <img
+            src={require("../assets/gallery10.jpg")}
+            alt="שינוי מתאמנת"
+            loading="lazy"
+          />
+          <img
+            src={require("../assets/gallery11.jpg")}
+            alt="שינוי מתאמנת"
+            loading="lazy"
+          />
+          <img
+            src={require("../assets/gallery12.jpg")}
+            alt="שינוי מתאמנת"
+            loading="lazy"
+          />
+          <img
+            src={require("../assets/gallery13.jpg")}
+            alt="שינוי מתאמנת"
+            loading="lazy"
+          />
+          <img
+            src={require("../assets/gallery14.jpg")}
+            alt="שינוי מתאמנת"
+            loading="lazy"
+          />
         </div>
       </section>
 

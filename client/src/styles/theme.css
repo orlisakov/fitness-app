@@ -855,35 +855,6 @@ label,
 }
 
 /* =========================
-   TABLES – HISTORY + MENU
-   ========================= */
-.table-wrapper,
-.table-wrap {
-  overflow-x: auto;
-}
-
-.action-btn.delete-btn {
-  background: #a90b00 !important;
-}
-
-.action-btn.view-btn {
-  background: var(--accent-gold) !important;
-  color: var(--background) !important;
-}
-
-@media (max-width: 720px) {
-  .table td,
-  .table th {
-    padding: 8px 6px;
-    font-size: 14px;
-  }
-  .table a.btn-link,
-  .table .btn-link {
-    padding: 8px 10px;
-  }
-}
-
-/* =========================
    MODAL
    ========================= */
 .modal-backdrop {
@@ -1591,7 +1562,10 @@ body,
    ========================= */
 .table-wrapper,
 .table-wrap {
+  width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch; /* גלילה חלקה בטלפון */
 }
 
 /* בסיס לטבלאות */
@@ -1931,10 +1905,6 @@ button.add-food {
 }
 /* ===== COACH DASHBOARD – MOBILE TABLE ===== */
 
-.coach-dashboard {
-  max-width: 100%;
-}
-
 /* עוטף הטבלה – כבר קיים class table-wrapper עם overflow-x:auto */
 .coach-table-wrapper {
   margin-top: 12px;
@@ -1958,14 +1928,6 @@ button.add-food {
     padding: 8px 6px;
     font-size: 13px;
     white-space: nowrap;
-  }
-
-  /* מסתירים עמודות פחות קריטיות במסך צר – היסטוריה + דרגה */
-  .coach-table th:nth-child(4),
-  .coach-table td:nth-child(4),
-  .coach-table th:nth-child(5),
-  .coach-table td:nth-child(5) {
-    display: none;
   }
 
   /* פעולות – כפתורים בשתי עמודות קטנות */
@@ -2735,12 +2697,14 @@ button.add-food {
   margin: 0 auto !important;
   padding: 0 !important;
   max-width: 100vw !important;
-  overflow-x: hidden !important;
+  overflow-x: visible !important; /* לא לחסום גלילה */
 }
+
 .modal {
   max-width: 60vw !important;
-  overflow-x: hidden !important;
+  overflow-x: visible !important; /* גם בתוך מודאל ניתן לגלול בטבלה */
 }
+
 /* עיצוב אחיד למגירת React-Select */
 .react-select-container {
   width: 100%;
@@ -3221,4 +3185,127 @@ button.add-food {
 .menu-table thead th,
 .menu-table thead th.grp {
   text-align: center;
+}
+
+/* משבצות העלאת תמונות */
+.upload-tiles {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 8px 0 12px;
+}
+
+.upload-tile {
+  width: 96px;
+  height: 96px;
+  border: 1px solid var(--pink, #fd2767);
+  border-radius: 10px;
+  background: #000;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  text-align: center;
+}
+
+.upload-tile .small {
+  font-size: 12px;
+  line-height: 1.2;
+  opacity: 0.9;
+  padding: 0 6px;
+}
+
+.upload-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.upload-cta {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  border: 1px solid var(--pink, #fd2767);
+  border-radius: 8px;
+  font-size: 11px;
+  padding: 2px 4px;
+}
+
+.upload-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.remove-x {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  cursor: pointer;
+  line-height: 20px;
+}
+/* ===== Measurements modal – force white text & icons ===== */
+.measurements-modal,
+.measurements-modal * {
+  color: #fff !important; /* כל הטקסט בלבן */
+}
+
+/* placeholder לבן */
+.measurements-modal input::placeholder,
+.measurements-modal textarea::placeholder {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* אייקונים (SVG/אייקונים של ספריות) בלבן */
+.measurements-modal svg,
+.measurements-modal i {
+  color: #fff !important;
+  fill: #fff !important;
+  stroke: #fff !important;
+}
+
+/* אריחי ההעלאה – טקסט/כפתור בלבן */
+.measurements-modal .upload-tile .small,
+.measurements-modal .upload-cta {
+  color: #fff !important;
+}
+
+/* לחצן X להסרת תמונה – נשאר לבן וחד */
+.measurements-modal .remove-x {
+  color: #fff !important;
+}
+
+/* אייקון של בחירת תאריך (כרום/אדג') – להפוך ללבן */
+.measurements-modal input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.8);
+  opacity: 0.9;
+}
+@media (max-width: 780px) {
+  /* הטבלאות העיקריות – שיהיו רחבות יותר מהמסך */
+  .coach-table,
+  table.history-table,
+  table.menu-table,
+  .table {
+    min-width: 650px; /* אפשר לשחק עם המספר – 600–800px */
+  }
+
+  /* לא לשבור שורות בתאים כדי שהעמודות יישארו צרות */
+  .coach-table th,
+  .coach-table td,
+  table.history-table th,
+  table.history-table td,
+  table.menu-table th,
+  table.menu-table td {
+    white-space: nowrap;
+  }
 }

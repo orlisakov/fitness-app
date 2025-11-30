@@ -229,6 +229,14 @@ export default function DashboardTrainee() {
     );
   };
 
+  const fmtDate = (s) => {
+    if (!s) return "—";
+    const [y, m, d] = String(s).split("-");
+    return y && m && d
+      ? `${d}.${m}.${y}`
+      : new Date(s).toLocaleDateString("he-IL");
+  };
+
   const saveDislikedFoods = async () => {
     try {
       const res = await fetch(
@@ -610,20 +618,18 @@ export default function DashboardTrainee() {
                     <thead>
                       <tr>
                         <th>תאריך</th>
-                        <th>משקל</th>
-                        <th>אחוז שומן</th>
-                        <th>מותניים</th>
-                        <th>אגן</th>
-                        <th>חזה</th>
-                        <th>תמונה</th>
+                        <th>בטן/טבור (ס״מ)</th>
+                        <th>חזה/עליון (ס״מ)</th>
+                        <th>ישבן/אגן (ס״מ)</th>
+                        <th>ירך (ס״מ)</th>
+                        <th>זרוע (ס״מ)</th>
+                        <th>תמונות</th>
                       </tr>
                     </thead>
                     <tbody>
                       {measurements.map((m, i) => (
                         <tr key={i}>
-                          <td>
-                            {new Date(m.date).toLocaleDateString("he-IL")}
-                          </td>
+                          <td>{fmtDate(m.date)}</td>
                           <td>{m.AbdominalCircumference}</td>
                           <td>{m.TopCircumference}</td>
                           <td>{m.ButtockCircumference}</td>
@@ -631,24 +637,37 @@ export default function DashboardTrainee() {
                           <td>{m.ArmCircumference}</td>
                           <td>
                             {(() => {
-                              const imgPath =
-                                m.imagePath || m.photoPath || m.photoUrl; // תמיכה בכמה שמות אפשריים
-                              return imgPath ? (
-                                <img
-                                  loading="lazy"
-                                  src={joinUrl(config.apiBaseUrl, imgPath)}
-                                  alt="מדידה"
+                              const imgs =
+                                Array.isArray(m.imagePaths) &&
+                                m.imagePaths.length
+                                  ? m.imagePaths
+                                  : m.imagePath
+                                  ? [m.imagePath]
+                                  : [];
+
+                              return imgs.length ? (
+                                <div
                                   style={{
-                                    width: 56,
-                                    height: 56,
-                                    objectFit: "cover",
-                                    borderRadius: 8,
-                                    cursor: "pointer",
+                                    display: "flex",
+                                    gap: 6,
+                                    flexWrap: "wrap",
                                   }}
-                                  onClick={() =>
-                                    setPreviewSrc(withBase(imgPath))
-                                  }
-                                />
+                                >
+                                  {imgs.slice(0, 3).map((p, idx) => (
+                                    <img
+                                      key={idx}
+                                      src={`${config.apiBaseUrl}/${p}`} // base + 'uploads/...'
+                                      alt={`מדידה ${idx + 1}`}
+                                      style={{
+                                        width: 56,
+                                        height: 56,
+                                        objectFit: "cover",
+                                        borderRadius: 8,
+                                        border: "1px solid var(--pink,#fd2767)",
+                                      }}
+                                    />
+                                  ))}
+                                </div>
                               ) : (
                                 "—"
                               );

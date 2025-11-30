@@ -1,5 +1,6 @@
-// server/index.js
+// server/server.js
 const path = require("path");
+const fs = require("fs");
 const express = require("express");
 const cors = require("cors");
 const app = express();
@@ -13,17 +14,26 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
+// תיקייה ראשית להעלאות
+const mainUploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(mainUploadDir)) {
+  fs.mkdirSync(mainUploadDir);
+}
+
+// תיקייה לתת-תיקיית מדידות
+const measurementDir = path.join(mainUploadDir, "measurements");
+if (!fs.existsSync(measurementDir)) {
+  fs.mkdirSync(measurementDir);
+}
+
+// סטטי לקבצים
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ראוטים (שימי לב לא לכרוך auth פעמיים בכל ראוטר)
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/trainees", authMiddleware, require("./routes/trainees"));
 app.use("/api/coach", authMiddleware, require("./routes/coach"));
-app.use(
-  "/api/measurements",
-  authMiddleware,
-  require("./routes/measurementRoutes")
-);
+app.use("/api/measurements", authMiddleware, require("./routes/measurements"));
 app.use("/api/foods", authMiddleware, require("./routes/foodRoutes"));
 app.use("/api/meal-plan", authMiddleware, require("./routes/generateMealPlan"));
 app.use("/api/workouts", authMiddleware, require("./routes/workouts"));
