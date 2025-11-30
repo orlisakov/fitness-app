@@ -613,8 +613,11 @@ export default function DashboardTrainee() {
               {measurements.length === 0 ? (
                 <p>אין מדידות קודמות</p>
               ) : (
-                <div className="table-wrapper">
-                  <table className="history-table narrow">
+                <div
+                  className="table-wrapper history-scroll"
+                  style={{ maxWidth: "100%", overflowX: "auto" }}
+                >
+                  <table className="history-table narrow history-table-scroll">
                     <thead>
                       <tr>
                         <th>תאריך</th>

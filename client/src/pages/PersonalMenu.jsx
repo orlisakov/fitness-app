@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import "../styles/theme.css";
 import config from "../config";
-import { loadRubikFonts, rtlFix } from "../utils/pdfFonts";
+import { loadRubikFonts } from "../utils/pdfFonts";
 import jsPDF from "jspdf";
 
 // ===== RTL helpers for PDF =====
