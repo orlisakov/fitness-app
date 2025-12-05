@@ -186,7 +186,7 @@ export default function CoachWorkouts() {
 
       {/* Plans Table */}
       <div className="table-wrap">
-        <table className="history-table workouts-table">
+        <table className="history-table narrow preferences-table">
           <thead>
             <tr>
               <th>שם התוכנית</th>

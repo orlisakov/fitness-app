@@ -457,7 +457,7 @@ export default function DashboardTrainee() {
                     <div style={{ flex: 1, minWidth: "280px" }}>
                       <h4>כל המזונות</h4>
                       <div className="table-wrapper">
-                        <table className="history-table narrow">
+                        <table className="history-table narrow preferences-table">
                           <thead>
                             <tr>
                               <th>בחרי</th>
@@ -504,7 +504,7 @@ export default function DashboardTrainee() {
 
                       <h4>מזונות שנבחרו</h4>
                       <div className="table-wrapper">
-                        <table className="history-table narrow">
+                        <table className="history-table narrow preferences-table">
                           <thead>
                             <tr>
                               <th>שם מזון</th>

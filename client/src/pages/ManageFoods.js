@@ -227,7 +227,10 @@ export default function ManageFoods() {
       {error && <p style={{ color: "red" }}>{error}</p>}
 
       <div className="table-wrapper" style={{ overflowX: "auto" }}>
-        <table className="history-table" style={{ minWidth: 900 }}>
+        <table
+          className="history-table narrow preferences-table"
+          style={{ minWidth: 900 }}
+        >
           <thead>
             <tr>
               <th>שם</th>

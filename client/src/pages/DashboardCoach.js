@@ -637,7 +637,7 @@ export default function DashboardCoach() {
         <p className="dashboard-message">אין מתאמנות במערכת כרגע</p>
       ) : (
         <div className="table-wrapper coach-table-wrapper">
-          <table className="history-table coach-table">
+          <table className="history-table narrow preferences-table">
             <thead>
               <tr>
                 <th>שם מלא</th>
@@ -1106,7 +1106,7 @@ export default function DashboardCoach() {
               <p>אין מדידות קודמות</p>
             ) : (
               <div className="table-wrapper">
-                <table className="history-table narrow">
+                <table className="history-table narrow preferences-table">
                   <thead>
                     <tr>
                       <th>תאריך</th>
@@ -1128,7 +1128,7 @@ export default function DashboardCoach() {
                         <td>{m.ButtockCircumference}</td>
                         <td>{m.ThighCircumference}</td>
                         <td>{m.ArmCircumference}</td>
-                        <td>
+                        <td className="measure-photos-cell">
                           {(() => {
                             const imgs =
                               Array.isArray(m.imagePaths) && m.imagePaths.length
@@ -1137,19 +1137,13 @@ export default function DashboardCoach() {
                                 ? [m.imagePath]
                                 : [];
                             return imgs.length ? (
-                              <div style={{ display: "flex", gap: 6 }}>
+                              <div className="measure-photos-row">
                                 {imgs.slice(0, 3).map((p, idx) => (
                                   <img
                                     key={idx}
                                     src={joinUrl(config.apiBaseUrl, p)}
                                     alt="מדידה"
-                                    style={{
-                                      width: 56,
-                                      height: 56,
-                                      objectFit: "cover",
-                                      borderRadius: 8,
-                                      border: "1px solid var(--pink, #fd2767)",
-                                    }}
+                                    className="measure-photo-thumb"
                                   />
                                 ))}
                               </div>
@@ -1208,7 +1202,7 @@ export default function DashboardCoach() {
               <div style={{ flex: 1, minWidth: "280px" }}>
                 <h4>כל המזונות</h4>
                 <div className="table-wrapper">
-                  <table className="history-table narrow">
+                  <table className="history-table narrow preferences-table">
                     <thead>
                       <tr>
                         <th>בחרי</th>
@@ -1262,7 +1256,7 @@ export default function DashboardCoach() {
 
                 <h4>מזונות שנבחרו</h4>
                 <div className="table-wrapper">
-                  <table className="history-table narrow">
+                  <table className="history-table narrow preferences-table">
                     <thead>
                       <tr>
                         <th>שם מזון</th>

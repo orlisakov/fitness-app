@@ -2204,6 +2204,43 @@ button.add-food {
   overflow: hidden;
 }
 
+/* עמודת תמונות – היסטוריית מדידות */
+.measure-photos-cell {
+  min-width: 210px; /* מספיק ל־3 תמונות + רווחים */
+}
+
+/* השורה שמכילה את שלוש התמונות */
+.measure-photos-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* התמונה עצמה */
+.measure-photo-thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--pink, #fd2767);
+}
+
+/* במובייל – לאפשר שבירה לשתי שורות ולהקטין קצת */
+@media (max-width: 780px) {
+  .measure-photos-cell {
+    min-width: 190px;
+  }
+
+  .measure-photos-row {
+    flex-wrap: wrap;
+  }
+
+  .measure-photo-thumb {
+    width: 48px;
+    height: 48px;
+  }
+}
+
 /* שורת כותרת */
 .history-table thead th {
   background: var(--accent-pink);
@@ -3441,4 +3478,111 @@ button.add-food {
   .menu-actions button {
     width: 100%;
   }
+}
+/* ===== טבלת העדפות – רוחב לפי תוכן ===== */
+
+.preferences-table {
+  table-layout: auto; /* ברירת מחדל – לפי תוכן */
+  width: 100%; /* שתמלא את רוחב המודאל, אבל לא מעבר לזה */
+}
+
+/* עמודת "בחרי" / "הסרה" – צרה ומיושרת למרכז */
+.preferences-table th:first-child,
+.preferences-table td:first-child {
+  width: 70px; /* מספיק לצ'קבוקס / כפתור */
+  text-align: center;
+  white-space: nowrap; /* שלא יישבר לשתי שורות */
+}
+
+/* עמודת שם המזון – לוקחת את שאר הרוחב */
+.preferences-table th:nth-child(2),
+.preferences-table td:nth-child(2) {
+  width: auto;
+  text-align: right;
+}
+
+/* במובייל – לא לכפות min-width ענק ולא nowrap מכללי */
+@media (max-width: 780px) {
+  .modal .preferences-table {
+    min-width: 0 !important; /* מבטל את ה-min-width הגלובלי של history-table */
+  }
+
+  .modal .preferences-table th,
+  .modal .preferences-table td {
+    white-space: nowrap; /* אפשר להשאיר nowrap כי יש רק שתי עמודות קצרות */
+  }
+}
+/* ===== חלונות קופצים יפים במובייל ===== */
+
+@media (max-width: 780px) {
+  .modal {
+    max-width: 95vw !important;
+    width: 95vw !important;
+    height: auto;
+    max-height: 85vh !important;
+    margin: 20px auto !important;
+
+    padding: 20px;
+    border-radius: 18px !important;
+
+    overflow-y: auto !important;
+    background: #ffffff !important;
+  }
+
+  .modal-header h2 {
+    font-size: 1.4rem !important;
+  }
+
+  .modal-header .close-btn {
+    font-size: 1.8rem !important;
+  }
+}
+/* גלילה אופקית לכל הטבלאות */
+.table-wrapper {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.history-table {
+  width: max-content; /* רוחב = רק מה שהטבלה צריכה */
+  min-width: max-content;
+}
+/* ===== טבלת העדפות – רוחב מדויק ===== */
+
+.preferences-table {
+  table-layout: auto;
+  width: 100%;
+  min-width: unset !important; /* מבטל כפייה של 650px */
+}
+
+/* עמודת בחירה / הסרה */
+.preferences-table th:first-child,
+.preferences-table td:first-child {
+  width: 60px !important;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* עמודת שם המזון */
+.preferences-table th:nth-child(2),
+.preferences-table td:nth-child(2) {
+  width: auto;
+  text-align: right;
+}
+
+@media (max-width: 780px) {
+  .preferences-table {
+    width: 100% !important;
+  }
+}
+/* ===== תא התמונות במדידות ===== */
+.history-table td img {
+  width: 65px !important;
+  height: 65px !important;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.history-table td:nth-child(7) {
+  min-width: 230px; /* לשורה של 3 תמונות */
 }

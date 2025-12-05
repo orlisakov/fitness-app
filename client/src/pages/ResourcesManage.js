@@ -264,7 +264,7 @@ export default function ResourcesManage() {
 
       {/* טבלה */}
       <div className="table-wrapper">
-        <table className="history-table">
+        <table className="history-table narrow preferences-table">
           <thead>
             <tr>
               <th>כותרת</th>
