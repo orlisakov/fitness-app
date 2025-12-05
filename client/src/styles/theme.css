@@ -1,6 +1,12 @@
 /* =========================
    ROOT – BLACKPINK THEME
    ========================= */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 :root {
   /* רקעים */
   --backgroundBlack: #000000; /* כרטיסים/פאנלים כהים */
@@ -9,6 +15,7 @@
   --accent-pink: #ff477e;
   --accent-pink-lite: #fd2767;
   --accent-pink-line: rgba(255, 71, 126, 0.6);
+  --accent-pink-strong: #ff6b9c;
 
   /* טקסט */
   --text-main: #ffffff;
@@ -564,17 +571,6 @@ label,
   }
 }
 
-/* =========================
-   PERSONAL MENU – LAYOUT
-   ========================= */
-.menu-container {
-  max-width: 820px;
-  margin: 0 auto;
-  padding: 30px 20px;
-  background: transparent;
-  color: var(--text-main);
-}
-
 .menu-header {
   text-align: right;
   margin-bottom: 20px;
@@ -822,16 +818,6 @@ label,
   font-size: 24px;
   border-bottom: 2px solid var(--accent-gold);
   padding-bottom: 5px;
-}
-
-/* רשימה ממוספרת מימין */
-.instructions-list {
-  direction: rtl;
-  unicode-bidi: bidi-override;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  counter-reset: step;
 }
 
 .instructions-list li {
@@ -1236,27 +1222,6 @@ video {
   }
 }
 
-/* =========================
-   MEDIA + PRINT
-   ========================= */
-img,
-video {
-  max-width: 100%;
-  height: auto;
-}
-
-@media print {
-  .menu-container {
-    width: 794px;
-  }
-  .meals-column,
-  .meal-card,
-  .instructions-card {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-}
-
 /* ===== רקע גלובלי + תיקון דף תוכנית אימונים ===== */
 
 /* נוודא שהעמוד תמיד גבוה לפחות כמו החלון */
@@ -1303,11 +1268,6 @@ body,
   gap: 28px;
   align-items: center;
   margin-bottom: 32px;
-}
-
-.coach-hero-image-wrap {
-  display: flex;
-  justify-content: center;
 }
 
 .coach-hero-image-wrap {
@@ -2011,12 +1971,6 @@ button.add-food {
 }
 /* ===== PERSONAL MENU – LAYOUT & MOBILE ===== */
 
-.menu-container {
-  max-width: 1040px;
-  margin: 0 auto;
-  padding: var(--container-pad);
-}
-
 .meals-column {
   display: flex;
   flex-direction: column;
@@ -2036,13 +1990,6 @@ button.add-food {
 .instructions-title {
   margin: 0 0 12px;
   font-size: 20px;
-}
-
-.instructions-list {
-  line-height: 1.7;
-  font-size: 15px;
-  padding-inline-start: 20px;
-  margin: 0;
 }
 
 .instructions-footer {
@@ -3118,7 +3065,7 @@ button.add-food {
   border-radius: 8px;
 }
 /* ==== FIX: מספרים לא הפוכים במסכים RTL ==== */
-.instructions-list,
+
 .instructions-card ol,
 .instructions-card li {
   /* אל תכפי היפוך כיווניות */
@@ -3318,11 +3265,6 @@ button.add-food {
 .history-table-scroll {
   min-width: 750px; /* או 800px / כמה שנוח לך */
 }
-/* בסיס – גם למחשב וגם לנייד */
-.menu-container {
-  max-width: 900px; /* רוחב נוח לדסקטופ */
-  margin: 0 auto;
-}
 
 /* כרטיס דגשים ותיבות ארוחות */
 .instructions-card,
@@ -3346,6 +3288,98 @@ button.add-food {
   .instructions-card,
   .meal-card,
   .menu-table {
+    width: 100%;
+  }
+}
+/* ===== PERSONAL MENU – LAYOUT UNIFIED ===== */
+
+/* דף התפריט – אותו רוחב כמו שאר הדפים בדסקטופ */
+.menu-container {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: var(--container-pad);
+  background: transparent;
+  color: var(--text-main);
+}
+
+/* עמודת הארוחות – טור אחד עם רווחים */
+.meals-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* כרטיס דגשים למעלה */
+.instructions-card {
+  background: var(--background-light);
+  border-radius: 16px;
+  padding: 20px 22px;
+  max-width: 900px;
+  margin: 0 auto 18px;
+  border: 1px solid var(--accent-pink);
+}
+
+/* טבלה – בסיס אחיד */
+.menu-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* כפתורים + פוטר */
+.menu-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.menu-footnote {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+}
+
+/* ===== RESPONSIVE – MOBILE ===== */
+@media (max-width: 780px) {
+  /* שייצמד לרוחב המסך כמו שאר הדפים */
+  .dashboard-main {
+    padding: 16px 10px;
+  }
+
+  .menu-container {
+    max-width: 100%;
+    margin: 0;
+    padding: 0 4px 24px;
+  }
+
+  .instructions-card {
+    padding: 14px 12px;
+    margin-bottom: 12px;
+  }
+
+  .instructions-title {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .instructions-list {
+    font-size: 13px;
+  }
+
+  .menu-table th,
+  .menu-table td {
+    padding: 4px 5px;
+    font-size: 12px;
+  }
+
+  .menu-actions {
+    flex-direction: column;
+  }
+
+  .menu-actions .btn,
+  .menu-actions button {
     width: 100%;
   }
 }
