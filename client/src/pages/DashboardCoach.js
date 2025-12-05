@@ -1180,7 +1180,10 @@ export default function DashboardCoach() {
 
       {showDislikedFoodsModal && (
         <div className="modal-backdrop">
-          <div className="modal" dir="rtl">
+          <div
+            className="modal preferences-modal disliked-foods-modal"
+            dir="rtl"
+          >
             <div className="modal-header">
               <h2>בחרי העדפות - {selectedTrainee?.fullName}</h2>
               <button
