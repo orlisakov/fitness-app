@@ -3526,7 +3526,7 @@ button.add-food {
     border-radius: 18px !important;
 
     overflow-y: auto !important;
-    background: #ffffff !important;
+    background: #000000 !important;
   }
 
   .modal-header h2 {

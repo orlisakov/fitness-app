@@ -589,7 +589,7 @@ export default function DashboardCoach() {
 
       {showModal && (
         <div className="modal-backdrop">
-          <div className="modal add-trainee-modal" dir="rtl">
+          <div className="modal add-trainee-modal preferences-modal" dir="rtl">
             <div className="modal-header">
               <h2>הוספת מתאמנת חדשה</h2>
               <button className="close-btn" onClick={() => setShowModal(false)}>
@@ -702,7 +702,7 @@ export default function DashboardCoach() {
 
       {showTraineeModal && (
         <div className="modal-backdrop">
-          <div className="modal" dir="rtl">
+          <div className="modal preferences-modal" dir="rtl">
             <div className="modal-header">
               <h2>פרטי מתאמנת — {selectedTrainee?.fullName}</h2>
               <button
@@ -966,7 +966,7 @@ export default function DashboardCoach() {
       {/* מודאלים נוספים (מדידות, היסטוריה, מזונות) נשארו */}
       {showMeasurementsModal && (
         <div className="modal-backdrop">
-          <div className="modal measurements-modal" dir="rtl">
+          <div className="modal measurements-modal preferences-modal" dir="rtl">
             <div className="modal-header">
               <h2>הוספת מדידות עבור {selectedTrainee?.fullName}</h2>
               <button
@@ -1092,7 +1092,7 @@ export default function DashboardCoach() {
 
       {showHistoryModal && (
         <div className="modal-backdrop">
-          <div className="modal" dir="rtl">
+          <div className="modal preferences-modal" dir="rtl">
             <div className="modal-header">
               <h2>היסטוריית מדידות - {selectedTrainee?.fullName}</h2>
               <button
