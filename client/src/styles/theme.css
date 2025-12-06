@@ -3586,3 +3586,59 @@ button.add-food {
 .history-table td:nth-child(7) {
   min-width: 230px; /* לשורה של 3 תמונות */
 }
+/* תאריך במודל מדידות – טקסט לבן ואייקון לבן */
+.measurements-modal .date-label {
+  color: #fff;
+}
+
+.measurements-modal .date-input {
+  color: #fff;
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+/* להפוך את אייקון לוח השנה ללבן (כרום/Edge) */
+.measurements-modal .date-input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+/* ליתר בטחון גם פוקוס יפה */
+.measurements-modal .date-input:focus {
+  outline: none;
+  border-color: var(--pink, #fd2767);
+  box-shadow: 0 0 0 1px rgba(253, 39, 103, 0.6);
+}
+/* טבלת ניהול מאכלים – צרה, אלגנטית ומבוססת תוכן */
+.foods-table-wrapper {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* נותן לרוחב העמודות להיקבע לפי התוכן, לא חלוקה שווה ומטורפת */
+table.foods-table {
+  width: 100%;
+  table-layout: auto;
+}
+
+/* מספרים ושדות קצרים – בשורה אחת, בלי התפרסות מיותרת */
+table.foods-table th,
+table.foods-table td {
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* עמודת "קטגוריות" – מותר לה לשבור שורות, עם רוחב מוגבל */
+table.foods-table th:nth-child(7),
+table.foods-table td:nth-child(7) {
+  white-space: normal;
+  max-width: 260px;
+}
+
+/* עמודת כפתורים – תמיד צרה ואלגנטית */
+table.foods-table th:nth-child(8),
+table.foods-table td:nth-child(8) {
+  white-space: nowrap;
+}
