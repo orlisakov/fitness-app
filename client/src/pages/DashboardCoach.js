@@ -977,11 +977,10 @@ export default function DashboardCoach() {
               </button>
             </div>
             <form onSubmit={handleMeasurementSubmit}>
-              <div className="field">
-                <label className="form-label date-label">תאריך</label>
+              <div className="date-wrapper">
                 <input
                   type="date"
-                  className="date-input"
+                  className={measurementData.date ? "has-value" : ""}
                   value={measurementData.date}
                   onChange={(e) =>
                     setMeasurementData((p) => ({ ...p, date: e.target.value }))
@@ -989,6 +988,7 @@ export default function DashboardCoach() {
                   required
                 />
               </div>
+
               <input
                 type="number"
                 placeholder="היקף בטן (טבור)"

@@ -616,10 +616,7 @@ export default function DashboardTrainee() {
               {measurements.length === 0 ? (
                 <p>אין מדידות קודמות</p>
               ) : (
-                <div
-                  className="table-wrapper history-scroll"
-                  style={{ maxWidth: "100%", overflowX: "auto" }}
-                >
+                <div className="table-wrapper history-scroll">
                   <table className="history-table narrow history-table-scroll">
                     <thead>
                       <tr>
@@ -641,7 +638,7 @@ export default function DashboardTrainee() {
                           <td>{m.ButtockCircumference}</td>
                           <td>{m.ThighCircumference}</td>
                           <td>{m.ArmCircumference}</td>
-                          <td>
+                          <td className="measure-photos-cell">
                             {(() => {
                               const imgs =
                                 Array.isArray(m.imagePaths) &&
@@ -652,25 +649,13 @@ export default function DashboardTrainee() {
                                   : [];
 
                               return imgs.length ? (
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    gap: 6,
-                                    flexWrap: "wrap",
-                                  }}
-                                >
+                                <div className="measure-photos-row">
                                   {imgs.slice(0, 3).map((p, idx) => (
                                     <img
                                       key={idx}
                                       src={`${config.apiBaseUrl}/${p}`} // base + 'uploads/...'
                                       alt={`מדידה ${idx + 1}`}
-                                      style={{
-                                        width: 56,
-                                        height: 56,
-                                        objectFit: "cover",
-                                        borderRadius: 8,
-                                        border: "1px solid var(--pink,#fd2767)",
-                                      }}
+                                      className="measure-photo-thumb"
                                     />
                                   ))}
                                 </div>

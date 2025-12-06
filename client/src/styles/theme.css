@@ -2138,8 +2138,9 @@ button.add-food {
   box-sizing: border-box;
 }
 .trainee-dashboard-page {
-  max-width: 100%;
-  overflow-x: hidden;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: var(--container-pad);
   box-sizing: border-box;
 }
 
@@ -2697,9 +2698,9 @@ button.add-food {
 
 .coach-dashboard {
   margin: 0 auto !important;
-  padding: 0 !important;
-  max-width: 100vw !important;
-  overflow-x: visible !important; /* לא לחסום גלילה */
+  padding: var(--container-pad) !important;
+  max-width: 1040px !important;
+  overflow-x: hidden !important; /* שלא יתפוצץ לרוחב */
 }
 
 /* בסיס מודאל – דסקטופ */
@@ -3338,9 +3339,6 @@ button.add-food {
   .coach-table,
   table.history-table,
   table.menu-table,
-  .table {
-    min-width: 650px; /* אפשר לשחק עם המספר – 600–800px */
-  }
 
   /* לא לשבור שורות בתאים כדי שהעמודות יישארו צרות */
   .coach-table th,
@@ -3356,10 +3354,6 @@ button.add-food {
 .history-scroll {
   max-width: 100%;
   overflow-x: auto;
-}
-
-.history-table-scroll {
-  min-width: 750px; /* או 800px / כמה שנוח לך */
 }
 
 /* כרטיס דגשים ותיבות ארוחות */
@@ -3537,16 +3531,7 @@ button.add-food {
     font-size: 1.8rem !important;
   }
 }
-/* גלילה אופקית לכל הטבלאות */
-.table-wrapper {
-  overflow-x: auto !important;
-  -webkit-overflow-scrolling: touch;
-}
 
-.history-table {
-  width: max-content; /* רוחב = רק מה שהטבלה צריכה */
-  min-width: max-content;
-}
 /* ===== טבלת העדפות – רוחב מדויק ===== */
 
 .preferences-table {
@@ -3641,4 +3626,94 @@ table.foods-table td:nth-child(7) {
 table.foods-table th:nth-child(8),
 table.foods-table td:nth-child(8) {
   white-space: nowrap;
+}
+/* כדי שהעמוד לא "יתפוצץ" לרוחב כשיש טבלה רחבה */
+.trainee-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+/* חשוב: לאפשר לתוכן להצטמצם ולהשתמש ב-scroll פנימי */
+.trainee-main-column {
+  flex: 1;
+  min-width: 0; /* זה המפתח! בלי זה, הטבלה מרחיבה את כל הפלקס */
+}
+
+/* בלוק ההיסטוריה – הטבלה תגלול אופקית בתוך עצמה */
+.trainee-history-block .table-wrapper.history-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto; /* גלילה ימינה/שמאלה */
+  overflow-y: visible;
+}
+
+/* הטבלה עצמה – רחבה מעט, אבל לא שוברת את העמוד */
+.history-table-scroll {
+  width: max-content;
+}
+
+/* תא התמונות – שיהיה מספיק מקום ל-3 תמונות בשורה אחת */
+.history-table-scroll .measure-photos-cell {
+  min-width: 210px;
+  vertical-align: middle;
+}
+
+/* שורה פנימית של התמונות */
+.measure-photos-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap; /* שלא ירדו שורה */
+}
+
+/* תמונה בודדת – גודל קבוע, לא עולות אחת על השנייה */
+.measure-photo-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--pink, #fd2767);
+  flex: 0 0 56px;
+}
+/* גלילה אופקית רק בטבלת היסטוריית מדידות */
+.trainee-history-block .table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.trainee-history-block .history-table {
+  width: max-content;
+}
+/* ===== עיצוב אחיד לכל הטבלאות – בלי להגדיל את כל הדף ===== */
+
+/* כל עוטף טבלה */
+.table-wrapper,
+.table-wrap,
+.history-scroll,
+.foods-table-wrapper,
+.coach-table-wrapper {
+  max-width: 100%;
+  overflow-x: auto; /* גלילה אופקית אם צריך */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* הטבלה עצמה – לפי התוכן, לא לפי המסך */
+.table-wrapper table,
+.table-wrap table,
+.history-scroll table,
+.foods-table-wrapper table,
+.coach-table-wrapper table {
+  width: max-content; /* טבלה ברוחב התוכן שלה */
+  border-collapse: collapse;
+}
+
+/* במסכים רחבים – אפשר לתת לה פשוט למלא את הרוחב הרגיל */
+@media (min-width: 900px) {
+  .table-wrapper table,
+  .table-wrap table,
+  .history-scroll table,
+  .foods-table-wrapper table,
+  .coach-table-wrapper table {
+    width: 100%;
+  }
 }
