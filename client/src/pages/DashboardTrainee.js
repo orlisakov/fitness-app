@@ -430,7 +430,10 @@ export default function DashboardTrainee() {
 
             {showDislikedFoodsModal && (
               <div className="modal-backdrop">
-                <div className="modal" dir="rtl">
+                <div
+                  className="modal preferences-modal disliked-foods-modal"
+                  dir="rtl"
+                >
                   <div className="modal-header">
                     <h2>בחרי העדפות</h2>
                     <button
@@ -689,10 +692,10 @@ export default function DashboardTrainee() {
       {previewSrc && (
         <div className="modal-backdrop" onClick={() => setPreviewSrc(null)}>
           <div
-            className="modal"
+            className="modal preferences-modal image-preview-modal"
             dir="rtl"
             style={{ maxWidth: 800 }}
-            onClick={(e) => e.stopPropagation()} // שלא יסגר בלחיצה בתוך המודל
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header">
               <h2>תצוגת תמונה</h2>
