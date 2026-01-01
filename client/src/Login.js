@@ -79,7 +79,7 @@ export default function Login({ onLogin }) {
             className="auth2-input"
             type="tel"
             inputMode="tel"
-            placeholder="למשל: 054-0000000"
+            placeholder="מספר טלפון"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             required

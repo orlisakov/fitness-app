@@ -114,7 +114,6 @@ export default function Register() {
             className="auth2-input same-size-input"
             type="tel"
             inputMode="tel"
-            placeholder="למשל: 054-0000000"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             autoComplete="tel"

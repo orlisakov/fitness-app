@@ -4,6 +4,77 @@ import { useParams, useNavigate } from "react-router-dom";
 import "../styles/theme.css";
 import config from "../config";
 
+const MealRow = React.memo(function MealRow({
+  mealKey,
+  title,
+  disabled,
+  value,
+  onChangeField,
+}) {
+  return (
+    <div className="meal-row">
+      <div className="meal-cell">
+        <label htmlFor={`${mealKey}-protein`}>
+          חלבון <br />
+          <span className="meal-unit-sub">(גרם)</span>
+        </label>
+        <input
+          id={`${mealKey}-protein`}
+          type="number"
+          min="0"
+          step="1"
+          inputMode="numeric"
+          value={value.protein ?? ""}
+          onChange={(e) => onChangeField(mealKey, "protein", e.target.value)}
+          disabled={disabled}
+          className="meal-input"
+          placeholder="0"
+        />
+      </div>
+
+      <div className="meal-cell">
+        <label htmlFor={`${mealKey}-carbs`}>
+          פחמימה <br />
+          <span className="meal-unit-sub">(גרם)</span>
+        </label>
+        <input
+          id={`${mealKey}-carbs`}
+          type="number"
+          min="0"
+          step="1"
+          inputMode="numeric"
+          value={value.carbs ?? ""}
+          onChange={(e) => onChangeField(mealKey, "carbs", e.target.value)}
+          disabled={disabled}
+          className="meal-input"
+          placeholder="0"
+        />
+      </div>
+
+      <div className="meal-cell">
+        <label htmlFor={`${mealKey}-fat`}>
+          שומן <br />
+          <span className="meal-unit-sub">(גרם)</span>
+        </label>
+        <input
+          id={`${mealKey}-fat`}
+          type="number"
+          min="0"
+          step="1"
+          inputMode="numeric"
+          value={value.fat ?? ""}
+          onChange={(e) => onChangeField(mealKey, "fat", e.target.value)}
+          disabled={disabled}
+          className="meal-input"
+          placeholder="0"
+        />
+      </div>
+
+      <div className="meal-title">{title}:</div>
+    </div>
+  );
+});
+
 export default function TraineeDetailsForm() {
   const { id } = useParams();
 
@@ -34,74 +105,21 @@ export default function TraineeDetailsForm() {
     },
   });
 
+  const onChangeMealField = React.useCallback((mealKey, field, newValue) => {
+    setFormData((p) => ({
+      ...p,
+      customMeals: {
+        ...p.customMeals,
+        [mealKey]: {
+          ...p.customMeals[mealKey],
+          [field]: newValue,
+        },
+      },
+    }));
+  }, []);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  // ---- Inline styles (כדי להבטיח שינוי מיידי) ----
-  const styles = {
-    splitCard: {
-      border: "1px solid #e7e7e7",
-      borderRadius: 12,
-      padding: 14,
-      margin: "12px 0 18px",
-      background: "#fff",
-    },
-    splitHeader: {
-      display: "flex",
-      gap: 18,
-      alignItems: "center",
-      flexWrap: "wrap",
-      marginBottom: 10,
-      fontWeight: 600,
-    },
-    muted: {
-      margin: "0 0 12px 0",
-      color: "#6b7280",
-      fontSize: "0.95rem",
-    },
-    mealSplit: {
-      display: "grid",
-      gap: 12,
-    },
-    // שלוש תיבות + כותרת ארוחה בקצה הימני
-    mealRow: {
-      display: "grid",
-      gridTemplateColumns: "repeat(3, minmax(110px, 220px)) 120px",
-      gap: 10,
-      alignItems: "center",
-    },
-    mealTitle: {
-      fontWeight: 700,
-      color: "#374151",
-      textAlign: "right",
-    },
-    mealCell: {
-      display: "grid",
-      gridTemplateColumns: "1fr 100px",
-      alignItems: "center",
-      gap: 8,
-      fontSize: "0.95rem",
-      color: "#374151",
-    },
-    mealInput: {
-      height: 36,
-      padding: "0 10px",
-      border: "1px solid #d1d5db",
-      borderRadius: 10,
-      fontSize: "0.95rem",
-      background: "#fff",
-      boxSizing: "border-box",
-    },
-    unitWrap: {
-      display: "flex",
-      flexDirection: "column",
-      lineHeight: 1.1,
-    },
-    unitSub: {
-      fontSize: "0.8rem",
-      color: "#6b7280",
-    },
-  };
 
   useEffect(() => {
     if (!id) {
@@ -249,88 +267,6 @@ export default function TraineeDetailsForm() {
   if (loading) return <div>טוען נתונים...</div>;
   if (error) return <div className="error">{error}</div>;
 
-  const MealRow = ({ mealKey, title, disabled }) => {
-    const value = formData.customMeals[mealKey];
-
-    const onNumericChange = (field) => (e) => {
-      const cleaned = (e.target.value || "").replace(/\D/g, "").slice(0, 20);
-
-      setFormData((p) => ({
-        ...p,
-        customMeals: {
-          ...p.customMeals,
-          [mealKey]: { ...p.customMeals[mealKey], [field]: cleaned },
-        },
-      }));
-    };
-
-    return (
-      <div className="meal-row">
-        <div className="meal-cell">
-          <label>
-            חלבון
-            <br />
-            <span className="unit">(גרם)</span>
-          </label>
-          <input
-            id={`${mealKey}-protein`}
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            autoComplete="off"
-            value={value.protein ?? ""}
-            onChange={onNumericChange("protein")}
-            disabled={disabled}
-            className="meal-input"
-            placeholder="0"
-          />
-        </div>
-
-        <div className="meal-cell">
-          <label>
-            פחמימה
-            <br />
-            <span className="unit">(גרם)</span>
-          </label>
-          <input
-            id={`${mealKey}-carbs`}
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            autoComplete="off"
-            value={value.carbs ?? ""}
-            onChange={onNumericChange("carbs")}
-            disabled={disabled}
-            className="meal-input"
-            placeholder="0"
-          />
-        </div>
-
-        <div className="meal-cell">
-          <label>
-            שומן
-            <br />
-            <span className="unit">(גרם)</span>
-          </label>
-          <input
-            id={`${mealKey}-fat`}
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            autoComplete="off"
-            value={value.fat ?? ""}
-            onChange={onNumericChange("fat")}
-            disabled={disabled}
-            className="meal-input"
-            placeholder="0"
-          />
-        </div>
-
-        <div className="meal-title">{title}:</div>
-      </div>
-    );
-  };
-
   return (
     <div className="modal-backdrop" dir="rtl">
       <div className="modal">
@@ -341,7 +277,12 @@ export default function TraineeDetailsForm() {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={handleSubmit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.preventDefault();
+          }}
+        >
           {/* ——— נתונים כלליים ——— */}
           <label>
             גיל:
@@ -510,21 +451,32 @@ export default function TraineeDetailsForm() {
                 mealKey="breakfast"
                 title="בוקר"
                 disabled={formData.customSplitMode !== "custom"}
+                value={formData.customMeals.breakfast}
+                onChangeField={onChangeMealField}
               />
+
               <MealRow
                 mealKey="lunch"
                 title="צהריים"
                 disabled={formData.customSplitMode !== "custom"}
+                value={formData.customMeals.lunch}
+                onChangeField={onChangeMealField}
               />
+
               <MealRow
                 mealKey="snack"
                 title="ביניים"
                 disabled={formData.customSplitMode !== "custom"}
+                value={formData.customMeals.snack}
+                onChangeField={onChangeMealField}
               />
+
               <MealRow
                 mealKey="dinner"
                 title="ערב"
                 disabled={formData.customSplitMode !== "custom"}
+                value={formData.customMeals.dinner}
+                onChangeField={onChangeMealField}
               />
             </div>
           </div>

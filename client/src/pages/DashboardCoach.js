@@ -3,6 +3,77 @@ import { useNavigate } from "react-router-dom";
 import "../styles/theme.css";
 import config from "../config";
 
+const MealRow = React.memo(function MealRow({
+  mealKey,
+  title,
+  disabled,
+  value,
+  onChangeField,
+}) {
+  return (
+    <div className="meal-row">
+      <div className="meal-cell">
+        <label htmlFor={`${mealKey}-protein`}>
+          חלבון <br />
+          <span className="meal-unit-sub">(גרם)</span>
+        </label>
+        <input
+          id={`${mealKey}-protein`}
+          type="number"
+          min="0"
+          step="1"
+          inputMode="numeric"
+          value={value.protein ?? ""}
+          onChange={(e) => onChangeField(mealKey, "protein", e.target.value)}
+          disabled={disabled}
+          className="meal-input"
+          placeholder="0"
+        />
+      </div>
+
+      <div className="meal-cell">
+        <label htmlFor={`${mealKey}-carbs`}>
+          פחמימה <br />
+          <span className="meal-unit-sub">(גרם)</span>
+        </label>
+        <input
+          id={`${mealKey}-carbs`}
+          type="number"
+          min="0"
+          step="1"
+          inputMode="numeric"
+          value={value.carbs ?? ""}
+          onChange={(e) => onChangeField(mealKey, "carbs", e.target.value)}
+          disabled={disabled}
+          className="meal-input"
+          placeholder="0"
+        />
+      </div>
+
+      <div className="meal-cell">
+        <label htmlFor={`${mealKey}-fat`}>
+          שומן <br />
+          <span className="meal-unit-sub">(גרם)</span>
+        </label>
+        <input
+          id={`${mealKey}-fat`}
+          type="number"
+          min="0"
+          step="1"
+          inputMode="numeric"
+          value={value.fat ?? ""}
+          onChange={(e) => onChangeField(mealKey, "fat", e.target.value)}
+          disabled={disabled}
+          className="meal-input"
+          placeholder="0"
+        />
+      </div>
+
+      <div className="meal-title">{title}:</div>
+    </div>
+  );
+});
+
 export default function DashboardCoach() {
   const navigate = useNavigate();
   const toStr = (v) => (v === 0 || Number.isFinite(Number(v)) ? String(v) : "");
@@ -496,89 +567,6 @@ export default function DashboardCoach() {
   if (loading) return <div className="dashboard-message">טוען נתונים...</div>;
   if (error) return <div className="dashboard-error">{error}</div>;
 
-  const MealRow = ({ mealKey, title }) => {
-    const value = editData.customMeals[mealKey];
-    const disabled = editData.customSplitMode !== "custom";
-
-    const onNumericChange = (field) => (e) => {
-      const cleaned = (e.target.value || "").replace(/\D/g, "").slice(0, 20);
-
-      setEditData((p) => ({
-        ...p,
-        customMeals: {
-          ...p.customMeals,
-          [mealKey]: { ...p.customMeals[mealKey], [field]: cleaned },
-        },
-      }));
-    };
-
-    return (
-      <div className="meal-row">
-        <div className="meal-cell">
-          <label htmlFor={`${mealKey}-protein`}>
-            חלבון
-            <br />
-            <span className="meal-unit-sub">(גרם)</span>
-          </label>
-          <input
-            id={`${mealKey}-protein`}
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            autoComplete="off"
-            value={value.protein ?? ""}
-            onChange={onNumericChange("protein")}
-            disabled={disabled}
-            className="meal-input"
-            placeholder="0"
-          />
-        </div>
-
-        <div className="meal-cell">
-          <label htmlFor={`${mealKey}-carbs`}>
-            פחמימה
-            <br />
-            <span className="meal-unit-sub">(גרם)</span>
-          </label>
-          <input
-            id={`${mealKey}-carbs`}
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            autoComplete="off"
-            value={value.carbs ?? ""}
-            onChange={onNumericChange("carbs")}
-            disabled={disabled}
-            className="meal-input"
-            placeholder="0"
-          />
-        </div>
-
-        <div className="meal-cell">
-          <label htmlFor={`${mealKey}-fat`}>
-            שומן
-            <br />
-            <span className="meal-unit-sub">(גרם)</span>
-          </label>
-          <input
-            id={`${mealKey}-fat`}
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            autoComplete="off"
-            value={value.fat ?? ""}
-            onChange={onNumericChange("fat")}
-            disabled={disabled}
-            className="meal-input"
-            placeholder="0"
-          />
-        </div>
-
-        <div className="meal-title">{title}:</div>
-      </div>
-    );
-  };
-
   return (
     <div className="coach-dashboard" dir="rtl">
       <h1 className="coach-title">לוח הבקרה של המאמנת</h1>
@@ -713,7 +701,12 @@ export default function DashboardCoach() {
               </button>
             </div>
 
-            <form onSubmit={saveTraineeDetails} className="trainee-form">
+            <form
+              onSubmit={saveTraineeDetails}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.preventDefault();
+              }}
+            >
               <h3 className="section-title">פרטי המתאמנת</h3>
 
               <div className="form-grid three tight">
@@ -938,10 +931,81 @@ export default function DashboardCoach() {
                 )}
 
                 <div className="meal-split">
-                  <MealRow mealKey="breakfast" title="בוקר" />
-                  <MealRow mealKey="lunch" title="צהריים" />
-                  <MealRow mealKey="snack" title="ביניים" />
-                  <MealRow mealKey="dinner" title="ערב" />
+                  <MealRow
+                    mealKey="breakfast"
+                    title="בוקר"
+                    disabled={editData.customSplitMode !== "custom"}
+                    value={editData.customMeals.breakfast}
+                    onChangeField={(mealKey, field, newValue) =>
+                      setEditData((p) => ({
+                        ...p,
+                        customMeals: {
+                          ...p.customMeals,
+                          [mealKey]: {
+                            ...p.customMeals[mealKey],
+                            [field]: newValue,
+                          },
+                        },
+                      }))
+                    }
+                  />
+
+                  <MealRow
+                    mealKey="lunch"
+                    title="צהריים"
+                    disabled={editData.customSplitMode !== "custom"}
+                    value={editData.customMeals.lunch}
+                    onChangeField={(mealKey, field, newValue) =>
+                      setEditData((p) => ({
+                        ...p,
+                        customMeals: {
+                          ...p.customMeals,
+                          [mealKey]: {
+                            ...p.customMeals[mealKey],
+                            [field]: newValue,
+                          },
+                        },
+                      }))
+                    }
+                  />
+
+                  <MealRow
+                    mealKey="snack"
+                    title="ביניים"
+                    disabled={editData.customSplitMode !== "custom"}
+                    value={editData.customMeals.snack}
+                    onChangeField={(mealKey, field, newValue) =>
+                      setEditData((p) => ({
+                        ...p,
+                        customMeals: {
+                          ...p.customMeals,
+                          [mealKey]: {
+                            ...p.customMeals[mealKey],
+                            [field]: newValue,
+                          },
+                        },
+                      }))
+                    }
+                  />
+
+                  <MealRow
+                    mealKey="dinner"
+                    title="ערב"
+                    disabled={editData.customSplitMode !== "custom"}
+                    value={editData.customMeals.dinner}
+                    onChangeField={(mealKey, field, newValue) =>
+                      setEditData((p) => ({
+                        ...p,
+                        customMeals: {
+                          ...p.customMeals,
+                          [mealKey]: {
+                            ...p.customMeals[mealKey],
+                            [field]: newValue,
+                          },
+                        },
+                      }))
+                    }
+                  />
                 </div>
               </div>
 
