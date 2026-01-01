@@ -467,9 +467,10 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain; /* ✅ תמיד שלם */
-  object-position: center;
-  filter: saturate(1.05);
+  display: block;
+
+  object-fit: cover; /* ✅ ממלא כמו בגלריה */
+  object-position: center; /* אפשר center top אם צריך */
   z-index: 0;
 }
 
@@ -488,4 +489,19 @@
 .auth2-hero-overlay {
   position: relative;
   z-index: 2; /* מעל התמונה והגרדיאנט */
+}
+/* ✅ HERO – משתמשים רק ב-img, לא ב-background-image */
+.auth2-hero {
+  position: relative;
+  min-height: 100vh;
+  background: #000000;
+  overflow: hidden;
+
+  /* ❌ לבטל את הרקע שהיה קודם */
+  background-image: none !important;
+  background-size: initial !important;
+  background-repeat: initial !important;
+  background-position: initial !important;
+
+  filter: saturate(1.05);
 }

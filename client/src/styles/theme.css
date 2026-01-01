@@ -1271,22 +1271,28 @@ body,
 }
 
 .coach-hero-image-wrap {
-  display: flex;
-  justify-content: center;
-  overflow: hidden; /* חשוב! שלא יגלוש מחוץ לרדיוס */
-  border-radius: 28px; /* שיתאים למסגרת */
+  width: 100%;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 2px solid var(--accent-pink);
+  background: var(--backgroundBlack);
+
+  /* במקום להגביל max-width על התמונה */
+  aspect-ratio: 4 / 5; /* כמו אצלך, אבל על המסגרת */
 }
 
 .coach-hero-image {
   width: 100%;
-  max-width: 320px;
-  aspect-ratio: 4 / 5;
-  object-fit: contain; /* ✅ לא חותך צדדים */
-  object-position: center;
-  background: var(--background); /* שלא יראו “לבן” אם יש שוליים */
-  border-radius: 28px;
-  border: 2px solid var(--accent-pink);
+  height: 100%;
   display: block;
+
+  object-fit: cover; /* ✅ כמו הגלריה: ממלא את המסגרת */
+  object-position: center;
+
+  /* לא צריך רדיוס/בורדר פה כי ה-wrap כבר מטפל בזה */
+  border-radius: 0;
+  border: 0;
+  background: none;
 }
 
 .coach-hero-placeholder {
