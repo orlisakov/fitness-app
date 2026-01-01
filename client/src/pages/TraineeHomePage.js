@@ -1,7 +1,7 @@
 // src/pages/TraineeHomePage.js
 import React from "react";
 // אם יש לך תמונות – עדכני את הנתיבים:
-import coachMain from "../assets/coach-main.jpg"; // תמונה יפה של איב
+import coachMain from "../assets/couch.jpg"; // תמונה יפה של איב
 import coachBeforeAfter from "../assets/coach-before-after.jpg"; // לפני / אחרי (לא חובה)
 
 export default function TraineeHomePage() {
