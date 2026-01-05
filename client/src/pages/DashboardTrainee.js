@@ -562,6 +562,7 @@ export default function DashboardTrainee() {
               דרגת אימון: {LEVEL_LABELS[trainee.trainingLevel] || "מתחילות"}
             </div>
             <h1></h1>
+            {/* 
             <h3 className="section-title">חישוב מאמן</h3>
             <div className="form-grid four">
               <div className="field">
@@ -581,6 +582,7 @@ export default function DashboardTrainee() {
                 <input type="number" value={editData.carbGrams} readOnly />
               </div>
             </div>
+            */}
 
             <button
               type="submit"

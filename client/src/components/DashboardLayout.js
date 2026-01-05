@@ -100,7 +100,7 @@ export default function DashboardLayout({ onLogout, user }) {
                 className={linkCls}
                 onClick={handleNavClick}
               >
-                אורח חיים בריא
+                תזונה נכונה
               </NavLink>
             )}
 
