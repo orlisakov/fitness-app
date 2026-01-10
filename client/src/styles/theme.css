@@ -3185,15 +3185,14 @@ button.add-food {
     unicode-bidi: plaintext;
   }
 }
-/* עמודות כמות – ספרות תמיד LTR */
 .menu-table td.amount,
 .menu-table thead tr:nth-child(2) th:nth-child(1),
 .menu-table thead tr:nth-child(2) th:nth-child(3) {
-  direction: ltr;
-  unicode-bidi: isolate; /* מבודד את המספר מהעברית */
+  unicode-bidi: plaintext; /* אבל מספרים נשארים תקינים */
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
+
 .chip,
 .targets-row .chip {
   direction: rtl;

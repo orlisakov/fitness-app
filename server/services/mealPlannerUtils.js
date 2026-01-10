@@ -312,22 +312,31 @@ function getDisplayText(food, q) {
 
   const base = si.baseQuantity || 100;
 
+  const LRI = "\u2066";
+  const PDI = "\u2069";
+
   switch (si.baseUnit) {
     case "piece":
-      return `${fmt(q, q % 1 ? 2 : 0)} יח׳`;
+      return `${LRI}${fmt(q, q % 1 ? 2 : 0)}${PDI} ${LRI}יח׳${PDI}`;
+
     case "cup":
-      return `${fmt(q * base, 2)} ${
+      return `${LRI}${fmt(q * base, 2)}${PDI} ${LRI}${
         si.displayName?.replace(/\d+ ?/, "") || "כוס"
-      }`;
+      }${PDI}`;
+
     case "tablespoon":
-      return `${fmt(q * base, 2)} ${si.displayName || "כף"}`;
+      return `${LRI}${fmt(q * base, 2)}${PDI} ${LRI}${
+        si.displayName || "כף"
+      }${PDI}`;
+
     case "ml":
-      return `${fmt(q * base, 0)} מ״ל`;
+      return `${LRI}${fmt(q * base, 0)}${PDI} ${LRI}מ״ל${PDI}`;
+
     case "gram":
     default: {
       const unitFromDisplay =
         (si.displayName || "100 גרם").split(" ")[1] || "גרם";
-      return `${fmt(q * base, 0)} ${unitFromDisplay}`;
+      return `${LRI}${fmt(q * base, 0)}${PDI} ${LRI}${unitFromDisplay}${PDI}`;
     }
   }
 }

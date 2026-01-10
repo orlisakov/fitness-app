@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+// src/App.jsx
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 
 import ResourcesLibrary from "./pages/ResourcesLibrary";
@@ -8,13 +9,15 @@ import DashboardCoach from "./pages/DashboardCoach";
 import DashboardTrainee from "./pages/DashboardTrainee";
 import CoachWorkouts from "./pages/CoachWorkouts";
 import TraineeWorkouts from "./pages/TraineeWorkouts";
-import PersonalMenu from "./pages/PersonalMenu";
 import ManageFoods from "./pages/ManageFoods";
 import TraineeDetailsForm from "./components/TraineeDetailsForm";
 import Login from "./Login";
 import Register from "./Register";
-import TraineeHomePage from "./pages/TraineeHomePage";
 import config from "./config";
+
+// ✅ LAZY (בלי import רגיל שלהם!)
+const PersonalMenu = lazy(() => import("./pages/PersonalMenu"));
+const TraineeHomePage = lazy(() => import("./pages/TraineeHomePage"));
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -28,6 +31,7 @@ export default function App() {
       setUserLoading(false);
       return;
     }
+
     fetch(`${config.apiBaseUrl}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -38,7 +42,9 @@ export default function App() {
   }, []);
 
   const handleLogin = (data) => {
-    sessionStorage.setItem("token", data.token);
+    // חשוב: לשמור token נקי
+    const cleanToken = String(data.token || "").replace(/^Bearer\s+/i, "");
+    sessionStorage.setItem("token", cleanToken);
     setUser(data.user || null);
   };
 
@@ -47,7 +53,6 @@ export default function App() {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     navigate("/login", { replace: true });
-    window.location.reload();
   };
 
   // ✅ רכיב ביניים למניעת גישה לפי תפקיד
@@ -59,6 +64,11 @@ export default function App() {
       <Navigate to="/" replace />
     );
   };
+
+  // ✅ עטיפה ל-Lazy routes (כדי שיהיה "טוען…" ולא מסך לבן)
+  const LazyWrap = ({ children }) => (
+    <Suspense fallback={<div dir="rtl">טוען…</div>}>{children}</Suspense>
+  );
 
   return (
     <Routes>
@@ -98,7 +108,7 @@ export default function App() {
               user.role === "coach" ? (
                 <DashboardCoach user={user} />
               ) : (
-                <TraineeHomePage user={user} />
+                <Navigate to="/trainee-home" replace />
               )
             ) : (
               <Navigate to="/login" replace />
@@ -106,8 +116,20 @@ export default function App() {
           }
         />
 
-        {/* דף הבית של המתאמנת */}
-        <Route path="trainee-home" element={<TraineeHomePage user={user} />} />
+        {/* דף הבית של המתאמנת (Lazy) */}
+        <Route
+          path="trainee-home"
+          element={
+            <RequireRole
+              allow={["trainee"]}
+              element={
+                <LazyWrap>
+                  <TraineeHomePage user={user} />
+                </LazyWrap>
+              }
+            />
+          }
+        />
 
         {/* דשבורד המתאמנת */}
         <Route
@@ -131,13 +153,17 @@ export default function App() {
           }
         />
 
-        {/* תפריט אישי */}
+        {/* תפריט אישי (Lazy) */}
         <Route
           path="personal-menu"
           element={
             <RequireRole
               allow={["trainee"]}
-              element={<PersonalMenu traineeData={user} />}
+              element={
+                <LazyWrap>
+                  <PersonalMenu traineeData={user} />
+                </LazyWrap>
+              }
             />
           }
         />

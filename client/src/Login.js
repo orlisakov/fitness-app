@@ -1,6 +1,6 @@
 // src/Login.jsx
 import React, { useState } from "react";
-import "./styles/auth.css"; // ← קובץ סגנונות חדש ומבודד
+import "./styles/auth.css";
 import logo from "./logo.jpg";
 import config from "./config";
 
@@ -11,45 +11,131 @@ export default function Login({ onLogin }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ✅ נרמול טלפון: משאיר רק ספרות (053-... / רווחים / וכו')
+  const normalizePhone = (p) => String(p || "").replace(/[^\d]/g, "");
+
+  // ✅ fetch עם timeout + ניסיון חוזר (פעם אחת) לתקלות זמניות
+  const fetchWithTimeout = async (url, options, timeoutMs = 12000) => {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const res = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+      return res;
+    } finally {
+      clearTimeout(id);
+    }
+  };
+
+  const shouldRetry = (status) => {
+    // תקלות שרת/timeout - לא credentials
+    return status === 408 || status === 429 || (status >= 500 && status <= 599);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
+
     setError("");
     setLoading(true);
 
+    const cleanPhone = normalizePhone(phone);
+
     try {
-      const res = await fetch(`${config.apiBaseUrl}/api/auth/login`, {
+      const url = `${config.apiBaseUrl}/api/auth/login`;
+      const options = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, password }),
-      });
+        body: JSON.stringify({ phone: cleanPhone, password }),
+      };
 
-      const data = await res.json();
-      console.log("login response:", data);
+      let res;
+      try {
+        res = await fetchWithTimeout(url, options, 12000);
+      } catch (err) {
+        // timeout / רשת
+        // ✅ retry פעם אחת (cold start)
+        await new Promise((r) => setTimeout(r, 600));
+        res = await fetchWithTimeout(url, options, 12000);
+      }
+
+      // נסה לקרוא JSON, אבל אל תיפול אם אין JSON תקין
+      let data = {};
+      const text = await res.text();
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = { message: text };
+      }
 
       if (!res.ok) {
-        setError(data.message || "שגיאה בהתחברות");
-        setLoading(false);
+        // ✅ 401 = פרטים שגויים
+        if (res.status === 401) {
+          setError("טלפון או סיסמה שגויים");
+          return;
+        }
+
+        // ✅ תקלות זמניות: retry פעם אחת ואז הודעה ידידותית
+        if (shouldRetry(res.status)) {
+          await new Promise((r) => setTimeout(r, 600));
+          const res2 = await fetchWithTimeout(url, options, 12000);
+
+          let data2 = {};
+          const text2 = await res2.text();
+          try {
+            data2 = text2 ? JSON.parse(text2) : {};
+          } catch {
+            data2 = { message: text2 };
+          }
+
+          if (!res2.ok) {
+            if (res2.status === 401) {
+              setError("טלפון או סיסמה שגויים");
+            } else {
+              setError("בעיה זמנית בשרת. נסי שוב בעוד כמה שניות.");
+            }
+            return;
+          }
+
+          // הצליח בנסיון השני
+          const cleanToken = (data2.token || "").replace(/^Bearer\s+/i, "");
+          if (!cleanToken) {
+            setError("התחברת אבל לא התקבל טוקן מהשרת");
+            return;
+          }
+          sessionStorage.setItem("token", cleanToken);
+          localStorage.setItem("token", cleanToken);
+          onLogin?.(data2);
+          return;
+        }
+
+        // ✅ שאר השגיאות: הודעה כללית
+        setError(data?.message || "שגיאה בהתחברות");
         return;
       }
 
-      // אם הטוקן כולל את המילה Bearer, נוריד אותה:
-      const cleanToken = data.token?.replace(/^Bearer\s+/i, "");
+      const cleanToken = (data.token || "").replace(/^Bearer\s+/i, "");
+      if (!cleanToken) {
+        setError("התחברת אבל לא התקבל טוקן מהשרת");
+        return;
+      }
+
       sessionStorage.setItem("token", cleanToken);
-
-      // אפשר לשמור גם ב-localStorage כדי שישמר אחרי רענון:
       localStorage.setItem("token", cleanToken);
-
       onLogin?.(data);
     } catch (err) {
-      setError("שגיאת רשת");
+      // AbortError / Failed to fetch וכו'
+      setError("בעיה זמנית בחיבור לשרת. נסי שוב.");
+    } finally {
       setLoading(false);
     }
   };
 
   return (
     <div className="auth2-container" dir="rtl">
-      {/* צד שמאל – תמונת אווירה + כותרת */}
       <aside className="auth2-hero">
         <img
           className="auth2-hero-img"
@@ -64,7 +150,6 @@ export default function Login({ onLogin }) {
         </div>
       </aside>
 
-      {/* צד ימין – כרטיס התחברות */}
       <main className="auth2-panel">
         <form className="auth2-card" onSubmit={handleSubmit}>
           <img className="auth2-logo" src={logo} alt="לוגו" />
@@ -95,6 +180,7 @@ export default function Login({ onLogin }) {
               {showPass ? "הסתר" : "הצג"}
             </button>
           </label>
+
           <input
             className="auth2-input"
             type={showPass ? "text" : "password"}

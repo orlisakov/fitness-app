@@ -9,6 +9,15 @@ import jsPDF from "jspdf";
 
 // ===== RTL helpers for PDF =====
 
+const toNumber = (v) => {
+  if (v === null || v === undefined) return null;
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  const s = String(v).trim();
+  if (!s) return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+};
+
 // --- Mirror (כתב מראה) ---
 const BRACKET_SWAP = {
   "(": ")",
@@ -64,48 +73,66 @@ export default function PersonalMenu({ traineeData }) {
   }
 
   useEffect(() => {
+    const eggs = mealPlan?.meals?.breakfast?.groups?.find(
+      (g) => g.key === "eggs"
+    )?.fixed;
+    console.log("EGGS displayText:", eggs?.displayText);
+  }, [mealPlan]);
+
+  useEffect(() => {
     if (mealPlan?.meals?.dinner) {
       // console.log("DINNER KEYS:", Object.keys(mealPlan.meals.dinner));
     }
   }, [mealPlan]);
 
   useEffect(() => {
+    let alive = true;
+
     const run = async () => {
       if (!traineeData) return;
 
-      const { proteinGrams, carbGrams, fatGrams, dailyCalories } = traineeData;
+      const proteinGrams = toNumber(traineeData?.proteinGrams);
+      const carbGrams = toNumber(traineeData?.carbGrams);
+      const fatGrams = toNumber(traineeData?.fatGrams);
+      const dailyCalories = toNumber(traineeData?.dailyCalories);
+
+      let fat = fatGrams;
+      if (
+        fat == null &&
+        [proteinGrams, carbGrams, dailyCalories].every((x) => x != null)
+      ) {
+        const remaining = dailyCalories - (proteinGrams * 4 + carbGrams * 4);
+        fat = Math.max(0, remaining / 9);
+      }
+
       const key = JSON.stringify({
         proteinGrams,
         carbGrams,
-        fatGrams,
+        fat,
         dailyCalories,
       });
       if (guardRef.current === key) return;
-      guardRef.current = key;
 
+      if (
+        [proteinGrams, carbGrams, fat, dailyCalories].some((x) => x == null)
+      ) {
+        guardRef.current = "";
+        if (!alive) return;
+        setError("נתוני מאקרו חסרים. לא ניתן ליצור תפריט.");
+        setMealPlan(null);
+        setAppliedPrefs(null);
+        return;
+      }
+
+      if (!alive) return;
+
+      setMealPlan(null);
+      setAppliedPrefs(null);
       setIsLoading(true);
+
       setError("");
 
       try {
-        // חישוב שומן אם חסר
-        let fat = typeof fatGrams === "number" ? fatGrams : null;
-        if (
-          fat == null &&
-          [proteinGrams, carbGrams, dailyCalories].every(
-            (x) => typeof x === "number"
-          )
-        ) {
-          const remaining = dailyCalories - (proteinGrams * 4 + carbGrams * 4);
-          fat = Math.max(0, remaining / 9);
-        }
-        if (
-          ![proteinGrams, carbGrams, fat].every((x) => typeof x === "number")
-        ) {
-          setError("נתוני מאקרו חסרים. לא ניתן ליצור תפריט.");
-          setIsLoading(false);
-          return;
-        }
-
         const prefs = {
           isVegetarian: !!(
             traineeData?.vegetarian || traineeData?.isVegetarian
@@ -119,13 +146,18 @@ export default function PersonalMenu({ traineeData }) {
           ),
         };
 
-        const token =
+        const rawToken =
           sessionStorage.getItem("token") || localStorage.getItem("token");
+        const token = rawToken?.replace(/^Bearer\s+/i, "");
+
         if (!token) {
+          guardRef.current = "";
+          if (!alive) return;
           setError("נראה שאינך מחוברת. התחברי מחדש ואז נסי שוב.");
-          setIsLoading(false);
           return;
         }
+
+        guardRef.current = key;
 
         const { data } = await axios.post(
           `${config.apiBaseUrl}/api/meal-plan/generate-meal-plan`,
@@ -139,25 +171,41 @@ export default function PersonalMenu({ traineeData }) {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
+        if (!alive) return;
+
         if (!data?.success) {
+          guardRef.current = "";
           setError(data?.message || "שגיאה ביצירת תפריט");
+          setMealPlan(null);
+          setAppliedPrefs(null);
         } else {
           setMealPlan(data.mealPlan || null);
           setAppliedPrefs(data.appliedPrefs || prefs);
         }
       } catch (e) {
+        guardRef.current = "";
         console.error("Meal plan error:", e);
+
         const serverMsg =
           e.response?.data?.message ||
           e.response?.data?.error ||
           (e.response?.status === 401 ? "אין הרשאה – התחברי מחדש." : null);
+
+        if (!alive) return;
         setError(serverMsg || "אירעה שגיאה בעת יצירת התפריט.");
+        setMealPlan(null);
+        setAppliedPrefs(null);
       } finally {
+        if (!alive) return;
         setIsLoading(false);
       }
     };
 
     run();
+
+    return () => {
+      alive = false;
+    };
   }, [traineeData]);
 
   /* ---------------------- EXPORT TO PDF ---------------------- */
@@ -184,8 +232,11 @@ export default function PersonalMenu({ traineeData }) {
     // לצבוע את העמוד הראשון
     paintPage();
 
-    // לצבוע אוטומטית כל עמוד חדש—גם כאלה שנוצרים ע"י autoTable
-    pdf.internal.events.subscribe("addPage", paintPage);
+    if (typeof pdf.on === "function") {
+      pdf.on("addPage", paintPage);
+    } else if (pdf?.internal?.events?.subscribe) {
+      pdf.internal.events.subscribe("addPage", paintPage);
+    }
 
     // דף שחור + הדר
     const startPage = () => {
@@ -449,15 +500,6 @@ export default function PersonalMenu({ traineeData }) {
       // אין מסגרת חיצונית, אין עיגול — כמו שביקשת
       return pdf.lastAutoTable.finalY;
     }
-
-    const traineeName =
-      traineeData?.displayName ||
-      traineeData?.fullName ||
-      [traineeData?.firstName, traineeData?.lastName]
-        .filter(Boolean)
-        .join(" ") ||
-      traineeData?.name ||
-      "מתאמנת";
 
     // ===== עמוד 1: פתיח ודגשים =====
     let { y } = startPage();
