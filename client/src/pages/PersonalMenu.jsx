@@ -8,6 +8,52 @@ import { loadRubikFonts } from "../utils/pdfFonts";
 import jsPDF from "jspdf";
 
 // ===== RTL helpers for PDF =====
+function comboToMultiline(text = "") {
+  const s = String(text || "");
+  const idx = s.indexOf("+");
+  if (idx === -1) return s.trim();
+
+  const first = s
+    .slice(0, idx + 1)
+    .replace(/\s+\+$/, "+")
+    .trim();
+  const rest = s.slice(idx + 1).trim();
+  return rest ? `${first}\n${rest}` : first;
+}
+
+// RTL-safe: לא להפוך סדר שורות
+function mirrorLines(text = "") {
+  return String(text || "")
+    .split("\n")
+    .map((line) => mirrorStr(line))
+    .join("\n");
+}
+
+function splitByPlus(text = "") {
+  const s = String(text || "");
+  const idx = s.indexOf("+");
+  if (idx === -1) return { first: s.trim(), rest: "" };
+
+  const first = s
+    .slice(0, idx + 1)
+    .replace(/\s+\+$/, "+")
+    .trim(); // כולל +
+  const rest = s.slice(idx + 1).trim();
+  return { first, rest };
+}
+
+function renderCombo(text) {
+  const { first, rest } = splitByPlus(text);
+  if (!rest) return first; // אין +, או אין מה לרדת שורה
+
+  return (
+    <>
+      <span>{first}</span>
+      <br />
+      <span>{rest}</span>
+    </>
+  );
+}
 
 const toNumber = (v) => {
   if (v === null || v === undefined) return null;
@@ -385,10 +431,10 @@ export default function PersonalMenu({ traineeData }) {
         const p = proteinOptions[i] || {};
         const c = carbOptions[i] || {};
         rows.push([
-          mirror(p?.displayText || ""),
-          mirror(p?.food?.name || ""),
-          mirror(c?.displayText || ""),
-          mirror(c?.food?.name || ""),
+          mirrorLines(comboToMultiline(p?.displayText || "")),
+          mirrorLines(comboToMultiline(p?.food?.name || "")),
+          mirrorLines(comboToMultiline(c?.displayText || "")),
+          mirrorLines(comboToMultiline(c?.food?.name || "")),
         ]);
       }
       return rows;
@@ -717,10 +763,10 @@ export default function PersonalMenu({ traineeData }) {
             const c = get(carbOptions, i);
             return (
               <tr key={i}>
-                <td className="amount">{p?.displayText || ""}</td>
-                <td>{p?.food?.name || ""}</td>
-                <td className="amount">{c?.displayText || ""}</td>
-                <td>{c?.food?.name || ""}</td>
+                <td className="amount">{renderCombo(p?.displayText || "")}</td>
+                <td>{renderCombo(p?.food?.name || "")}</td>
+                <td className="amount">{renderCombo(c?.displayText || "")}</td>
+                <td>{renderCombo(c?.food?.name || "")}</td>
               </tr>
             );
           })}
