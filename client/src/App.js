@@ -49,9 +49,16 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    // מוחקים הכול
     sessionStorage.removeItem("token");
-    localStorage.removeItem("user");
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    // חשוב: מעדכנים state כדי שכל האפליקציה תדע שיצאת
+    setUser(null);
+    setUserLoading(false);
+
+    // ניווט ללוגין
     navigate("/login", { replace: true });
   };
 
