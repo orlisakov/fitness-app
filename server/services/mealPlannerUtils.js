@@ -1175,9 +1175,14 @@ class RuleBasedPlanner {
       (f) =>
         bySuitability("breakfast", minSuit)(f) &&
         !this.isMayo(f) && // FIX: מניעת מיונז בפול החלבון
+        // ✅ מוצרי חלב לבוקר
         ((hasFlag(f, "flag_dairy") &&
           inCats(f, ["protein_breakfast", "protein_any", "protein_main"])) ||
-          hasFlag(f, "flag_fish"))
+          // ✅ דגים/טונה
+          hasFlag(f, "flag_fish") ||
+          // ✅ ביצים כאופציה רגילה (דגל או לפי שם)
+          hasFlag(f, "flag_egg") ||
+          looksLikeEgg(f))
     );
   }
 
