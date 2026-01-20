@@ -81,7 +81,7 @@ router.post("/generate-meal-plan", authMiddleware, async (req, res) => {
     // ==== פרטי מתאמנת והעדפות ====
     const trainee = await Trainee.findById(userId)
       .select(
-        "isVegetarian isVegan glutenSensitive lactoseSensitive dislikedFoods customSplit"
+        "isVegetarian isVegan glutenSensitive lactoseSensitive dislikedFoods customSplit",
       )
       .lean();
 
@@ -92,11 +92,11 @@ router.post("/generate-meal-plan", authMiddleware, async (req, res) => {
       isVegan: coalesce(trainee?.isVegan, clientPrefs.isVegan),
       glutenSensitive: coalesce(
         trainee?.glutenSensitive,
-        clientPrefs.glutenSensitive
+        clientPrefs.glutenSensitive,
       ),
       lactoseSensitive: coalesce(
         trainee?.lactoseSensitive,
-        clientPrefs.lactoseSensitive
+        clientPrefs.lactoseSensitive,
       ),
     };
 
@@ -104,18 +104,18 @@ router.post("/generate-meal-plan", authMiddleware, async (req, res) => {
     const dislikedIds = Array.isArray(trainee?.dislikedFoods)
       ? trainee.dislikedFoods
       : Array.isArray(dislikedFoods)
-      ? dislikedFoods
-      : [];
+        ? dislikedFoods
+        : [];
 
     // ==== מזונות ====
     const allFoods = await Food.find({ isActive: { $ne: false } }).lean();
 
     const filteredFoods = allFoods.filter(
-      (food) => !dislikedIds.some((id) => String(id) === String(food._id))
+      (food) => !dislikedIds.some((id) => String(id) === String(food._id)),
     );
 
     const prefFilteredFoods = filteredFoods.filter((food) =>
-      matchesPrefs(food, prefs)
+      matchesPrefs(food, prefs),
     );
 
     // ==== יעדים ====
@@ -200,8 +200,9 @@ router.post("/generate-meal-plan", authMiddleware, async (req, res) => {
       targets,
       prefs,
       ctx,
-      splitOverridePct
+      splitOverridePct,
     );
+
     const mealPlan = planner.buildAll();
 
     return res.json({
@@ -211,10 +212,14 @@ router.post("/generate-meal-plan", authMiddleware, async (req, res) => {
       mealPlan,
     });
   } catch (err) {
+    console.error("🔥 MEAL PLAN ERROR FULL:", err);
+    console.error("🔥 STACK:", err?.stack);
+
     return res.status(500).json({
       success: false,
       message: "אירעה שגיאה בעת יצירת התפריט.",
       error: String(err?.message || err),
+      stack: err?.stack,
     });
   }
 });

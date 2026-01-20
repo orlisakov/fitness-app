@@ -7,6 +7,8 @@ import config from "../config";
 import { loadRubikFonts } from "../utils/pdfFonts";
 import jsPDF from "jspdf";
 
+console.log("🌐 API BASE URL FROM CONFIG:", config.apiBaseUrl);
+
 // ===== RTL helpers for PDF =====
 function comboToMultiline(text = "") {
   const s = String(text || "");
@@ -120,15 +122,24 @@ export default function PersonalMenu({ traineeData }) {
 
   useEffect(() => {
     const eggs = mealPlan?.meals?.breakfast?.groups?.find(
-      (g) => g.key === "eggs"
+      (g) => g.key === "eggs",
     )?.fixed;
     console.log("EGGS displayText:", eggs?.displayText);
   }, [mealPlan]);
 
   useEffect(() => {
-    if (mealPlan?.meals?.dinner) {
-      // console.log("DINNER KEYS:", Object.keys(mealPlan.meals.dinner));
-    }
+    if (!mealPlan?.meals) return;
+
+    console.log(
+      "LUNCH group keys:",
+      mealPlan?.meals?.lunch?.groups?.map((g) => g.key),
+    );
+
+    console.log(
+      "DINNER groups/keys:",
+      mealPlan?.meals?.dinner?.groups?.map((g) => g.key) ||
+        Object.keys(mealPlan?.meals?.dinner || {}),
+    );
   }, [mealPlan]);
 
   useEffect(() => {
@@ -205,6 +216,12 @@ export default function PersonalMenu({ traineeData }) {
 
         guardRef.current = key;
 
+        console.log(
+          "🚀 CALLING API:",
+          `${config.apiBaseUrl}/api/meal-plan/generate-meal-plan`,
+        );
+        console.log("🚀 PREFS SENT:", prefs);
+
         const { data } = await axios.post(
           `${config.apiBaseUrl}/api/meal-plan/generate-meal-plan`,
           {
@@ -214,7 +231,7 @@ export default function PersonalMenu({ traineeData }) {
             totalCalories: dailyCalories,
             prefs,
           },
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${token}` } },
         );
 
         if (!alive) return;
@@ -387,11 +404,11 @@ export default function PersonalMenu({ traineeData }) {
       pdf.setTextColor(...WHITE);
       pdf.text(
         mirror(
-          "תזכרי – תהליך אמיתי לא קורה בשבוע. הוא קורה כשאת מפסיקה לוותר על עצמך כל פעם מחדש ❤️"
+          "תזכרי – תהליך אמיתי לא קורה בשבוע. הוא קורה כשאת מפסיקה לוותר על עצמך כל פעם מחדש ❤️",
         ),
         right - padX,
         y,
-        { align: "right" }
+        { align: "right" },
       );
 
       // מסגרת ורודה מעוגלת סביב כל הכרטיס
@@ -407,7 +424,7 @@ export default function PersonalMenu({ traineeData }) {
         cardBottom - cardTop,
         radius,
         radius,
-        "S"
+        "S",
       );
 
       return cardBottom; // ה-Y הבא אחרי הכרטיס
@@ -554,7 +571,7 @@ export default function PersonalMenu({ traineeData }) {
       mirror(`היי, ${traineeName}`),
       pdf.internal.pageSize.getWidth() / 2,
       y,
-      { align: "center" }
+      { align: "center" },
     );
     y += 10;
     pdf.setFontSize(14);
@@ -562,7 +579,7 @@ export default function PersonalMenu({ traineeData }) {
       mirror("המלצות התזונה מותאמות לך באופן אישי"),
       pdf.internal.pageSize.getWidth() / 2,
       y,
-      { align: "center" }
+      { align: "center" },
     );
     y += 14;
 
@@ -582,10 +599,29 @@ export default function PersonalMenu({ traineeData }) {
 
     const pickDinnerVariant = (meal) => {
       if (!meal) return null;
-      const { dairyStyle, meatStyle, veggieStyle } = meal;
+
       const isVegan = !!appliedPrefs?.isVegan;
       const isVegetarian = !!appliedPrefs?.isVegetarian;
-      if (isVegan) return veggieStyle || dairyStyle || meatStyle || meal;
+
+      const hasGroups = (m) => Array.isArray(m?.groups);
+      const hasVeganGroups = (m) =>
+        hasGroups(m) &&
+        m.groups.some(
+          (g) => g.key === "vegan_protein" || g.key === "vegan_carbs",
+        );
+
+      const { dairyStyle, meatStyle, veggieStyle, veganStyle } = meal;
+
+      if (isVegan) {
+        // אם meal עצמו כבר "שטוח" עם groups טבעוניים
+        if (hasVeganGroups(meal)) return meal;
+        // אם יש veganStyle
+        if (hasVeganGroups(veganStyle)) return veganStyle;
+        // fallback רק אם במקרה יש vegan_* ב-veggieStyle
+        if (hasVeganGroups(veggieStyle)) return veggieStyle;
+        return meal; // כדי שלא יקרוס, אבל אולי יצא ריק אם אין vegan_*
+      }
+
       if (isVegetarian) return dairyStyle || veggieStyle || meatStyle || meal;
       return meatStyle || dairyStyle || veggieStyle || meal;
     };
@@ -637,14 +673,37 @@ export default function PersonalMenu({ traineeData }) {
       }
 
       // צהריים/בשרית/צמחונית: חלבון מול פחמימות/קטניות מאוחדות
+      // צהריים/ערב: התאמה לטבעוני/צמחוני/רגיל
       if (key === "lunch" || key === "dinner") {
+        const isVegan = !!appliedPrefs?.isVegan;
+        const isVegetarian = !!appliedPrefs?.isVegetarian;
+
+        if (isVegan) {
+          const veganProtein =
+            findGroup(meal, ["vegan_protein"])?.options || [];
+          const veganCarbs = findGroup(meal, ["vegan_carbs"])?.options || [];
+
+          y = drawTable({
+            headRows: [
+              [
+                { content: mirror("חלבון — בחרי אחד"), colSpan: 2 },
+                { content: mirror("פחמימה — בחרי אחד"), colSpan: 2 },
+              ],
+              [mirror("כמות"), mirror("מוצר"), mirror("כמות"), mirror("מוצר")],
+            ],
+            body: buildDualRows(veganProtein, veganCarbs),
+            startY: y + 2,
+          });
+
+          return;
+        }
+
         const protein = findGroup(meal, ["protein"])?.options || [];
         const carbs = findGroup(meal, ["carbs"])?.options || [];
         const legumes =
           findGroup(meal, ["legumes_lunch", "legumes"])?.options || [];
 
-        // מאחדים פחמימות וקטניות
-        const mergedCarbs = [...carbs, ...legumes];
+        const mergedCarbs = isVegetarian ? carbs : [...carbs, ...legumes];
 
         y = drawTable({
           headRows: [
@@ -871,10 +930,89 @@ export default function PersonalMenu({ traineeData }) {
 
     const isVegan = !!appliedPrefs?.isVegan;
     const isVegetarian = !!appliedPrefs?.isVegetarian;
-    const isVeg = isVegan || isVegetarian;
 
-    const proteinGroup = findGroup(meal, ["protein"]);
+    // ====== 1) טבעוני: רק vegan_* ======
+    if (isVegan) {
+      const veganProteinGroup = findGroup(meal, ["vegan_protein"]);
+      const veganCarbsGroup = findGroup(meal, ["vegan_carbs"]);
+      const veganFatGroup = findGroup(meal, ["vegan_fat"]); // אופציונלי להמשך
+
+      const veganProtein = veganProteinGroup?.options || [];
+      const veganCarbs = veganCarbsGroup?.options || [];
+      const veganFats = veganFatGroup?.options || [];
+
+      const showDual =
+        (veganProtein?.length || 0) > 0 || (veganCarbs?.length || 0) > 0;
+
+      if (!showDual && (veganFats?.length || 0) === 0) {
+        return (
+          <div className="meal-card stacked">
+            <SectionTitle>{title} — גרסה טבעונית</SectionTitle>
+            <TargetsRow t={t} />
+            <div style={{ padding: 8, opacity: 0.8 }}>
+              לא נמצאו אופציות טבעוניות. בדקי שבמאכלים יש קטגוריות{" "}
+              <code>vegan_protein</code> / <code>vegan_carbs</code> /{" "}
+              <code>vegan_fat</code> וגם <code>safe_vegan</code>.
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <>
+          {showDual && (
+            <div className="meal-card stacked">
+              <SectionTitle>{title} — גרסה טבעונית</SectionTitle>
+              <TargetsRow t={t} />
+              <DualGroupTable
+                proteinTitle={
+                  veganProteinGroup?.title || "חלבון לטבעונים - בחרי אחד"
+                }
+                carbTitle={
+                  veganCarbsGroup?.title || "פחמימה לטבעונים - בחרי אחד"
+                }
+                proteinOptions={veganProtein}
+                carbOptions={veganCarbs}
+              />
+            </div>
+          )}
+
+          {/* אופציונלי: אם בעתיד את מציגה גם שומן לטבעונים, אפשר להציג טבלה נפרדת */}
+          {veganFats.length > 0 && (
+            <div className="meal-card stacked">
+              <SectionTitle>{title} — תוספת שומן (טבעוני)</SectionTitle>
+              <TargetsRow t={t} />
+              <table className="menu-table" dir="rtl">
+                <thead>
+                  <tr>
+                    <th style={{ width: 110 }}>כמות</th>
+                    <th>מוצר</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {veganFats.map((opt, i) => (
+                    <tr key={i}>
+                      <td className="amount">
+                        {renderCombo(opt?.displayText || "")}
+                      </td>
+                      <td>{renderCombo(opt?.food?.name || "")}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      );
+    }
+
+    // ====== 2) צמחוני: כמו היום (protein/carbs + קטניות) ======
+    const proteinGroup = isVegetarian
+      ? findGroup(meal, ["veges_Protein"])
+      : findGroup(meal, ["protein"]);
+
     const carbsGroup = findGroup(meal, ["carbs"]);
+
     const legumesGroup = findGroup(meal, ["legumes_lunch"]);
 
     const protein = proteinGroup?.options || [];
@@ -901,17 +1039,18 @@ export default function PersonalMenu({ traineeData }) {
       .reduce(
         (acc, x) =>
           acc.some((y) => byId(y) === byId(x)) ? acc : acc.concat(x),
-        []
+        [],
       );
 
-    if (isVeg) {
+    if (isVegetarian) {
       const showDual =
         (protein?.length || 0) > 0 || (carbsNoLegumes?.length || 0) > 0;
+
       return (
         <>
           {showDual && (
             <div className="meal-card stacked">
-              <SectionTitle>{title} — גרסת צמחונים</SectionTitle>
+              <SectionTitle>{title} — גרסה צמחונית</SectionTitle>
               <TargetsRow t={t} />
               <DualGroupTable
                 proteinTitle={proteinLabel}
@@ -926,6 +1065,7 @@ export default function PersonalMenu({ traineeData }) {
       );
     }
 
+    // ====== 3) רגיל: מאחדים פחמימות + קטניות ======
     const carbsMergedLabel =
       carbsGroup?.title || legumesGroup?.title || "פחמימות / קטניות - בחרי אחד";
     const carbsMerged = [...carbsNoLegumes, ...legumesMerged];
@@ -954,7 +1094,7 @@ export default function PersonalMenu({ traineeData }) {
       proteinOptions.length,
       sweetsOptions.length,
       fruitsOptions.length,
-      fatsOptions.length
+      fatsOptions.length,
     );
     const get = (arr, i) => (i < arr.length ? arr[i] : null);
 
@@ -1062,13 +1202,76 @@ export default function PersonalMenu({ traineeData }) {
   }
 
   function DinnerBlock({ meal }) {
-    const { dairyStyle, meatStyle, veggieStyle } = meal;
-
     const isVegan = !!appliedPrefs?.isVegan;
     const isVegetarian = !!appliedPrefs?.isVegetarian;
     const isVeg = isVegan || isVegetarian;
 
-    const showDairy = !!dairyStyle && !isVegan;
+    // helper: האם יש בגרסה קבוצות טבעוניות
+    const hasVeganGroups = (m) =>
+      Array.isArray(m?.groups) &&
+      m.groups.some(
+        (g) => g.key === "vegan_protein" || g.key === "vegan_carbs",
+      );
+
+    // helper: האם זו חלבית-בוקר (prot_breakfast)
+    const isBreakfastLike = (m) =>
+      Array.isArray(m?.groups) &&
+      m.groups.some((g) => g.key === "prot_breakfast");
+
+    // אם dinner הגיע "שטוח" עם groups
+    if (Array.isArray(meal?.groups)) {
+      // טבעוני → חייב vegan_*
+      if (isVegan && !hasVeganGroups(meal)) {
+        return (
+          <div className="meal-card stacked">
+            <SectionTitle>ארוחת ערב</SectionTitle>
+            <div style={{ padding: 8, opacity: 0.8 }}>
+              ארוחת ערב טבעונית הגיעה בלי קבוצות <code>vegan_*</code>. ודאי
+              שבשרת dinner לטבעוני נבנה עם <code>vegan_protein</code>/
+              <code>vegan_carbs</code>.
+            </div>
+          </div>
+        );
+      }
+
+      // אם זו "בוקרית" (חלבית) נציג כמו BreakfastLike
+      if (!isVegan && isBreakfastLike(meal)) {
+        return <BreakfastLike meal={meal} title="ארוחת ערב — גרסה חלבית" />;
+      }
+
+      return <LunchBlock meal={meal} title="ארוחת ערב" />;
+    }
+
+    // אחרת dinner הגיע כ־styles
+    const { dairyStyle, meatStyle, veggieStyle, veganStyle } = meal || {};
+
+    // ✅ טבעוני: קודם veganStyle (אם קיימת), אחרת רק גרסה שיש בה vegan_*
+    if (isVegan) {
+      const veganCandidate =
+        (hasVeganGroups(meal) && meal) ||
+        (hasVeganGroups(veganStyle) && veganStyle) ||
+        null;
+
+      if (!veganCandidate) {
+        return (
+          <div className="meal-card stacked">
+            <SectionTitle>ארוחת ערב</SectionTitle>
+            <div style={{ padding: 8, opacity: 0.8 }}>
+              לא נמצאה גרסת ערב טבעונית. ודאי שבשרת מוחזר dinner טבעוני עם
+              <code>vegan_protein</code>/<code>vegan_carbs</code> (או
+              veganStyle).
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <LunchBlock meal={veganCandidate} title="ארוחת ערב — גרסה טבעונית" />
+      );
+    }
+
+    // צמחוני
+    const showDairy = !!dairyStyle;
     const showVeggie = !!veggieStyle;
     const showMeat = !!meatStyle && !isVeg;
 
@@ -1088,9 +1291,7 @@ export default function PersonalMenu({ traineeData }) {
           <div className="meal-card stacked">
             <SectionTitle>ארוחת ערב</SectionTitle>
             <div style={{ padding: 8, opacity: 0.8 }}>
-              לא נמצאה גרסת ערב מתאימה להעדפות (צמחונית/טבעונית). בדקי שהמאכלים
-              במסד מסומנים בקטגוריות <code>safe_vegetarian</code> /{" "}
-              <code>safe_vegan</code>.
+              לא נמצאה גרסת ערב מתאימה להעדפות (צמחונית/טבעונית).
             </div>
           </div>
         )}

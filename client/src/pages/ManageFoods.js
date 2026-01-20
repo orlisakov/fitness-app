@@ -42,6 +42,11 @@ const categoryMap = {
   vegetables_breakfast: "ירקות חופשיים לבוקר",
 
   // --- צהריים ---
+  // --- צהריים / טבעונים ---
+  vegan_protein: "חלבון לטבעונים",
+  vegan_fat: "שומן לטבעונים",
+  vegan_carbs: "פחמימות לטבעונים",
+
   veges_Protein: "חלבון לצמחונים",
   protein_lunch: "חלבון לצהריים",
   carbs_lunch: "פחמימות לצהריים (כללי)",

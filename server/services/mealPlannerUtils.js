@@ -306,7 +306,7 @@ function getDisplayText(food, q) {
     (s) =>
       typeof s.quantity === "number" &&
       Math.abs(s.quantity - q) < 1e-6 &&
-      s.displayText
+      s.displayText,
   );
   if (exact) return exact.displayText;
 
@@ -341,12 +341,6 @@ function getDisplayText(food, q) {
   }
 }
 
-// זיהוי "ביצה" לפי שם המוצר
-function looksLikeEgg(food) {
-  const name = (food?.name || "").trim();
-  return /(?:\b|_|^)(egg|eggs)(?:\b|_|$)|ביצה|ביצים/i.test(name);
-}
-
 /* ===================== חלוקת יתרה לארוחת בוקר ===================== */
 const DEFAULT_BREAKFAST_WEIGHTS = {
   protein: { prot: 0.7, carbs: 0.3 },
@@ -358,7 +352,7 @@ const DEFAULT_BREAKFAST_WEIGHTS = {
 function allocateRemainBetweenProtAndCarbs(
   remain,
   weights = DEFAULT_BREAKFAST_WEIGHTS,
-  safety = SAFETY
+  safety = SAFETY,
 ) {
   const keys = ["protein", "carbs", "fat", "calories"];
   const protT = {};
@@ -381,7 +375,7 @@ function allocateRemainBetweenProtAndCarbs(
 /* ===================== צהריים: השלמות קטנות ===================== */
 function topUpFromPool(remainTargets, foodsPool, maxWant = 12) {
   const keyMostMissing = ["protein", "carbs", "fat"].sort(
-    (a, b) => (remainTargets[b] ?? 0) - (remainTargets[a] ?? 0)
+    (a, b) => (remainTargets[b] ?? 0) - (remainTargets[a] ?? 0),
   )[0];
 
   const tinyT = {
@@ -422,7 +416,7 @@ function microSearchAround(
   maxQ,
   T,
   flexMap,
-  spanSteps = 3
+  spanSteps = 3,
 ) {
   const m = getEffectiveMacros(food);
   let best = null;
@@ -483,7 +477,7 @@ function tunePairToTargets(pOpt, cOpt, totalTargets, flexMap, microSpan = 3) {
         calories: totalTargets.calories * 0.5,
       },
       flexMap,
-      microSpan
+      microSpan,
     ) || { q: qP, nut: multiplyMacros(pm, qP), s: Infinity };
 
     const cLocal = microSearchAround(
@@ -499,7 +493,7 @@ function tunePairToTargets(pOpt, cOpt, totalTargets, flexMap, microSpan = 3) {
         calories: totalTargets.calories * 0.5,
       },
       flexMap,
-      microSpan
+      microSpan,
     ) || { q: qC, nut: multiplyMacros(cm, qC), s: Infinity };
 
     qP = pLocal.q;
@@ -728,7 +722,7 @@ function allocateMacro(total, weights, bounds, roundTo = 1) {
   const diff = total - sumRounded;
   if (diff !== 0) {
     const order = Object.keys(rounded).sort(
-      (a, b) => (weights[b] || 0) - (weights[a] || 0)
+      (a, b) => (weights[b] || 0) - (weights[a] || 0),
     );
     let left = Math.round(diff / roundTo);
     for (const k of order) {
@@ -753,13 +747,13 @@ function buildDynamicSplitInGrams(totals, ctx = {}) {
     totals.protein,
     tweaked.protein,
     DEFAULT_BOUNDS.protein,
-    1
+    1,
   );
   const carbs = allocateMacro(
     totals.carbs,
     tweaked.carbs,
     DEFAULT_BOUNDS.carbs,
-    1
+    1,
   );
   const fat = allocateMacro(totals.fat, tweaked.fat, DEFAULT_BOUNDS.fat, 1);
 
@@ -804,7 +798,7 @@ function buildEggsWithWhiteCheeseCombo(foods, protTarget, fatCeil, prefs = {}) {
   if (prefs?.isVegan) return null;
 
   const eggsPool = (foods || [])
-    .filter((f) => hasFlag(f, "flag_egg") || looksLikeEgg(f))
+    .filter((f) => hasFlag(f, "flag_egg"))
     .filter((f) => safeMatches(f, prefs));
 
   const cheesesPool = (foods || [])
@@ -872,7 +866,7 @@ function buildEggsWithWhiteCheeseCombo(foods, protTarget, fatCeil, prefs = {}) {
   const eggsQty = clamp(
     floorToIncrement(2, getInc(egg)),
     Math.max(1, toNumber(egg?.constraints?.minServing, 1)),
-    toNumber(egg?.constraints?.maxServing, 10)
+    toNumber(egg?.constraints?.maxServing, 10),
   );
   const cheeseQty = best.qC;
 
@@ -880,7 +874,7 @@ function buildEggsWithWhiteCheeseCombo(foods, protTarget, fatCeil, prefs = {}) {
     food: { name: `${egg.name} + ${cheese.name}` },
     displayText: `${getDisplayText(
       egg,
-      eggsQty
+      eggsQty,
     )} (חלמון אחד) + ${getDisplayText(cheese, cheeseQty)}`,
     quantity: null,
     nutrition: best.total,
@@ -896,12 +890,12 @@ function buildEggsWhiteCheeseStrictCombo(
   foods,
   protTarget,
   fatCeil,
-  prefs = {}
+  prefs = {},
 ) {
   if (prefs?.isVegan) return null;
 
   const eggsPool = (foods || [])
-    .filter((f) => hasFlag(f, "flag_egg") || looksLikeEgg(f))
+    .filter((f) => hasFlag(f, "flag_egg"))
     .filter((f) => safeMatches(f, prefs));
   const cheesesPool = (foods || [])
     .filter((f) => /גבינה\s*לבנה/i.test(f?.name || ""))
@@ -964,7 +958,7 @@ function buildEggsWhiteCheeseStrictCombo(
               food: { name: `${egg.name} + ${cheese.name}` },
               displayText: `${getDisplayText(egg, qE)} + ${getDisplayText(
                 cheese,
-                qC
+                qC,
               )}`,
               quantity: null,
               nutrition: total,
@@ -1023,7 +1017,7 @@ function buildTunaMayoCombo(foods, protTarget, fatCeil, prefs = {}) {
   qM = clamp(
     floorToIncrement(qM, getInc(mayo)),
     Number(mayo?.constraints?.minServing ?? 0.1),
-    Number(mayo?.constraints?.maxServing ?? 10)
+    Number(mayo?.constraints?.maxServing ?? 10),
   );
   const mayoNut = multiplyMacros(mM, qM);
   if (mayoNut.fat > fatCeil + 1e-9) return null;
@@ -1036,7 +1030,7 @@ function buildTunaMayoCombo(foods, protTarget, fatCeil, prefs = {}) {
   let qT = clamp(
     floorToIncrement((protTarget - mayoNut.protein) / tM.protein, tInc),
     tMin,
-    tMax
+    tMax,
   );
 
   let best = null,
@@ -1061,7 +1055,7 @@ function buildTunaMayoCombo(foods, protTarget, fatCeil, prefs = {}) {
     food: { name: `${tuna.name} + ${mayo.name}` },
     displayText: `${getDisplayText(tuna, best.qT)} + 🥄 ${getDisplayText(
       mayo,
-      qM
+      qM,
     )}`,
     quantity: null,
     nutrition: best.total,
@@ -1095,7 +1089,7 @@ class RuleBasedPlanner {
         fat: targets.totalFat,
         calories: targets.totalCalories,
       },
-      ctx
+      ctx,
     );
 
     // המרה לאחוזים (מה שסעיפי mealTargets משתמשים בו)
@@ -1129,7 +1123,7 @@ class RuleBasedPlanner {
       (f) =>
         bySuitability("dinner", minSuit)(f) &&
         inCats(f, ["protein_dinner"]) &&
-        !isDairy(f)
+        !isDairy(f),
     );
     return this.prefs?.isVegetarian ? [] : base;
   }
@@ -1137,19 +1131,35 @@ class RuleBasedPlanner {
   pool(filterFn) {
     return (
       this.foods
-        // ✅ חוסם veges_Protein רק למי שלא צמחוני *וגם* לא טבעוני
         .filter((f) => {
-          const isVeg = this.prefs?.isVegetarian || this.prefs?.isVegan;
-          if (!isVeg) {
+          const cats = Array.isArray(f.categories) ? f.categories : [];
+
+          const isVegan = !!this.prefs?.isVegan;
+          const isVegetarian = !!this.prefs?.isVegetarian;
+
+          // רגילה – לא להכניס צמחוני / טבעוני
+          if (!isVegan && !isVegetarian) {
             return (
-              !Array.isArray(f.categories) ||
-              !f.categories.includes("veges_Protein")
+              !cats.includes("veges_Protein") &&
+              !cats.includes("vegan_protein") &&
+              !cats.includes("vegan_carbs") &&
+              !cats.includes("vegan_fat")
             );
           }
-          return true; // צמחונית/טבעונית — מותר
+
+          // צמחונית – לחסום רק בשר
+          if (isVegetarian && !isVegan) {
+            return !cats.includes("meat");
+          }
+
+          // טבעונית – לא לחסום כלום כאן
+          return true;
         })
         .filter(filterFn)
-        .filter((f) => matchesPrefs(f, this.prefs))
+        // ⬇⬇⬇ פה התיקון הקריטי
+        .filter((f) =>
+          this.prefs?.isVegan ? true : matchesPrefs(f, this.prefs),
+        )
     );
   }
 
@@ -1158,9 +1168,7 @@ class RuleBasedPlanner {
   // ביצים: דגל בלבד — לא משתמשים בהן לבד בבוקר/ערב, רק בקומבו
   getEggsPool(meal, minSuit = 0) {
     return this.pool(
-      (f) =>
-        bySuitability(meal, minSuit)(f) &&
-        (hasFlag(f, "flag_egg") || looksLikeEgg(f))
+      (f) => bySuitability(meal, minSuit)(f) && hasFlag(f, "flag_egg"),
     );
   }
 
@@ -1171,18 +1179,41 @@ class RuleBasedPlanner {
 
   // חלבון לבוקר: מוצרי חלב או דגים/טונה (בלי ביצים לבד)
   getBreakfastProteinPool(minSuit = 4) {
+    const isVegan = this.prefs?.isVegan;
+    const isVegetarian = this.prefs?.isVegetarian;
+
+    // טבעוני
+    if (isVegan) {
+      return this.pool(
+        (f) =>
+          bySuitability("breakfast", minSuit)(f) &&
+          !this.isMayo(f) &&
+          // חלבון טבעוני ייעודי
+          inCats(f, ["protein_breakfast"]) &&
+          inCats(f, ["safe_vegan"]),
+      );
+    }
+
+    // צמחוני
+    if (isVegetarian) {
+      return this.pool(
+        (f) =>
+          bySuitability("breakfast", minSuit)(f) &&
+          !this.isMayo(f) &&
+          (hasFlag(f, "flag_dairy") ||
+            hasFlag(f, "flag_egg") ||
+            inCats(f, ["veges_Protein"])),
+      );
+    }
+
+    // רגיל
     return this.pool(
       (f) =>
         bySuitability("breakfast", minSuit)(f) &&
-        !this.isMayo(f) && // FIX: מניעת מיונז בפול החלבון
-        // ✅ מוצרי חלב לבוקר
-        ((hasFlag(f, "flag_dairy") &&
-          inCats(f, ["protein_breakfast", "protein_any", "protein_main"])) ||
-          // ✅ דגים/טונה
+        !this.isMayo(f) &&
+        (hasFlag(f, "flag_dairy") ||
           hasFlag(f, "flag_fish") ||
-          // ✅ ביצים כאופציה רגילה (דגל או לפי שם)
-          hasFlag(f, "flag_egg") ||
-          looksLikeEgg(f))
+          hasFlag(f, "flag_egg")),
     );
   }
 
@@ -1191,7 +1222,7 @@ class RuleBasedPlanner {
     return this.pool(
       (f) =>
         bySuitability("breakfast", minSuit)(f) &&
-        inCats(f, ["fat_breakfast", "fat_any", "fat_main"])
+        inCats(f, ["fat_breakfast", "fat_any", "fat_main"]),
     );
   }
 
@@ -1240,7 +1271,7 @@ class RuleBasedPlanner {
     const qClamped = clamp(
       floorToIncrement(q, getInc(mayo)),
       Number(mayo?.constraints?.minServing ?? 0.1),
-      Number(mayo?.constraints?.maxServing ?? 10)
+      Number(mayo?.constraints?.maxServing ?? 10),
     );
     const nut = multiplyMacros(getEffectiveMacros(mayo), qClamped);
     return {
@@ -1261,7 +1292,7 @@ class RuleBasedPlanner {
           "carbs_bread",
           "carbs_pita",
           "carbs_main",
-        ])
+        ]),
     );
   }
 
@@ -1277,7 +1308,7 @@ class RuleBasedPlanner {
   getBreakfastVeggiesPool(meal, minSuit = 3) {
     return this.pool(
       (f) =>
-        bySuitability(meal, minSuit)(f) && inCats(f, ["vegetables_breakfast"])
+        bySuitability(meal, minSuit)(f) && inCats(f, ["vegetables_breakfast"]),
     );
   }
 
@@ -1285,7 +1316,7 @@ class RuleBasedPlanner {
     return this.pool(
       (f) =>
         bySuitability("lunch", minSuit)(f) &&
-        (inCats(f, ["protein_lunch"]) || inCats(f, ["veges_Protein"]))
+        (inCats(f, ["protein_lunch"]) || inCats(f, ["veges_Protein"])),
     );
   }
 
@@ -1294,71 +1325,112 @@ class RuleBasedPlanner {
     return this.pool(
       (f) =>
         bySuitability("lunch", minSuit)(f) &&
-        (inCats(f, ["protein_lunch"]) || inCats(f, ["veges_Protein"]))
+        (inCats(f, ["protein_lunch"]) || inCats(f, ["veges_Protein"])),
     );
   }
+
+  // צמחוני: חלבון לצהריים רק מ-veges_Protein
+  getProteinLunchVegetarian(minSuit = 5) {
+    return this.pool(
+      (f) => bySuitability("lunch", minSuit)(f) && inCats(f, ["veges_Protein"]),
+    );
+  }
+
+  // טבעוני: חלבון לצהריים רק מ-vegan_protein
+  getProteinLunchVegan(minSuit = 5) {
+    if (!this.prefs?.isVegan) return [];
+    return this.pool(
+      (f) => bySuitability("lunch", minSuit)(f) && inCats(f, ["vegan_protein"]),
+    );
+  }
+
+  getFatLunchVegan(minSuit = 5) {
+    if (!this.prefs?.isVegan) return [];
+    return this.pool(
+      (f) => bySuitability("lunch", minSuit)(f) && inCats(f, ["vegan_fat"]),
+    );
+  }
+
+  getCarbsLunchVegan(minSuit = 5) {
+    if (!this.prefs?.isVegan) return [];
+    return this.pool(
+      (f) => bySuitability("lunch", minSuit)(f) && inCats(f, ["vegan_carbs"]),
+    );
+  }
+
+  getFatLunchVegan(minSuit = 5) {
+    if (!this.prefs?.isVegan) return [];
+    return this.pool(
+      (f) => bySuitability("lunch", minSuit)(f) && inCats(f, ["vegan_fat"]),
+    );
+  }
+
   getCarbsOrLegumesLunch(minSuit = 5) {
     return this.pool(
       (f) =>
         bySuitability("lunch", minSuit)(f) &&
         (inCats(f, ["carbs_lunch"]) ||
           inCats(f, ["legumes_lunch"]) ||
-          inCats(f, ["carbs_bread"]))
+          inCats(f, ["carbs_bread"])),
     );
   }
 
   // ערב
   getProteinDinner(minSuit = 5) {
-    if (this.prefs?.isVegetarian) return []; // חגורת בטיחות
+    if (this.prefs?.isVegetarian && !this.prefs?.isVegan) return [];
     return this.pool(
       (f) =>
-        bySuitability("dinner", minSuit)(f) && inCats(f, ["protein_dinner"])
+        bySuitability("dinner", minSuit)(f) && inCats(f, ["protein_dinner"]),
     );
   }
 
   getCarbsDinner(minSuit = 5) {
     return this.pool(
-      (f) => bySuitability("dinner", minSuit)(f) && inCats(f, ["carbs_dinner"])
+      (f) => bySuitability("dinner", minSuit)(f) && inCats(f, ["carbs_dinner"]),
     );
   }
   getLegumesDinner(minSuit = 5) {
     return this.pool(
       (f) =>
-        bySuitability("dinner", minSuit)(f) && inCats(f, ["legumes_dinner"])
+        bySuitability("dinner", minSuit)(f) && inCats(f, ["legumes_dinner"]),
     );
   }
   getVegDinner(minSuit = 3) {
     return this.pool(
       (f) =>
-        bySuitability("dinner", minSuit)(f) && inCats(f, ["vegetables_dinner"])
+        bySuitability("dinner", minSuit)(f) && inCats(f, ["vegetables_dinner"]),
     );
   }
 
   // חלבון/חטיפים ביניים
   getProteinSnack(minSuit = 3) {
     return this.pool(
-      (f) => inCats(f, ["protein_snack"]) && bySuitability("snack", minSuit)(f)
+      (f) => inCats(f, ["protein_snack"]) && bySuitability("snack", minSuit)(f),
     );
   }
   getSweetSnack(minSuit = 5) {
     return this.pool(
       (f) =>
         bySuitability("snack", minSuit)(f) &&
-        inCats(f, ["sweet_snack", "carbs_snack"])
+        inCats(f, ["sweet_snack", "carbs_snack"]),
     );
   }
   getFruitSnack(minSuit = 6) {
     return this.pool(
-      (f) => bySuitability("snack", minSuit)(f) && inCats(f, ["fruit_snack"])
+      (f) => bySuitability("snack", minSuit)(f) && inCats(f, ["fruit_snack"]),
     );
   }
   getFatSnack(minSuit = 6) {
     return this.pool(
-      (f) => bySuitability("snack", minSuit)(f) && inCats(f, ["fat_snack"])
+      (f) => bySuitability("snack", minSuit)(f) && inCats(f, ["fat_snack"]),
     );
   }
 
   buildLunch(totalTargets) {
+    // טבעוני קודם (כי טבעוני גם "לא צמחוני" אצלך לפעמים, תלוי איך את מסמנת)
+    if (this.prefs?.isVegan) {
+      return this.buildLunchVegan(totalTargets);
+    }
     // אם צמחונית — נשתמש בגרסה הצמחונית הקיימת
     if (this.prefs?.isVegetarian) {
       return this.buildLunchVegetarian(totalTargets);
@@ -1374,14 +1446,14 @@ class RuleBasedPlanner {
       "protein",
       totalTargets.protein,
       fatCeil,
-      80
+      80,
     );
     const carbs = this.buildGroupOptionsDominantWithFatCeil(
       carbsPool,
       "carbs",
       totalTargets.carbs,
       fatCeil,
-      80
+      80,
     );
 
     const vegFree = this.buildFreeList(this.getVegDinner(3), 12, "חופשי");
@@ -1433,7 +1505,7 @@ class RuleBasedPlanner {
         food,
         groupTargets,
         flexOverride,
-        customCheck
+        customCheck,
       );
       if (!pack) continue;
       candidates.push({
@@ -1449,7 +1521,7 @@ class RuleBasedPlanner {
       (a, b) =>
         a._score - b._score ||
         b.nutrition.protein - a.nutrition.protein ||
-        a.nutrition.calories - b.nutrition.calories
+        a.nutrition.calories - b.nutrition.calories,
     );
 
     return candidates.slice(0, want);
@@ -1540,7 +1612,7 @@ class RuleBasedPlanner {
       candidates.sort(
         (a, b) =>
           a._score - b._score ||
-          (a.nutrition?.calories || 0) - (b.nutrition?.calories || 0)
+          (a.nutrition?.calories || 0) - (b.nutrition?.calories || 0),
       );
 
       return candidates.slice(0, want);
@@ -1550,33 +1622,36 @@ class RuleBasedPlanner {
     const proteinPool = this.getProteinSnack(0);
     const sweetsPool = this.getSweetSnack(0);
     const fruitsPool = this.getFruitSnack(0);
-    const FatsPool = this.getFatSnack(0);
+    const FatsPool = this.pool(
+      (f) =>
+        inCats(f, ["fat_snack", "vegan_fat"]) && bySuitability("snack", 0)(f),
+    );
 
     // אופציות לפי מאקרו יחיד
     const proteins = buildSingleMacroOptions(
       proteinPool,
       "protein",
       totalTargets.protein,
-      80
+      80,
     );
     const sweetsAsCarb = buildSingleMacroOptions(
       sweetsPool,
       "carbs",
       totalTargets.carbs,
-      35
+      35,
     );
     const fruitsAsAlt = buildSingleMacroOptions(
       fruitsPool,
       "carbs",
       totalTargets.carbs,
-      30
+      30,
     );
 
     const FatsAsAlt = buildSingleMacroOptions(
       FatsPool,
       "fat",
       totalTargets.fat,
-      30
+      30,
     );
 
     return {
@@ -1733,7 +1808,7 @@ class RuleBasedPlanner {
     protTarget,
     carbTarget,
     fatCeil,
-    want = 40
+    want = 40,
   ) {
     const out = [];
     for (const food of pool) {
@@ -1741,7 +1816,7 @@ class RuleBasedPlanner {
         food,
         protTarget,
         carbTarget,
-        fatCeil
+        fatCeil,
       );
       if (!pack) continue;
       const dp = protTarget - pack.nut.protein;
@@ -1758,7 +1833,7 @@ class RuleBasedPlanner {
     out.sort(
       (a, b) =>
         a._score - b._score ||
-        (a.nutrition?.protein || 0) - (b.nutrition?.protein || 0)
+        (a.nutrition?.protein || 0) - (b.nutrition?.protein || 0),
     );
     return out.slice(0, want);
   }
@@ -1768,7 +1843,7 @@ class RuleBasedPlanner {
     dominantKey,
     domTarget,
     fatCeil,
-    want = 30
+    want = 30,
   ) {
     const candidates = [];
     for (const food of pool) {
@@ -1776,12 +1851,12 @@ class RuleBasedPlanner {
         food,
         dominantKey,
         domTarget,
-        fatCeil
+        fatCeil,
       );
       if (!pack) continue;
       const s = Math.abs(
         domTarget -
-          (dominantKey === "protein" ? pack.nut.protein : pack.nut.carbs)
+          (dominantKey === "protein" ? pack.nut.protein : pack.nut.carbs),
       );
       candidates.push({
         food,
@@ -1794,7 +1869,7 @@ class RuleBasedPlanner {
     candidates.sort(
       (a, b) =>
         a._score - b._score ||
-        (a.nutrition?.calories || 0) - (b.nutrition?.calories || 0)
+        (a.nutrition?.calories || 0) - (b.nutrition?.calories || 0),
     );
     return candidates.slice(0, want);
   }
@@ -1811,7 +1886,7 @@ class RuleBasedPlanner {
       "protein",
       totalTargets.protein,
       fatCeil,
-      30
+      30,
     );
 
     const carbsOptions = this.buildGroupOptionsDominantWithFatCeil(
@@ -1819,7 +1894,7 @@ class RuleBasedPlanner {
       "carbs",
       totalTargets.carbs,
       fatCeil,
-      30
+      30,
     );
 
     // --- Eggs + White Cheese: choose a single combo (prefer strict) ---
@@ -1827,13 +1902,13 @@ class RuleBasedPlanner {
       this.foods,
       totalTargets.protein,
       fatCeil,
-      this.prefs
+      this.prefs,
     );
     const eggsCheeseFlex = buildEggsWithWhiteCheeseCombo(
       this.foods,
       totalTargets.protein,
       fatCeil,
-      this.prefs
+      this.prefs,
     );
     let eggsComboToUse = eggsCheeseCombo || eggsCheeseFlex || null;
 
@@ -1842,7 +1917,7 @@ class RuleBasedPlanner {
       this.foods,
       totalTargets.protein,
       fatCeil,
-      this.prefs
+      this.prefs,
     );
 
     // ---- דה-דופליקציה והזרקה מסודרת של הקומבואים ----
@@ -1894,7 +1969,7 @@ class RuleBasedPlanner {
               opt?._id ||
               opt?.id ||
               opt?.name ||
-              ""
+              "",
           );
           if (fid === String(tunaId)) proteinOptions.splice(i, 1);
         }
@@ -1944,45 +2019,92 @@ class RuleBasedPlanner {
     };
   }
 
-  buildLunchVegetarian(totalTargets) {
-    const protTarget = Math.max(0, toNumber(totalTargets.protein, 0));
-    const carbTarget = Math.max(0, toNumber(totalTargets.carbs, 0));
+  buildLunchVegan(totalTargets) {
     const fatCeil = Math.max(0, toNumber(totalTargets.fat, 0));
 
-    const legumesPool = this.getCarbsOrLegumesLunch();
-    const legumesOnly = legumesPool.filter((f) => inCats(f, ["legumes_lunch"]));
-
-    const legumesOptions = this.buildGroupOptionsLegumesBiDominant(
-      legumesOnly.length ? legumesOnly : legumesPool,
-      protTarget,
-      carbTarget,
-      fatCeil,
-      60
+    // חלבון טבעוני
+    const proteinPool = this.pool(
+      (f) =>
+        inCats(f, ["vegan_protein"]) ||
+        (inCats(f, ["protein_lunch"]) && inCats(f, ["safe_vegan"])) ||
+        (inCats(f, ["veges_Protein"]) && inCats(f, ["safe_vegan"])),
     );
 
-    const proteinPoolVeg = this.getProteinLunchVeg();
-    const carbsOrLegumesPool = this.getCarbsOrLegumesLunch();
-    const carbsNoLegumes = carbsOrLegumesPool.filter(
-      (f) => !inCats(f, ["legumes_lunch"])
+    // פחמימות טבעוניות
+    const carbsPool = this.pool(
+      (f) =>
+        (inCats(f, ["carbs_lunch", "legumes_lunch", "carbs_bread"]) &&
+          inCats(f, ["safe_vegan"])) ||
+        inCats(f, ["vegan_carbs"]),
     );
 
-    const proteinOptions = this.buildGroupOptionsDominantWithFatCeil(
-      proteinPoolVeg,
+    const proteins = this.buildGroupOptionsDominantWithFatCeil(
+      proteinPool,
       "protein",
-      protTarget,
+      totalTargets.protein,
       fatCeil,
-      60
+      60,
     );
 
-    const carbsOptions = this.buildGroupOptionsDominantWithFatCeil(
-      carbsNoLegumes,
+    const carbs = this.buildGroupOptionsDominantWithFatCeil(
+      carbsPool,
       "carbs",
-      carbTarget,
+      totalTargets.carbs,
       fatCeil,
-      80
+      80,
     );
 
-    const vegFree = this.buildFreeList(this.getVegDinner(3), 12, "חופשי");
+    return {
+      mode: "variety",
+      header: "צהריים — גרסה טבעונית",
+      targets: totalTargets,
+      groups: [
+        {
+          title: "חלבון טבעוני - בחרי אחד",
+          key: "vegan_protein",
+          options: proteins,
+          selected: proteins[0] || null,
+        },
+        {
+          title: "פחמימה טבעונית - בחרי אחד",
+          key: "vegan_carbs",
+          options: carbs,
+          selected: carbs[0] || null,
+        },
+      ],
+    };
+  }
+
+  buildLunchVegetarian(totalTargets) {
+    const fatCeil = Math.max(0, toNumber(totalTargets.fat, 0));
+
+    // חלבון צמחוני בלבד
+    const proteinPool = this.pool(
+      (f) =>
+        inCats(f, ["veges_Protein"]) ||
+        (inCats(f, ["protein_lunch"]) && inCats(f, ["safe_vegetarian"])),
+    );
+
+    // פחמימות רגילות (אורז, פסטה, תפוח אדמה וכו')
+    const carbsPool = this.pool((f) =>
+      inCats(f, ["carbs_lunch", "legumes_lunch", "carbs_bread"]),
+    );
+
+    const proteins = this.buildGroupOptionsDominantWithFatCeil(
+      proteinPool,
+      "protein",
+      totalTargets.protein,
+      fatCeil,
+      60,
+    );
+
+    const carbs = this.buildGroupOptionsDominantWithFatCeil(
+      carbsPool,
+      "carbs",
+      totalTargets.carbs,
+      fatCeil,
+      80,
+    );
 
     return {
       mode: "variety",
@@ -1990,31 +2112,25 @@ class RuleBasedPlanner {
       targets: totalTargets,
       groups: [
         {
-          title: "חלבון - בחרי אחד",
-          key: "protein",
-          options: proteinOptions,
-          selected: proteinOptions[0] || undefined,
+          title: "חלבון צמחוני - בחרי אחד",
+          key: "veges_Protein",
+          options: proteins,
+          selected: proteins[0] || null,
         },
         {
           title: "פחמימה - בחרי אחד",
           key: "carbs",
-          options: carbsOptions,
-          selected: carbsOptions[0] || undefined,
+          options: carbs,
+          selected: carbs[0] || null,
         },
-        {
-          title: "קטניות - בחרי אחד",
-          key: "legumes_lunch",
-          options: legumesOptions,
-          selected: legumesOptions[0] || undefined,
-        },
-        { title: "ירקות - חופשי", key: "veg_free", options: vegFree },
       ],
     };
   }
 
   getProteinDinnerVeg(minSuit = 5) {
     return this.pool(
-      (f) => bySuitability("dinner", minSuit)(f) && inCats(f, ["veges_Protein"])
+      (f) =>
+        bySuitability("dinner", minSuit)(f) && inCats(f, ["veges_Protein"]),
     );
   }
 
@@ -2029,7 +2145,7 @@ class RuleBasedPlanner {
       protTarget,
       carbTarget,
       fatCeil,
-      60
+      60,
     );
 
     const vegProtPool = this.getProteinDinnerVeg();
@@ -2038,7 +2154,7 @@ class RuleBasedPlanner {
       "protein",
       protTarget,
       fatCeil,
-      60
+      60,
     );
 
     const vegFree = this.buildFreeList(this.getVegDinner(), 12, "חופשי");
@@ -2069,7 +2185,87 @@ class RuleBasedPlanner {
     return this.buildBreakfastTemplate("breakfast", totalTargets);
   }
 
+  getProteinDinnerVegan(minSuit = 5) {
+    if (!this.prefs?.isVegan) return [];
+    return this.pool(
+      (f) =>
+        bySuitability("dinner", minSuit)(f) && inCats(f, ["vegan_protein"]),
+    );
+  }
+  getCarbsDinnerVegan(minSuit = 5) {
+    if (!this.prefs?.isVegan) return [];
+    return this.pool(
+      (f) => bySuitability("dinner", minSuit)(f) && inCats(f, ["vegan_carbs"]),
+    );
+  }
+  getFatDinnerVegan(minSuit = 5) {
+    if (!this.prefs?.isVegan) return [];
+    return this.pool(
+      (f) => bySuitability("dinner", minSuit)(f) && inCats(f, ["vegan_fat"]),
+    );
+  }
+
+  buildDinnerVegan(totalTargets) {
+    const fatCeil = Math.max(0, toNumber(totalTargets.fat, 0));
+
+    // חלבון = כמו בוקר טבעוני
+    const proteinPool = this.pool(
+      (f) =>
+        inCats(f, ["vegan_protein"]) ||
+        (inCats(f, ["veges_Protein"]) && inCats(f, ["safe_vegan"])) ||
+        (inCats(f, ["protein_breakfast"]) && inCats(f, ["safe_vegan"])),
+    );
+
+    // פחמימות = כמו בוקר טבעוני
+    const carbsPool = this.pool(
+      (f) =>
+        (inCats(f, ["carbs_breakfast", "carbs_dinner"]) &&
+          inCats(f, ["safe_vegan"])) ||
+        inCats(f, ["vegan_carbs"]),
+    );
+
+    const proteins = this.buildGroupOptionsDominantWithFatCeil(
+      proteinPool,
+      "protein",
+      totalTargets.protein,
+      fatCeil,
+      60,
+    );
+
+    const carbs = this.buildGroupOptionsDominantWithFatCeil(
+      carbsPool,
+      "carbs",
+      totalTargets.carbs,
+      fatCeil,
+      80,
+    );
+
+    return {
+      mode: "variety",
+      header: "ערב — גרסה טבעונית",
+      targets: totalTargets,
+      groups: [
+        {
+          title: "חלבון טבעוני - בחרי אחד",
+          key: "vegan_protein",
+          options: proteins,
+          selected: proteins[0] || null,
+        },
+        {
+          title: "פחמימה טבעונית - בחרי אחד",
+          key: "vegan_carbs",
+          options: carbs,
+          selected: carbs[0] || null,
+        },
+      ],
+    };
+  }
+
   buildDinner(totalTargets) {
+    // טבעוני: רק טבעוני (בלי חלבי ובלי בשרי)
+    if (this.prefs?.isVegan) {
+      return this.buildDinnerVegan(totalTargets);
+    }
     const fatCeil = Math.max(0, toNumber(totalTargets.fat, 0));
     // גרסה חלבית (מבוסס בוקר)
     const dairyStyle = this.buildBreakfastTemplate("dinner", totalTargets);
@@ -2077,8 +2273,10 @@ class RuleBasedPlanner {
 
     // ✅ אם צמחונית — לא בונים meatStyle בכלל
     if (this.prefs?.isVegetarian) {
-      const veggieStyle = this.buildDinnerVegetarian(totalTargets);
-      return veggieStyle ? { dairyStyle, veggieStyle } : { dairyStyle };
+      // צמחוני = רק גרסה חלבית כמו בוקר
+      const dairyStyle = this.buildBreakfastTemplate("dinner", totalTargets);
+      dairyStyle.header = "ערב — גרסה חלבית (צמחוני)";
+      return dairyStyle;
     }
 
     // לא צמחונית → יש גם בשרית
@@ -2093,7 +2291,7 @@ class RuleBasedPlanner {
         if (seen.has(id)) return false;
         seen.add(id);
         return true;
-      }
+      },
     );
 
     const proteinsMeaty = this.buildGroupOptionsDominantWithFatCeil(
@@ -2101,14 +2299,14 @@ class RuleBasedPlanner {
       "protein",
       totalTargets.protein,
       fatCeil,
-      60
+      60,
     );
     const carbsOrLegumes = this.buildGroupOptionsDominantWithFatCeil(
       carbsLegumesPool,
       "carbs",
       totalTargets.carbs,
       fatCeil,
-      80
+      80,
     );
     const vegFree = this.buildFreeList(this.getVegDinner(), 12, "חופשי");
 
@@ -2159,10 +2357,10 @@ const toBool = (x) =>
   typeof x === "boolean"
     ? x
     : typeof x === "number"
-    ? x !== 0
-    : typeof x === "string"
-    ? ["true", "1", "yes", "on"].includes(x.toLowerCase())
-    : false;
+      ? x !== 0
+      : typeof x === "string"
+        ? ["true", "1", "yes", "on"].includes(x.toLowerCase())
+        : false;
 
 const coalesce = (dbVal, clientVal) =>
   typeof dbVal === "boolean" ? dbVal : !!clientVal;
@@ -2222,7 +2420,6 @@ module.exports = {
   inCats,
   bySuitability,
   getDisplayText,
-  looksLikeEgg,
   allocateRemainBetweenProtAndCarbs,
 
   // constants
