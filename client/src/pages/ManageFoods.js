@@ -45,6 +45,14 @@ const categoryMap = {
 
   // --- צהריים ---
   // --- צהריים / טבעונים ---
+  vegan_protein_breakfast: "חלבון טבעוני לבוקר",
+  vegan_protein_lunch: "חלבון טבעוני לצהריים",
+  vegan_protein_snack: "חלבון טבעוני לביניים",
+  vegan_protein_dinner: "חלבון טבעוני לערב",
+
+  vegan_fat_breakfast: "שומן טבעוני לבוקר",
+  vegan_fat_dinner: "שומן טבעוני לערב",
+
   vegan_protein: "חלבון לטבעונים",
   vegan_fat: "שומן לטבעונים",
   vegan_carbs: "פחמימות לטבעונים",
@@ -76,8 +84,8 @@ const categoryMap = {
   carbs_root: "שורשיים",
 
   // === דגלים ספציפיים לדגים/טונה (ללוגיקת המיונז) ===
-  fish_in_water: "דג/טונה במים", // ← חדש
-  fish_in_oil: "דג/טונה בשמן", // ← חדש
+  fish_in_water: "דג/טונה במים",
+  fish_in_oil: "דג/טונה בשמן",
 
   vegetables_limited_onion: "ירק מוגבל – בצל",
   vegetables_limited_carrot: "ירק מוגבל – גזר",

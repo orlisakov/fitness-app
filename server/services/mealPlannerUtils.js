@@ -1195,12 +1195,10 @@ class RuleBasedPlanner {
     if (isVegan) {
       return this.pool(
         (f) =>
-          bySuitability("breakfast", minSuit)(f) &&
-          !this.isMayo(f) &&
-          (inCats(f, ["vegan_protein"]) ||
-            (inCats(f, ["protein_breakfast"]) && inCats(f, ["safe_vegan"])) ||
-            (inCats(f, ["protein_breakfast_veges"]) &&
-              inCats(f, ["safe_vegan"]))),
+          (bySuitability("breakfast", minSuit)(f) &&
+            !this.isMayo(f) &&
+            inCats(f, ["vegan_protein_breakfast"])) ||
+          inCats(f, ["vegan_fat_breakfast"]),
       );
     }
 
@@ -1221,6 +1219,7 @@ class RuleBasedPlanner {
       (f) =>
         bySuitability("breakfast", minSuit)(f) &&
         !this.isMayo(f) &&
+        !inCats(f, ["protein_snack"]) &&
         (hasFlag(f, "flag_dairy") ||
           hasFlag(f, "flag_fish") ||
           hasFlag(f, "flag_egg")),
@@ -1414,10 +1413,21 @@ class RuleBasedPlanner {
 
   // חלבון/חטיפים ביניים
   getProteinSnack(minSuit = 3) {
+    // טבעוני – רק קטגוריית vegan_protein_snack
+    if (this.prefs?.isVegan) {
+      return this.pool(
+        (f) =>
+          bySuitability("snack", minSuit)(f) &&
+          inCats(f, ["vegan_protein_snack"]),
+      );
+    }
+
+    // לא טבעוני – התנהגות רגילה
     return this.pool(
       (f) => inCats(f, ["protein_snack"]) && bySuitability("snack", minSuit)(f),
     );
   }
+
   getSweetSnack(minSuit = 5) {
     return this.pool(
       (f) =>
@@ -2053,12 +2063,7 @@ class RuleBasedPlanner {
     const fatCeil = Math.max(0, toNumber(totalTargets.fat, 0));
 
     // חלבון טבעוני
-    const proteinPool = this.pool(
-      (f) =>
-        inCats(f, ["vegan_protein"]) ||
-        (inCats(f, ["protein_lunch"]) && inCats(f, ["safe_vegan"])) ||
-        (inCats(f, ["veges_Protein"]) && inCats(f, ["safe_vegan"])),
-    );
+    const proteinPool = this.pool((f) => inCats(f, ["vegan_protein_lunch"]));
 
     // פחמימות טבעוניות
     const carbsPool = this.pool(
@@ -2241,9 +2246,7 @@ class RuleBasedPlanner {
     // חלבון = כמו בוקר טבעוני
     const proteinPool = this.pool(
       (f) =>
-        inCats(f, ["vegan_protein"]) ||
-        (inCats(f, ["veges_Protein"]) && inCats(f, ["safe_vegan"])) ||
-        (inCats(f, ["protein_breakfast"]) && inCats(f, ["safe_vegan"])),
+        inCats(f, ["vegan_protein_dinner"]) || inCats(f, ["vegan_fat_dinner"]),
     );
 
     // פחמימות = כמו בוקר טבעוני
