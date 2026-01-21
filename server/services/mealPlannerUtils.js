@@ -1584,31 +1584,41 @@ class RuleBasedPlanner {
   }
 
   buildSnack(totalTargets) {
-    function buildSingleMacroOptions(pool, macroKey, targetVal, want = 50) {
-      const BIG = 1e9;
-      const T = { protein: BIG, carbs: BIG, fat: BIG, calories: BIG };
-      T[macroKey] = Math.max(0, Number(targetVal) || 0);
+    const fatCeil = Math.max(0, toNumber(totalTargets.fat, 0));
 
-      // בודקות רק את המאקרו הרלוונטי
-      const customCheck = (nut) =>
-        nut[macroKey] <=
-        T[macroKey] * (typeof FLEX === "number" ? FLEX : 1.005) + 1e-9;
-
+    function buildSingleMacroOptionsWithFatCeil(
+      pool,
+      macroKey,
+      targetVal,
+      fatCeil,
+      want = 50,
+    ) {
       const candidates = [];
+
       for (const food of pool) {
-        const pack = computeQuantityForTargets(food, T, null, customCheck);
+        const pack = this.computeQuantityDominantWithFatCeil(
+          food,
+          macroKey,
+          targetVal,
+          fatCeil,
+        );
         if (!pack) continue;
-        const s = Math.abs(T[macroKey] - pack.nut[macroKey]);
+
+        const nutrition = pack.nut;
+        const quantity = pack.q;
+        const displayText = getDisplayText(food, quantity);
+
+        const s = Math.abs(targetVal - (nutrition?.[macroKey] || 0));
+
         candidates.push({
           food,
-          quantity: pack.q,
-          displayText: getDisplayText(food, pack.q),
-          nutrition: pack.nut,
+          quantity,
+          displayText,
+          nutrition,
           _score: s,
         });
       }
 
-      // הכי קרוב ליעד; שובר שוויון: קל׳ נמוכות יותר
       candidates.sort(
         (a, b) =>
           a._score - b._score ||
@@ -1628,29 +1638,39 @@ class RuleBasedPlanner {
     );
 
     // אופציות לפי מאקרו יחיד
-    const proteins = buildSingleMacroOptions(
+    const proteins = buildSingleMacroOptionsWithFatCeil.call(
+      this,
       proteinPool,
       "protein",
       totalTargets.protein,
+      fatCeil,
       80,
     );
-    const sweetsAsCarb = buildSingleMacroOptions(
+
+    const sweetsAsCarb = buildSingleMacroOptionsWithFatCeil.call(
+      this,
       sweetsPool,
       "carbs",
       totalTargets.carbs,
+      fatCeil,
       35,
     );
-    const fruitsAsAlt = buildSingleMacroOptions(
+
+    const fruitsAsAlt = buildSingleMacroOptionsWithFatCeil.call(
+      this,
       fruitsPool,
       "carbs",
       totalTargets.carbs,
+      fatCeil,
       30,
     );
 
-    const FatsAsAlt = buildSingleMacroOptions(
+    const FatsAsAlt = buildSingleMacroOptionsWithFatCeil.call(
+      this,
       FatsPool,
       "fat",
       totalTargets.fat,
+      fatCeil,
       30,
     );
 
