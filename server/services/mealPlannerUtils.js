@@ -1152,7 +1152,13 @@ class RuleBasedPlanner {
               !cats.includes("veges_Protein") &&
               !cats.includes("vegan_protein") &&
               !cats.includes("vegan_carbs") &&
-              !cats.includes("vegan_fat")
+              !cats.includes("vegan_fat") &&
+              !cats.includes("vegan_protein_breakfast") &&
+              !cats.includes("vegan_protein_lunch") &&
+              !cats.includes("vegan_protein_snack") &&
+              !cats.includes("vegan_protein_dinner") &&
+              !cats.includes("vegan_fat_breakfast") &&
+              !cats.includes("vegan_fat_dinner")
             );
           }
 
@@ -1357,13 +1363,6 @@ class RuleBasedPlanner {
     if (!this.prefs?.isVegan) return [];
     return this.pool(
       (f) => bySuitability("lunch", minSuit)(f) && inCats(f, ["vegan_fat"]),
-    );
-  }
-
-  getCarbsLunchVegan(minSuit = 5) {
-    if (!this.prefs?.isVegan) return [];
-    return this.pool(
-      (f) => bySuitability("lunch", minSuit)(f) && inCats(f, ["vegan_carbs"]),
     );
   }
 
@@ -2225,18 +2224,6 @@ class RuleBasedPlanner {
     return this.pool(
       (f) =>
         bySuitability("dinner", minSuit)(f) && inCats(f, ["vegan_protein"]),
-    );
-  }
-  getCarbsDinnerVegan(minSuit = 5) {
-    if (!this.prefs?.isVegan) return [];
-    return this.pool(
-      (f) => bySuitability("dinner", minSuit)(f) && inCats(f, ["vegan_carbs"]),
-    );
-  }
-  getFatDinnerVegan(minSuit = 5) {
-    if (!this.prefs?.isVegan) return [];
-    return this.pool(
-      (f) => bySuitability("dinner", minSuit)(f) && inCats(f, ["vegan_fat"]),
     );
   }
 
