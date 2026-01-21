@@ -36,6 +36,8 @@ const dietaryFlagsList = [
 /** מיפוי להצגה בטבלה (לא קשור להצגה ללקוח) */
 const categoryMap = {
   // --- בוקר ---
+  protein_breakfast_veges: "חלבון לבוקר לצמחוניים",
+
   protein_breakfast: "חלבון לבוקר",
   carbs_breakfast: "פחמימות לבוקר",
   fat_breakfast: "שומנים לבוקר",
@@ -102,7 +104,7 @@ const allCategoriesOptions = Object.entries(categoryMap).map(
   ([value, label]) => ({
     value,
     label,
-  })
+  }),
 );
 
 export default function ManageFoods() {
@@ -339,7 +341,7 @@ function FoodModal({ title, onClose, onSave, food = {} }) {
   const selectedCategories = useMemo(
     () =>
       allCategoriesOptions.filter((opt) => form.categories.includes(opt.value)),
-    [form.categories]
+    [form.categories],
   );
 
   const setNested = (path, value) => {

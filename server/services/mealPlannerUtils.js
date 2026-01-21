@@ -151,9 +151,18 @@ function withinTargetsByFlexMap(nut, T, flexMap) {
 
 /* ==== אילוצי הגשה ==== */
 function getInc(food) {
-  const step = toNumber(food?.constraints?.increment, 0.01);
-  return step > 0 ? Math.max(step, 0.05) : 0.05;
+  const incFromFood = Number(food?.servingInfo?.increment);
+  const minServing = Number(food?.constraints?.minServing);
+
+  if (incFromFood > 0) return incFromFood;
+
+  if (minServing > 0 && minServing < 1) {
+    return minServing; // מאפשר חצאים, רבעים וכו'
+  }
+
+  return 1;
 }
+
 function floorToIncrement(q, step) {
   return Math.floor(q / step) * step;
 }
@@ -1188,9 +1197,10 @@ class RuleBasedPlanner {
         (f) =>
           bySuitability("breakfast", minSuit)(f) &&
           !this.isMayo(f) &&
-          // חלבון טבעוני ייעודי
-          inCats(f, ["protein_breakfast"]) &&
-          inCats(f, ["safe_vegan"]),
+          (inCats(f, ["vegan_protein"]) ||
+            (inCats(f, ["protein_breakfast"]) && inCats(f, ["safe_vegan"])) ||
+            (inCats(f, ["protein_breakfast_veges"]) &&
+              inCats(f, ["safe_vegan"]))),
       );
     }
 
@@ -1200,9 +1210,9 @@ class RuleBasedPlanner {
         (f) =>
           bySuitability("breakfast", minSuit)(f) &&
           !this.isMayo(f) &&
-          (hasFlag(f, "flag_dairy") ||
-            hasFlag(f, "flag_egg") ||
-            inCats(f, ["veges_Protein"])),
+          (inCats(f, ["protein_breakfast"]) ||
+            inCats(f, ["protein_breakfast_veges"])) &&
+          (inCats(f, ["safe_vegetarian"]) || inCats(f, ["safe_vegan"])),
       );
     }
 
