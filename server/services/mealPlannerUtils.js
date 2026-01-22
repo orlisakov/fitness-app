@@ -153,22 +153,24 @@ function withinTargetsByFlexMap(nut, T, flexMap) {
 function getInc(food) {
   const incFromConstraints = Number(food?.constraints?.increment);
   const incFromServing = Number(food?.servingInfo?.increment);
+  const baseQ = Number(food?.servingInfo?.baseQuantity || 1);
 
-  // 1. אם המשתמש הגדיר קפיצה מפורשת – זה הקובע
-  if (incFromConstraints > 0) return incFromConstraints;
+  let inc = 0;
 
-  // 2. אם יש קפיצה ביחידת ההגשה
-  if (incFromServing > 0) return incFromServing;
+  if (incFromConstraints > 0) inc = incFromConstraints;
+  else if (incFromServing > 0) inc = incFromServing;
+  else inc = 0.1; // ברירת מחדל
 
-  // 3. ברירת מחדל גלובלית – דיוק של עשירית מנה
-  return 0.1;
+  // אם היחידה בגרמים – הקפיצה היא ביחידות מנה, לא בגרמים
+  // נשמור אותה ביחידות מנה, אבל נוודא שהעיגול נעשה מדויק
+  return Number(inc.toFixed(4));
 }
 
 function floorToIncrement(q, step) {
-  return Math.floor(q / step) * step;
+  return Math.floor((q + 1e-9) / step) * step;
 }
 function ceilToIncrement(q, step) {
-  return Math.ceil(q / step) * step;
+  return Math.ceil((q - 1e-9) / step) * step;
 }
 function clamp(q, minQ, maxQ) {
   return Math.max(minQ, Math.min(maxQ, q));

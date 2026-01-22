@@ -3,7 +3,7 @@ const URL_WEB = "https://fitness-app-wdsh.onrender.com";
 //const URL_local = "http://localhost:5000";
 
 const config = {
-  apiBaseUrl: URL_WEB,
+  apiBaseUrl: URL_local,
   password: "123456",
 };
 
