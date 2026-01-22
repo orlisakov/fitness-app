@@ -153,19 +153,15 @@ function withinTargetsByFlexMap(nut, T, flexMap) {
 function getInc(food) {
   const incFromConstraints = Number(food?.constraints?.increment);
   const incFromServing = Number(food?.servingInfo?.increment);
-  const minServing = Number(food?.constraints?.minServing);
 
-  // 1. אם הוגדרה קפיצה מפורשת – היא מנצחת
+  // 1. אם המשתמש הגדיר קפיצה מפורשת – זה הקובע
   if (incFromConstraints > 0) return incFromConstraints;
 
-  // 2. אחרת אם יש קפיצה ביחידת ההגשה
+  // 2. אם יש קפיצה ביחידת ההגשה
   if (incFromServing > 0) return incFromServing;
 
-  // 3. אחרת – אם המינימום קטן מ־1, הוא עצמו משמש קפיצה
-  if (minServing > 0 && minServing < 1) return minServing;
-
-  // 4. ברירת מחדל
-  return 1;
+  // 3. ברירת מחדל גלובלית – דיוק של עשירית מנה
+  return 0.1;
 }
 
 function floorToIncrement(q, step) {
