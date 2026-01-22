@@ -1371,13 +1371,6 @@ class RuleBasedPlanner {
     );
   }
 
-  getFatLunchVegan(minSuit = 5) {
-    if (!this.prefs?.isVegan) return [];
-    return this.pool(
-      (f) => bySuitability("lunch", minSuit)(f) && inCats(f, ["vegan_fat"]),
-    );
-  }
-
   getCarbsOrLegumesLunch(minSuit = 5) {
     return this.pool(
       (f) =>
@@ -2306,18 +2299,8 @@ class RuleBasedPlanner {
 
     // לא צמחונית → יש גם בשרית
     const proteinMeatyPool = this.getProteinDinnerMeaty();
-    const carbsDinnerPool = this.getCarbsDinner();
-    const legumesDinnerPool = this.getLegumesDinner();
 
-    const seen = new Set();
-    const carbsLegumesPool = [...carbsDinnerPool, ...legumesDinnerPool].filter(
-      (f) => {
-        const id = String(f?._id || f?.id || f?.name);
-        if (seen.has(id)) return false;
-        seen.add(id);
-        return true;
-      },
-    );
+    const carbsOrLegumesPool = this.getCarbsOrLegumesLunch();
 
     const proteinsMeaty = this.buildGroupOptionsDominantWithFatCeil(
       proteinMeatyPool,
@@ -2327,12 +2310,13 @@ class RuleBasedPlanner {
       60,
     );
     const carbsOrLegumes = this.buildGroupOptionsDominantWithFatCeil(
-      carbsLegumesPool,
+      carbsOrLegumesPool,
       "carbs",
       totalTargets.carbs,
       fatCeil,
       80,
     );
+
     const vegFree = this.buildFreeList(this.getVegDinner(), 12, "חופשי");
 
     const meatStyle = {
