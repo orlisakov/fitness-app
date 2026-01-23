@@ -105,7 +105,7 @@ export default function DashboardTrainee() {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
-        }
+        },
       );
       if (!res.ok) throw new Error("שגיאה בשליפת ההיסטוריה");
       const data = await res.json();
@@ -153,7 +153,7 @@ export default function DashboardTrainee() {
     };
 
     Object.keys(payload).forEach(
-      (k) => typeof payload[k] === "undefined" && delete payload[k]
+      (k) => typeof payload[k] === "undefined" && delete payload[k],
     );
 
     try {
@@ -166,7 +166,7 @@ export default function DashboardTrainee() {
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
           body: JSON.stringify(payload),
-        }
+        },
       );
 
       const data = await res.json();
@@ -212,7 +212,7 @@ export default function DashboardTrainee() {
       setAllFoods(normalized);
 
       setDislikedFoods(
-        Array.isArray(trainee.dislikedFoods) ? trainee.dislikedFoods : []
+        Array.isArray(trainee.dislikedFoods) ? trainee.dislikedFoods : [],
       );
       setShowDislikedFoodsModal(true);
     } catch (err) {
@@ -225,7 +225,7 @@ export default function DashboardTrainee() {
     setDislikedFoods((prev) =>
       prev.includes(foodId)
         ? prev.filter((id) => id !== foodId)
-        : [...prev, foodId]
+        : [...prev, foodId],
     );
   };
 
@@ -248,7 +248,7 @@ export default function DashboardTrainee() {
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
           body: JSON.stringify({ dislikedFoods }),
-        }
+        },
       );
 
       const data = await res.json();
@@ -472,7 +472,7 @@ export default function DashboardTrainee() {
                               .filter((food) =>
                                 (food.name || "")
                                   .toLowerCase()
-                                  .includes(searchTerm.toLowerCase())
+                                  .includes(searchTerm.toLowerCase()),
                               )
                               .map((food) => (
                                 <tr key={food._id}>
@@ -517,7 +517,7 @@ export default function DashboardTrainee() {
                           <tbody>
                             {dislikedFoods.map((foodId) => {
                               const food = foodsArray.find(
-                                (f) => f._id === foodId
+                                (f) => f._id === foodId,
                               );
                               return (
                                 <tr key={foodId}>
@@ -527,7 +527,7 @@ export default function DashboardTrainee() {
                                       className="action-btn delete-btn"
                                       onClick={() =>
                                         setDislikedFoods((prev) =>
-                                          prev.filter((f) => f !== foodId)
+                                          prev.filter((f) => f !== foodId),
                                         )
                                       }
                                     >
@@ -626,7 +626,7 @@ export default function DashboardTrainee() {
                         <th>בטן/טבור (ס״מ)</th>
                         <th>חזה/עליון (ס״מ)</th>
                         <th>ישבן/אגן (ס״מ)</th>
-                        <th>ירך (ס״מ)</th>
+                        <th>משקל (ק"ג)</th>
                         <th>זרוע (ס״מ)</th>
                         <th>תמונות</th>
                       </tr>
@@ -638,7 +638,7 @@ export default function DashboardTrainee() {
                           <td>{m.AbdominalCircumference}</td>
                           <td>{m.TopCircumference}</td>
                           <td>{m.ButtockCircumference}</td>
-                          <td>{m.ThighCircumference}</td>
+                          <td>{m.BodyWeight}</td>
                           <td>{m.ArmCircumference}</td>
                           <td className="measure-photos-cell">
                             {(() => {
@@ -647,8 +647,8 @@ export default function DashboardTrainee() {
                                 m.imagePaths.length
                                   ? m.imagePaths
                                   : m.imagePath
-                                  ? [m.imagePath]
-                                  : [];
+                                    ? [m.imagePath]
+                                    : [];
 
                               return imgs.length ? (
                                 <div className="measure-photos-row">

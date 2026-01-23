@@ -68,7 +68,7 @@ router.post("/", (req, res) => {
         AbdominalCircumference,
         TopCircumference,
         ButtockCircumference,
-        ThighCircumference,
+        BodyWeight,
         ArmCircumference,
       } = req.body;
 
@@ -95,7 +95,7 @@ router.post("/", (req, res) => {
         AbdominalCircumference: num(AbdominalCircumference),
         TopCircumference: num(TopCircumference),
         ButtockCircumference: num(ButtockCircumference),
-        ThighCircumference: num(ThighCircumference),
+        BodyWeight: num(BodyWeight),
         ArmCircumference: num(ArmCircumference),
         imagePaths,
         imagePath: imagePaths[0] || undefined, // תאימות לאחור
@@ -105,7 +105,7 @@ router.post("/", (req, res) => {
         "[measurements:POST] created _id:",
         doc._id,
         "imagePaths:",
-        doc.imagePaths
+        doc.imagePaths,
       );
       res.status(201).json(doc);
     } catch (e) {
@@ -161,7 +161,7 @@ router.put("/:id/photos", authMiddleware, (req, res) => {
         m.imagePaths = [...current, ...incoming.slice(0, free)];
       } else {
         [...new Set(current)].forEach((rel) =>
-          safeUnlink(path.join(__dirname, "..", rel))
+          safeUnlink(path.join(__dirname, "..", rel)),
         );
         m.imagePaths = incoming.slice(0, 3);
       }

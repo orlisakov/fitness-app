@@ -11,7 +11,7 @@ const measurementSchema = new mongoose.Schema(
     AbdominalCircumference: { type: Number },
     TopCircumference: { type: Number },
     ButtockCircumference: { type: Number },
-    ThighCircumference: { type: Number },
+    BodyWeight: { type: Number },
     ArmCircumference: { type: Number },
     imagePaths: {
       type: [String],
@@ -22,7 +22,7 @@ const measurementSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model("Measurement", measurementSchema);

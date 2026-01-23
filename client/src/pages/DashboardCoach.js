@@ -121,7 +121,7 @@ export default function DashboardCoach() {
     AbdominalCircumference: "",
     TopCircumference: "",
     ButtockCircumference: "",
-    ThighCircumference: "",
+    BodyWeight: "",
     ArmCircumference: "",
   });
 
@@ -136,7 +136,7 @@ export default function DashboardCoach() {
     window.clearTimeout(showToast._t);
     showToast._t = window.setTimeout(
       () => setToast((p) => ({ ...p, visible: false })),
-      ms
+      ms,
     );
   }
 
@@ -338,7 +338,7 @@ export default function DashboardCoach() {
     };
 
     Object.keys(payload).forEach(
-      (k) => typeof payload[k] === "undefined" && delete payload[k]
+      (k) => typeof payload[k] === "undefined" && delete payload[k],
     );
 
     try {
@@ -351,7 +351,7 @@ export default function DashboardCoach() {
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
           body: JSON.stringify(payload),
-        }
+        },
       );
 
       const data = await res.json().catch(() => ({}));
@@ -384,17 +384,40 @@ export default function DashboardCoach() {
     }
   };
 
-  const openMeasurementModal = (trainee) => {
+  const openMeasurementModal = async (trainee) => {
     setSelectedTrainee(trainee);
     setMeasurementData({
       date: "",
       AbdominalCircumference: "",
       TopCircumference: "",
       ButtockCircumference: "",
-      ThighCircumference: "",
+      BodyWeight: "",
       ArmCircumference: "",
     });
     setMeasurementPhotos([]);
+
+    try {
+      const res = await fetch(
+        `${config.apiBaseUrl}/api/measurements/${trainee._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setMeasurements([data[0]]); // מדידה אחרונה
+        } else {
+          setMeasurements([]);
+        }
+      }
+    } catch (e) {
+      setMeasurements([]);
+    }
+
     setShowMeasurementsModal(true);
   };
 
@@ -425,7 +448,7 @@ export default function DashboardCoach() {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
-        }
+        },
       );
       if (!res.ok) throw new Error("שגיאה בשליפת ההיסטוריה");
       const data = await res.json();
@@ -445,14 +468,14 @@ export default function DashboardCoach() {
 
       fd.append(
         "AbdominalCircumference",
-        measurementData.AbdominalCircumference || ""
+        measurementData.AbdominalCircumference || "",
       );
       fd.append("TopCircumference", measurementData.TopCircumference || "");
       fd.append(
         "ButtockCircumference",
-        measurementData.ButtockCircumference || ""
+        measurementData.ButtockCircumference || "",
       );
-      fd.append("ThighCircumference", measurementData.ThighCircumference || "");
+      fd.append("BodyWeight", measurementData.BodyWeight || "");
       fd.append("ArmCircumference", measurementData.ArmCircumference || "");
 
       // שולחים מערך 'photos' (וכדאי להשאיר גם 'photo' לתאימות אחורה אם השרת עוד מצפה לשם הזה)
@@ -492,7 +515,7 @@ export default function DashboardCoach() {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
-        }
+        },
       );
       if (!res.ok) {
         const txt = await res.text().catch(() => "");
@@ -522,11 +545,11 @@ export default function DashboardCoach() {
       const list = Array.isArray(data)
         ? data
         : Array.isArray(data?.items)
-        ? data.items
-        : [];
+          ? data.items
+          : [];
       setAllFoods(list);
       setDislikedFoods(
-        Array.isArray(trainee.dislikedFoods) ? trainee.dislikedFoods : []
+        Array.isArray(trainee.dislikedFoods) ? trainee.dislikedFoods : [],
       );
       setShowDislikedFoodsModal(true);
     } catch (err) {
@@ -546,7 +569,7 @@ export default function DashboardCoach() {
             Authorization: `Bearer ${sessionStorage.getItem("token")}`,
           },
           body: JSON.stringify({ dislikedFoods }),
-        }
+        },
       );
       if (!res.ok) {
         const text = await res.text();
@@ -555,8 +578,8 @@ export default function DashboardCoach() {
       }
       setTrainees((prev) =>
         prev.map((t) =>
-          t._id === selectedTrainee._id ? { ...t, dislikedFoods } : t
-        )
+          t._id === selectedTrainee._id ? { ...t, dislikedFoods } : t,
+        ),
       );
       setShowDislikedFoodsModal(false);
     } catch (err) {
@@ -678,8 +701,8 @@ export default function DashboardCoach() {
                     {t.trainingLevel === "advanced"
                       ? "מתקדמות"
                       : t.trainingLevel === "intermediate"
-                      ? "בינוניות"
-                      : "מתחילות"}
+                        ? "בינוניות"
+                        : "מתחילות"}
                   </td>
                 </tr>
               ))}
@@ -1040,6 +1063,50 @@ export default function DashboardCoach() {
                 ←
               </button>
             </div>
+
+            {/* ===== מדידה אחרונה ===== */}
+            {measurements.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <h3
+                  className="section-title"
+                  style={{ textAlign: "center", marginBottom: 8 }}
+                >
+                  מדידה אחרונה
+                </h3>
+
+                <div className="table-wrapper">
+                  <table className="history-table narrow preferences-table">
+                    <thead>
+                      <tr>
+                        <th>תאריך</th>
+                        <th>בטן</th>
+                        <th>חזה</th>
+                        <th>ישבן</th>
+                        <th>משקל</th>
+                        <th>זרוע</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          {new Date(measurements[0].date).toLocaleDateString(
+                            "he-IL",
+                          )}
+                        </td>
+                        <td>{measurements[0].AbdominalCircumference}</td>
+                        <td>{measurements[0].TopCircumference}</td>
+                        <td>{measurements[0].ButtockCircumference}</td>
+                        <td>{measurements[0].BodyWeight}</td>
+                        <td>{measurements[0].ArmCircumference}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <hr style={{ margin: "20px 0", opacity: 0.3 }} />
+              </div>
+            )}
+
             <form onSubmit={handleMeasurementSubmit}>
               <div className="date-wrapper">
                 <input
@@ -1088,12 +1155,12 @@ export default function DashboardCoach() {
               />
               <input
                 type="number"
-                placeholder="היקף ירכיים"
-                value={measurementData.ThighCircumference}
+                placeholder="משקל גוף"
+                value={measurementData.BodyWeight}
                 onChange={(e) =>
                   setMeasurementData((p) => ({
                     ...p,
-                    ThighCircumference: e.target.value,
+                    BodyWeight: e.target.value,
                   }))
                 }
               />
@@ -1181,7 +1248,7 @@ export default function DashboardCoach() {
                       <th>בטן/טבור (ס״מ)</th>
                       <th>חזה/עליון (ס״מ)</th>
                       <th>ישבן/אגן (ס״מ)</th>
-                      <th>ירך (ס״מ)</th>
+                      <th>משקל (ק"ג)</th>
                       <th>זרוע (ס״מ)</th>
                       <th>תמונות</th>
                       <th>הסר</th>
@@ -1194,7 +1261,7 @@ export default function DashboardCoach() {
                         <td>{m.AbdominalCircumference}</td>
                         <td>{m.TopCircumference}</td>
                         <td>{m.ButtockCircumference}</td>
-                        <td>{m.ThighCircumference}</td>
+                        <td>{m.BodyWeight}</td>
                         <td>{m.ArmCircumference}</td>
                         <td className="measure-photos-cell">
                           {(() => {
@@ -1202,8 +1269,8 @@ export default function DashboardCoach() {
                               Array.isArray(m.imagePaths) && m.imagePaths.length
                                 ? m.imagePaths
                                 : m.imagePath
-                                ? [m.imagePath]
-                                : [];
+                                  ? [m.imagePath]
+                                  : [];
                             return imgs.length ? (
                               <div className="measure-photos-row">
                                 {imgs.slice(0, 3).map((p, idx) => (
@@ -1282,7 +1349,7 @@ export default function DashboardCoach() {
                         .filter((food) =>
                           (food?.name || "")
                             .toLowerCase()
-                            .includes(searchTerm.toLowerCase())
+                            .includes(searchTerm.toLowerCase()),
                         )
                         .map((food) => (
                           <tr key={food._id}>
@@ -1298,7 +1365,7 @@ export default function DashboardCoach() {
                                     ]);
                                   } else {
                                     setDislikedFoods((prev) =>
-                                      prev.filter((f) => f !== food._id)
+                                      prev.filter((f) => f !== food._id),
                                     );
                                   }
                                 }}
@@ -1342,7 +1409,7 @@ export default function DashboardCoach() {
                                 className="action-btn delete-btn"
                                 onClick={() =>
                                   setDislikedFoods((prev) =>
-                                    prev.filter((f) => f !== foodId)
+                                    prev.filter((f) => f !== foodId),
                                   )
                                 }
                               >
