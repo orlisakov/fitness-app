@@ -18,8 +18,8 @@ export default function ResourcesLibrary() {
       .then((r) => (r.ok ? r.json() : []))
       .then((arr) =>
         setCategories(
-          Array.from(new Set((arr || []).filter((c) => c && c.trim())))
-        )
+          Array.from(new Set((arr || []).filter((c) => c && c.trim()))),
+        ),
       )
       .catch(() => {});
   }
@@ -129,13 +129,17 @@ export default function ResourcesLibrary() {
                         <button
                           className="btn-link secondary"
                           onClick={() =>
-                            window.open(`${api}${r.fileUrl}`, "_blank")
+                            window.open(
+                              `${api}/${r.fileUrl.replace(/^\/+/, "")}`,
+                              "_blank",
+                            )
                           }
                           type="button"
                         >
                           צפייה
                         </button>
                       )}
+
                       <button
                         className="btn-link"
                         onClick={() => handleDownload(r)}

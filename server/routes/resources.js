@@ -47,11 +47,11 @@ router.post("/", requireCoach, upload.single("file"), async (req, res) => {
       tags: Array.isArray(tags)
         ? tags
         : typeof tags === "string"
-        ? tags
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : [],
+          ? tags
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [],
       createdBy: {
         _id: req.user?._id,
         name: req.user?.name || req.user?.username || "",
@@ -159,11 +159,11 @@ router.put("/:id", requireCoach, upload.single("file"), async (req, res) => {
       doc.tags = Array.isArray(tags)
         ? tags
         : typeof tags === "string"
-        ? tags
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : [];
+          ? tags
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [];
     }
 
     if (req.file) {
