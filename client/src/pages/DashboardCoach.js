@@ -76,6 +76,9 @@ const MealRow = React.memo(function MealRow({
 
 export default function DashboardCoach() {
   const navigate = useNavigate();
+
+  const [searchTrainee, setSearchTrainee] = useState("");
+
   const toStr = (v) => (v === 0 || Number.isFinite(Number(v)) ? String(v) : "");
 
   const joinUrl = (base, p) =>
@@ -590,6 +593,8 @@ export default function DashboardCoach() {
   if (loading) return <div className="dashboard-message">טוען נתונים...</div>;
   if (error) return <div className="dashboard-error">{error}</div>;
 
+  const q = searchTrainee.trim().toLowerCase();
+
   return (
     <div className="coach-dashboard" dir="rtl">
       <h1 className="coach-title">לוח הבקרה של המאמנת</h1>
@@ -597,6 +602,15 @@ export default function DashboardCoach() {
       <button className="add-btn" onClick={() => setShowModal(true)}>
         הוספת מתאמנת חדשה
       </button>
+
+      <input
+        type="text"
+        className="search-input"
+        placeholder="חיפוש לפי שם..."
+        value={searchTrainee}
+        onChange={(e) => setSearchTrainee(e.target.value)}
+        style={{ maxWidth: 300, marginBottom: 12 }}
+      />
 
       {showModal && (
         <div className="modal-backdrop">
@@ -659,53 +673,55 @@ export default function DashboardCoach() {
               </tr>
             </thead>
             <tbody>
-              {trainees.map((t) => (
-                <tr key={t._id}>
-                  <td>{t.fullName}</td>
-                  <td>{t.phone || "-"}</td>
-                  <td>
-                    <button
-                      className="action-btn"
-                      onClick={() => openTraineeModal(t)}
-                    >
-                      עריכה
-                    </button>
-                    <button
-                      className="action-btn delete-btn"
-                      onClick={() => handleDelete(t._id)}
-                    >
-                      מחק
-                    </button>
-                    <button
-                      className="action-btn"
-                      onClick={() => openMeasurementModal(t)}
-                    >
-                      מדידה
-                    </button>
-                    <button
-                      className="action-btn"
-                      onClick={() => openDislikedFoodsModal(t)}
-                    >
-                      העדפות
-                    </button>
-                  </td>
-                  <td>
-                    <button
-                      className="action-btn"
-                      onClick={() => openMeasurementHistory(t)}
-                    >
-                      ראה
-                    </button>
-                  </td>
-                  <td>
-                    {t.trainingLevel === "advanced"
-                      ? "מתקדמות"
-                      : t.trainingLevel === "intermediate"
-                        ? "בינוניות"
-                        : "מתחילות"}
-                  </td>
-                </tr>
-              ))}
+              {trainees
+                .filter((t) => (t.fullName || "").toLowerCase().includes(q))
+                .map((t) => (
+                  <tr key={t._id}>
+                    <td>{t.fullName}</td>
+                    <td>{t.phone || "-"}</td>
+                    <td>
+                      <button
+                        className="action-btn"
+                        onClick={() => openTraineeModal(t)}
+                      >
+                        עריכה
+                      </button>
+                      <button
+                        className="action-btn delete-btn"
+                        onClick={() => handleDelete(t._id)}
+                      >
+                        מחק
+                      </button>
+                      <button
+                        className="action-btn"
+                        onClick={() => openMeasurementModal(t)}
+                      >
+                        מדידה
+                      </button>
+                      <button
+                        className="action-btn"
+                        onClick={() => openDislikedFoodsModal(t)}
+                      >
+                        העדפות
+                      </button>
+                    </td>
+                    <td>
+                      <button
+                        className="action-btn"
+                        onClick={() => openMeasurementHistory(t)}
+                      >
+                        ראה
+                      </button>
+                    </td>
+                    <td>
+                      {t.trainingLevel === "advanced"
+                        ? "מתקדמות"
+                        : t.trainingLevel === "intermediate"
+                          ? "בינוניות"
+                          : "מתחילות"}
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
