@@ -26,7 +26,7 @@ export default function ResourcesManage() {
     () => ({
       Authorization: `Bearer ${sessionStorage.getItem("token")}`,
     }),
-    []
+    [],
   );
 
   const loadCategories = useCallback(async () => {
@@ -50,7 +50,7 @@ export default function ResourcesManage() {
 
       const res = await fetch(
         `${api}/api/resources${p.toString() ? `?${p}` : ""}`,
-        { headers }
+        { headers },
       );
 
       if (!res.ok) {

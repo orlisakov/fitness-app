@@ -54,9 +54,10 @@ export default function ResourcesLibrary() {
 
   const handleDownload = async (r) => {
     try {
-      const res = await fetch(`${api}/api/resources/${r._id}/download`, {
+      const res = await fetch(`${api}/api/resources/${r._id}/file?download=1`, {
         headers,
       });
+
       if (!res.ok) {
         const msg = await res.text();
         throw new Error(msg || "Download failed");
@@ -129,7 +130,7 @@ export default function ResourcesLibrary() {
                         className="btn-link secondary"
                         onClick={() =>
                           window.open(
-                            `${api}/api/resources/${r._id}/download`,
+                            `${api}/api/resources/${r._id}/file?token=${sessionStorage.getItem("token")}`,
                             "_blank",
                           )
                         }
