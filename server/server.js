@@ -1,35 +1,19 @@
 // server/server.js
-const path = require("path");
-const fs = require("fs");
 const express = require("express");
 const cors = require("cors");
 const app = express();
 
 const dotenv = require("dotenv");
-const connectDB = require("./config/db");
+const { connectDB } = require("./config/db");
 const authMiddleware = require("./middleware/authMiddleware");
+
 dotenv.config();
 connectDB();
 
 app.use(cors());
 app.use(express.json());
 
-// תיקייה ראשית להעלאות
-const mainUploadDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(mainUploadDir)) {
-  fs.mkdirSync(mainUploadDir);
-}
-
-// תיקייה לתת-תיקיית מדידות
-const measurementDir = path.join(mainUploadDir, "measurements");
-if (!fs.existsSync(measurementDir)) {
-  fs.mkdirSync(measurementDir);
-}
-
-// סטטי לקבצים
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// ראוטים (שימי לב לא לכרוך auth פעמיים בכל ראוטר)
+// ראוטים
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/trainees", authMiddleware, require("./routes/trainees"));
 app.use("/api/coach", authMiddleware, require("./routes/coach"));

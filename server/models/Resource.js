@@ -12,7 +12,11 @@ const resourceSchema = new mongoose.Schema(
       default: "all",
     },
     category: { type: String, default: "", index: true },
-    fileUrl: String,
+
+    fileId: {
+      type: mongoose.Schema.Types.ObjectId, // GridFS
+    },
+
     originalName: String,
     mimeType: String,
     size: Number,
@@ -23,7 +27,7 @@ const resourceSchema = new mongoose.Schema(
       role: String,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("Resource", resourceSchema);

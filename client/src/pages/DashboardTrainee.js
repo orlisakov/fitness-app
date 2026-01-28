@@ -655,7 +655,7 @@ export default function DashboardTrainee() {
                                   {imgs.slice(0, 3).map((p, idx) => (
                                     <img
                                       key={idx}
-                                      src={`${config.apiBaseUrl}/${p}`} // base + 'uploads/...'
+                                      src={withBase(p)}
                                       alt={`מדידה ${idx + 1}`}
                                       className="measure-photo-thumb"
                                     />

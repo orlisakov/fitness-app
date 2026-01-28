@@ -33,7 +33,7 @@ function normalizeCustomSplit(input) {
     },
   };
   const any = Object.values(meals).some(
-    (x) => (x.protein ?? 0) || (x.carbs ?? 0) || (x.fat ?? 0)
+    (x) => (x.protein ?? 0) || (x.carbs ?? 0) || (x.fat ?? 0),
   );
   return any ? { mode: "custom", meals } : { mode: "auto" };
 }
@@ -78,11 +78,9 @@ exports.register = async (req, res) => {
     await newUser.save();
 
     const token = jwt.sign(
-      { id: newUser._id, role: newUser.role },
+      { _id: newUser._id, role: newUser.role },
       process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
+      { expiresIn: "7d" },
     );
 
     return res.status(201).json({
@@ -124,7 +122,7 @@ exports.login = async (req, res) => {
     if (!isMatch)
       return res.status(400).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign({ id: user._id, role }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ _id: user._id, role }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 

@@ -1,24 +1,11 @@
-const path = require("path");
-const fs = require("fs");
 const express = require("express");
 const multer = require("multer");
+const { Readable } = require("stream");
+const { getGridFSBucket } = require("../config/db");
 const Resource = require("../models/Resource");
 
 const router = express.Router();
-
-// אחסון לוקאלי
-const uploadDir = path.join(__dirname, "..", "uploads", "resources");
-fs.mkdirSync(uploadDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname || "");
-    cb(null, unique + ext);
-  },
-});
-const upload = multer({ storage });
+const upload = multer({ storage: multer.memoryStorage() });
 
 function requireCoach(req, res, next) {
   if (req.user?.role !== "coach") {
@@ -27,7 +14,7 @@ function requireCoach(req, res, next) {
   next();
 }
 
-/* === POST /api/resources (coach) === */
+/* === POST /api/resources === */
 router.post("/", requireCoach, upload.single("file"), async (req, res) => {
   try {
     const {
@@ -37,30 +24,31 @@ router.post("/", requireCoach, upload.single("file"), async (req, res) => {
       tags,
       category = "",
     } = req.body;
-    if (!title) return res.status(400).json({ message: "חסר כותרת (title)" });
+    if (!title) return res.status(400).json({ message: "חסרה כותרת" });
 
     const payload = {
       title,
       description,
       visibility,
-      category: String(category || "").trim(),
-      tags: Array.isArray(tags)
-        ? tags
-        : typeof tags === "string"
-          ? tags
-              .split(",")
-              .map((s) => s.trim())
-              .filter(Boolean)
-          : [],
+      category: category.trim(),
+      tags:
+        typeof tags === "string" ? tags.split(",").map((t) => t.trim()) : [],
       createdBy: {
-        _id: req.user?._id,
-        name: req.user?.name || req.user?.username || "",
-        role: req.user?.role || "",
+        _id: req.user._id,
+        name: req.user.name || "",
+        role: req.user.role,
       },
     };
 
     if (req.file) {
-      payload.fileUrl = `/uploads/resources/${req.file.filename}`;
+      const bucket = getGridFSBucket();
+      const uploadStream = bucket.openUploadStream(req.file.originalname, {
+        contentType: req.file.mimetype,
+      });
+
+      Readable.from(req.file.buffer).pipe(uploadStream);
+
+      payload.fileId = uploadStream.id;
       payload.originalName = req.file.originalname;
       payload.mimeType = req.file.mimetype;
       payload.size = req.file.size;
@@ -69,136 +57,68 @@ router.post("/", requireCoach, upload.single("file"), async (req, res) => {
     const doc = await Resource.create(payload);
     res.status(201).json(doc);
   } catch (e) {
-    res.status(500).json({ message: e.message || "שגיאה ביצירת משאב" });
+    res.status(500).json({ message: e.message });
   }
 });
 
-/* === GET /api/resources (all) === */
+/* === GET list === */
 router.get("/", async (req, res) => {
-  try {
-    const role = req.user?.role || "trainee";
-    const q = {};
-    if (role === "trainee") q.visibility = { $in: ["all", "trainee"] };
-
-    // חיפוש טקסטואלי
-    const search = (req.query.q || "").trim();
-    if (search) {
-      q.$or = [
-        { title: new RegExp(search, "i") },
-        { description: new RegExp(search, "i") },
-        { tags: new RegExp(search, "i") },
-      ];
-    }
-
-    // סינון לפי קטגוריה
-    const category = (req.query.category || "").trim();
-    if (category) q.category = category;
-
-    const items = await Resource.find(q).sort({ createdAt: -1 }).lean();
-    res.json(items);
-  } catch (e) {
-    res.status(500).json({ message: e.message || "שגיאה בטעינה" });
-  }
+  const role = req.user?.role || "trainee";
+  const q =
+    role === "trainee" ? { visibility: { $in: ["all", "trainee"] } } : {};
+  const items = await Resource.find(q).sort({ createdAt: -1 });
+  res.json(items);
 });
 
-/* === רשימת קטגוריות ייחודיות (all) === */
-router.get("/categories/list", async (req, res) => {
-  try {
-    const role = req.user?.role || "trainee";
-    const match = {};
-    if (role === "trainee") match.visibility = { $in: ["all", "trainee"] };
-
-    const cats = await Resource.aggregate([
-      { $match: match },
-      { $group: { _id: "$category", count: { $sum: 1 } } },
-      { $match: { _id: { $ne: "" } } },
-      { $sort: { _id: 1 } },
-    ]);
-
-    res.json(cats.map((c) => c._id));
-  } catch (e) {
-    res.status(500).json({ message: e.message || "שגיאה בשליפת קטגוריות" });
-  }
-});
-
-/* === הורדה === */
+/* === DOWNLOAD === */
 router.get("/:id/download", async (req, res) => {
-  try {
-    const doc = await Resource.findById(req.params.id).lean();
-    if (!doc) return res.status(404).json({ message: "לא נמצא" });
+  const doc = await Resource.findById(req.params.id);
+  if (!doc || !doc.fileId) return res.status(404).json({ message: "אין קובץ" });
 
-    const role = req.user?.role || "trainee";
-    if (role === "trainee" && !["all", "trainee"].includes(doc.visibility)) {
-      return res.status(403).json({ message: "אין הרשאה" });
-    }
-
-    if (!doc.fileUrl || !doc.fileUrl.startsWith("/uploads/")) {
-      return res.status(404).json({ message: "אין קובץ" });
-    }
-
-    const rel = doc.fileUrl.replace(/^\//, "");
-    const filePath = path.join(__dirname, "..", rel);
-    return res.download(filePath, doc.originalName || "resource");
-  } catch (e) {
-    res.status(500).json({ message: e.message || "שגיאה בהורדה" });
-  }
+  const bucket = getGridFSBucket();
+  res.set("Content-Type", doc.mimeType);
+  res.set("Content-Disposition", `attachment; filename="${doc.originalName}"`);
+  bucket.openDownloadStream(doc.fileId).pipe(res);
 });
 
-/* === PUT (coach) === */
+/* === UPDATE === */
 router.put("/:id", requireCoach, upload.single("file"), async (req, res) => {
-  try {
-    const doc = await Resource.findById(req.params.id);
-    if (!doc) return res.status(404).json({ message: "לא נמצא" });
+  const doc = await Resource.findById(req.params.id);
+  if (!doc) return res.status(404).json({ message: "לא נמצא" });
 
-    const { title, description, visibility, tags, category } = req.body;
-    if (title !== undefined) doc.title = title;
-    if (description !== undefined) doc.description = description;
-    if (visibility !== undefined) doc.visibility = visibility;
-    if (category !== undefined) doc.category = String(category || "").trim();
-    if (tags !== undefined) {
-      doc.tags = Array.isArray(tags)
-        ? tags
-        : typeof tags === "string"
-          ? tags
-              .split(",")
-              .map((s) => s.trim())
-              .filter(Boolean)
-          : [];
-    }
+  if (req.file) {
+    const bucket = getGridFSBucket();
+    if (doc.fileId) await bucket.delete(doc.fileId);
 
-    if (req.file) {
-      if (doc.fileUrl && doc.fileUrl.startsWith("/uploads/")) {
-        const oldPath = path.join(__dirname, "..", doc.fileUrl);
-        fs.existsSync(oldPath) && fs.unlinkSync(oldPath);
-      }
-      doc.fileUrl = `/uploads/resources/${req.file.filename}`;
-      doc.originalName = req.file.originalname;
-      doc.mimeType = req.file.mimetype;
-      doc.size = req.file.size;
-    }
+    const uploadStream = bucket.openUploadStream(req.file.originalname, {
+      contentType: req.file.mimetype,
+    });
 
-    await doc.save();
-    res.json(doc);
-  } catch (e) {
-    res.status(500).json({ message: e.message || "שגיאה בעדכון" });
+    Readable.from(req.file.buffer).pipe(uploadStream);
+
+    doc.fileId = uploadStream.id;
+    doc.originalName = req.file.originalname;
+    doc.mimeType = req.file.mimetype;
+    doc.size = req.file.size;
   }
+
+  Object.assign(doc, req.body);
+  await doc.save();
+  res.json(doc);
 });
 
-/* === DELETE (coach) === */
+/* === DELETE === */
 router.delete("/:id", requireCoach, async (req, res) => {
-  try {
-    const doc = await Resource.findById(req.params.id);
-    if (!doc) return res.status(404).json({ message: "לא נמצא" });
+  const doc = await Resource.findById(req.params.id);
+  if (!doc) return res.status(404).json({ message: "לא נמצא" });
 
-    if (doc.fileUrl && doc.fileUrl.startsWith("/uploads/")) {
-      const p = path.join(__dirname, "..", doc.fileUrl);
-      fs.existsSync(p) && fs.unlinkSync(p);
-    }
-    await doc.deleteOne();
-    res.json({ ok: true });
-  } catch (e) {
-    res.status(500).json({ message: e.message || "שגיאה במחיקה" });
+  if (doc.fileId) {
+    const bucket = getGridFSBucket();
+    await bucket.delete(doc.fileId);
   }
+
+  await doc.deleteOne();
+  res.json({ ok: true });
 });
 
 module.exports = router;

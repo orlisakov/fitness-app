@@ -14,7 +14,7 @@ export default function ResourcesLibrary() {
 
   // טוען קטגוריות (ללא ריקים)
   function loadCategories() {
-    fetch(`${api}/api/resources/categories/list`, { headers })
+    fetch(`${api}/api/categories/list`, { headers })
       .then((r) => (r.ok ? r.json() : []))
       .then((arr) =>
         setCategories(
@@ -125,20 +125,18 @@ export default function ResourcesLibrary() {
                     <div className="resource-title">{r.title}</div>
 
                     <div className="resource-actions">
-                      {r.fileUrl && (
-                        <button
-                          className="btn-link secondary"
-                          onClick={() =>
-                            window.open(
-                              `${api}/${r.fileUrl.replace(/^\/+/, "")}`,
-                              "_blank",
-                            )
-                          }
-                          type="button"
-                        >
-                          צפייה
-                        </button>
-                      )}
+                      <button
+                        className="btn-link secondary"
+                        onClick={() =>
+                          window.open(
+                            `${api}/api/resources/${r._id}/download`,
+                            "_blank",
+                          )
+                        }
+                        type="button"
+                      >
+                        צפייה
+                      </button>
 
                       <button
                         className="btn-link"
