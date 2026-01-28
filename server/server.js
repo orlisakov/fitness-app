@@ -21,7 +21,7 @@ app.use("/api/measurements", authMiddleware, require("./routes/measurements"));
 app.use("/api/foods", authMiddleware, require("./routes/foodRoutes"));
 app.use("/api/meal-plan", authMiddleware, require("./routes/generateMealPlan"));
 app.use("/api/workouts", authMiddleware, require("./routes/workouts"));
-app.use("/api/resources", authMiddleware, require("./routes/resources"));
+app.use("/api/resources", require("./routes/resources"));
 app.use("/api/categories", authMiddleware, require("./routes/categories"));
 
 const PORT = process.env.PORT || 5000;
