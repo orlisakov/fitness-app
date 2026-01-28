@@ -1,34 +1,27 @@
-// התחברות ל־MongoDB
 const mongoose = require("mongoose");
-const { GridFSBucket } = require("mongodb");
 
-let gfsBucket = null;
+let bucket = null;
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log("MongoDB connected");
+    const conn = await mongoose.connect(process.env.MONGO_URI);
 
-    mongoose.connection.once("open", () => {
-      gfsBucket = new GridFSBucket(mongoose.connection.db, {
-        bucketName: "resources", // זה השם של GridFS (resources.files / resources.chunks)
-      });
-      console.log("GridFS bucket ready: resources");
+    bucket = new mongoose.mongo.GridFSBucket(conn.connection.db, {
+      bucketName: "resources",
     });
+
+    console.log("MongoDB connected + GridFS ready");
   } catch (err) {
-    console.error(err.message);
+    console.error("Mongo connection error:", err);
     process.exit(1);
   }
 };
 
 const getGridFSBucket = () => {
-  if (!gfsBucket) {
+  if (!bucket) {
     throw new Error("GridFS not initialized yet");
   }
-  return gfsBucket;
+  return bucket;
 };
 
-module.exports = {
-  connectDB,
-  getGridFSBucket,
-};
+module.exports = { connectDB, getGridFSBucket };
