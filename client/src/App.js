@@ -26,7 +26,8 @@ export default function App() {
   console.log("API BASE:", config.apiBaseUrl);
 
   useEffect(() => {
-    const token = sessionStorage.getItem("token");
+    const token =
+      sessionStorage.getItem("token") || localStorage.getItem("token");
     if (!token) {
       setUser(null);
       setUserLoading(false);
@@ -46,6 +47,7 @@ export default function App() {
     // חשוב: לשמור token נקי
     const cleanToken = String(data.token || "").replace(/^Bearer\s+/i, "");
     sessionStorage.setItem("token", cleanToken);
+    localStorage.setItem("token", cleanToken);
     setUser(data.user || null);
   };
 
@@ -99,7 +101,12 @@ export default function App() {
       />
 
       {/* דפי משתמש ספציפיים */}
-      <Route path="/trainees/:id" element={<TraineeDetailsForm />} />
+      <Route
+        path="trainees/:id"
+        element={
+          <RequireRole allow={["coach"]} element={<TraineeDetailsForm />} />
+        }
+      />
 
       {/* דשבורד ראשי */}
       <Route

@@ -256,9 +256,14 @@ export default function DashboardCoach() {
       setNewFullName("");
       setNewPhone("");
 
-      await fetchTrainees();
+      const created = data?.user || data?.trainee || data;
 
-      const newId = data?.user?._id || data?.user?.id;
+      if (created?._id) {
+        setTrainees((prev) => [created, ...prev]); // או בסוף: [...prev, created]
+      }
+
+      const newId = created?._id || created?.id;
+
       if (newId) {
         navigate(`/trainees/${newId}`);
       } else {
@@ -365,7 +370,6 @@ export default function DashboardCoach() {
       setTrainees((prev) => prev.map((t) => (t._id === saved._id ? saved : t)));
       setSelectedTrainee(saved);
       setShowTraineeModal(false);
-      await fetchTrainees();
     } catch (err) {
       console.error("PUT trainee error:", err);
       alert(err.message || "שגיאה בעדכון נתונים");
@@ -667,6 +671,7 @@ export default function DashboardCoach() {
               <tr>
                 <th>שם מלא</th>
                 <th>טלפון</th>
+                <th>קלוריות</th>
                 <th>פעולות</th>
                 <th>היסטוריית שקילויות</th>
                 <th>דרגה</th>
@@ -679,6 +684,12 @@ export default function DashboardCoach() {
                   <tr key={t._id}>
                     <td>{t.fullName}</td>
                     <td>{t.phone || "-"}</td>
+                    <td>
+                      {Number.isFinite(Number(t.dailyCalories))
+                        ? Number(t.dailyCalories).toLocaleString("he-IL")
+                        : "-"}
+                    </td>
+
                     <td>
                       <button
                         className="action-btn"

@@ -1,15 +1,14 @@
 // src/utils/auth.js
 import config from "../config";
 
-export const getToken = () =>
-  (sessionStorage.getItem("token") || localStorage.getItem("token") || "")
-    .replace(/^Bearer\s+/i, "")
-    .trim();
+export function getToken() {
+  return localStorage.getItem("token") || sessionStorage.getItem("token") || "";
+}
 
-export const authHeaders = () => {
+export function authHeaders() {
   const t = getToken();
   return t ? { Authorization: `Bearer ${t}` } : {};
-};
+}
 
 export const joinUrl = (base, path) =>
   `${String(base).replace(/\/$/, "")}/${String(path || "").replace(/^\//, "")}`;
