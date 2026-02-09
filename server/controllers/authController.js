@@ -54,17 +54,19 @@ exports.register = async (req, res) => {
 
     const Model = role === "coach" ? Coach : Trainee;
 
-    // check unique phone inside model
-    const existingUser = await Model.findOne({ phone });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
-    }
+    const phoneStr = normalizePhone(phone);
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // check unique phone inside model
+    const existingUser = await Model.findOne({ phone: phoneStr });
+    if (existingUser)
+      return res.status(400).json({ message: "User already exists" });
+
+    const plainPassword = password?.trim() ? password : "123456";
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
     const newUserData = {
       fullName,
-      phone,
+      phone: phoneStr,
       role: role || (Model === Coach ? "coach" : "trainee"),
       passwordHash: hashedPassword,
       dailyCalories,
@@ -76,6 +78,10 @@ exports.register = async (req, res) => {
 
     const newUser = new Model(newUserData);
     await newUser.save();
+
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ message: "JWT_SECRET missing in .env" });
+    }
 
     const token = jwt.sign(
       { _id: newUser._id, role: newUser.role },
@@ -96,7 +102,7 @@ exports.register = async (req, res) => {
         customSplit: newUser.customSplit,
       },
       token,
-      initialPassword: password ? undefined : "123456",
+      initialPassword: password?.trim() ? undefined : "123456",
     });
   } catch (err) {
     console.error("❌ Error in register:", err);
@@ -104,27 +110,61 @@ exports.register = async (req, res) => {
   }
 };
 
+const normalizePhone = (p) =>
+  String(p || "")
+    .replace(/\D/g, "")
+    .trim();
+
 exports.login = async (req, res) => {
   try {
     const { phone, password } = req.body;
+    const phoneStr = normalizePhone(phone);
+    const phoneNum = Number(phoneStr);
 
-    let user = await Coach.findOne({ phone });
-    let role = "coach";
+    console.log("LOGIN body:", req.body);
+    console.log("phoneStr:", phoneStr, "phoneNum:", phoneNum);
 
-    if (!user) {
-      user = await Trainee.findOne({ phone });
-      role = "trainee";
-    }
+    let user =
+      (await Coach.findOne({
+        $or: [{ phone: phoneStr }, { phone: phoneNum }],
+      })) ||
+      (await Trainee.findOne({
+        $or: [{ phone: phoneStr }, { phone: phoneNum }],
+      }));
+
+    console.log("found user?", !!user, "dbPhone:", user?.phone);
 
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    const hash = user.passwordHash || user.password; // תמיכה גם בישן אם יש
+
+    console.log("hash fields:", {
+      hasPasswordHash: !!user?.passwordHash,
+      hasPassword: !!user?.password,
+    });
+
+    const isMatch = await bcrypt.compare(password, hash);
+    console.log(
+      "COMPARE result:",
+      isMatch,
+      "passwordLen:",
+      String(password ?? "").length,
+    );
+
     if (!isMatch)
       return res.status(400).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign({ _id: user._id, role }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ message: "JWT_SECRET missing in .env" });
+    }
+
+    const token = jwt.sign(
+      { _id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      },
+    );
 
     res.json({
       token,
@@ -133,14 +173,10 @@ exports.login = async (req, res) => {
         fullName: user.fullName,
         phone: user.phone,
         role: user.role,
-        dailyCalories: user.dailyCalories,
-        proteinGrams: user.proteinGrams,
-        carbGrams: user.carbGrams,
-        fatGrams: user.fatGrams,
-        customSplit: user.customSplit,
       },
     });
   } catch (err) {
+    console.error("❌ LOGIN ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };

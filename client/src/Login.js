@@ -73,7 +73,7 @@ export default function Login({ onLogin }) {
 
       if (!res.ok) {
         // ✅ 401 = פרטים שגויים
-        if (res.status === 401) {
+        if (res.status === 400 || res.status === 401) {
           setError("טלפון או סיסמה שגויים");
           return;
         }
@@ -92,7 +92,7 @@ export default function Login({ onLogin }) {
           }
 
           if (!res2.ok) {
-            if (res2.status === 401) {
+            if (res2.status === 400 || res2.status === 401) {
               setError("טלפון או סיסמה שגויים");
             } else {
               setError("בעיה זמנית בשרת. נסי שוב בעוד כמה שניות.");

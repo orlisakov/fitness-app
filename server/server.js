@@ -3,11 +3,13 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 
-const dotenv = require("dotenv");
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config();
+}
+
 const { connectDB } = require("./config/db");
 const authMiddleware = require("./middleware/authMiddleware");
 
-dotenv.config();
 connectDB();
 
 app.use(cors());

@@ -6,6 +6,12 @@ const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGO_URI);
 
+    console.log(
+      "✅ Mongo connected to:",
+      mongoose.connection.host,
+      mongoose.connection.name,
+    );
+
     bucket = new mongoose.mongo.GridFSBucket(conn.connection.db, {
       bucketName: "resources",
     });
