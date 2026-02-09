@@ -1,5 +1,6 @@
 // src/pages/NutritionForm.js
 import React, { useEffect, useState } from "react";
+import { authHeaders } from "../utils/auth";
 import "../styles/theme.css";
 import config from "./config";
 
@@ -20,9 +21,7 @@ export default function NutritionForm() {
   const fetchNutritionData = async () => {
     try {
       const res = await fetch(`${config.apiBaseUrl}/api/nutrition/me`, {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
+        headers: { ...authHeaders() },
       });
       if (!res.ok) throw new Error("שגיאה בטעינת נתונים");
       const data = await res.json();
@@ -49,7 +48,7 @@ export default function NutritionForm() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          ...authHeaders(),
         },
         body: JSON.stringify(form),
       });

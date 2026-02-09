@@ -10,12 +10,12 @@ router.post("/login", login);
 
 router.get("/me", authMiddleware, async (req, res) => {
   try {
+    const userId = req.user.id || req.user._id; // ✅ תומך בשני המקרים
     let user = null;
-    if (req.user.role === "coach") {
-      user = await Coach.findById(req.user.id);
-    } else {
-      user = await Trainee.findById(req.user.id);
-    }
+
+    if (req.user.role === "coach") user = await Coach.findById(userId);
+    else user = await Trainee.findById(userId);
+
     if (!user) return res.status(404).json({ message: "משתמש לא נמצא" });
     res.json(user);
   } catch (error) {

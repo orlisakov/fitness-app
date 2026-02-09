@@ -1,5 +1,5 @@
 // client/src/pages/DashboardTrainee.jsx
-
+import { authHeaders } from "../utils/auth";
 import React, { useEffect, useState } from "react";
 import "../styles/theme.css";
 import config from "../config";
@@ -60,11 +60,16 @@ export default function DashboardTrainee() {
     setLoading(true);
     try {
       const res = await fetch(`${config.apiBaseUrl}/api/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
+        headers: { ...authHeaders() },
       });
-      if (!res.ok) throw new Error("שגיאה בשליפת נתוני משתמש");
+      if (!res.ok) {
+        let msg = "שגיאה בשליפת נתוני משתמש";
+        try {
+          const j = await res.json();
+          msg = j.message || j.error || msg;
+        } catch {}
+        throw new Error(msg);
+      }
 
       const data = await res.json();
       const user = data.user || data;
@@ -102,9 +107,7 @@ export default function DashboardTrainee() {
       const res = await fetch(
         `${config.apiBaseUrl}/api/measurements/${trainee._id}`,
         {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-          },
+          headers: { ...authHeaders() },
         },
       );
       if (!res.ok) throw new Error("שגיאה בשליפת ההיסטוריה");
@@ -163,7 +166,7 @@ export default function DashboardTrainee() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            ...authHeaders(),
           },
           body: JSON.stringify(payload),
         },
@@ -201,9 +204,7 @@ export default function DashboardTrainee() {
   const openDislikedFoodsModal = async () => {
     try {
       const foodsRes = await fetch(`${config.apiBaseUrl}/api/foods`, {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
+        headers: { ...authHeaders() },
       });
       const foods = await foodsRes.json();
 
@@ -245,7 +246,7 @@ export default function DashboardTrainee() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            ...authHeaders(),
           },
           body: JSON.stringify({ dislikedFoods }),
         },

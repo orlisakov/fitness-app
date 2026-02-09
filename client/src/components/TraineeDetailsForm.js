@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "../styles/theme.css";
 import config from "../config";
+import { authHeaders } from "../utils/auth";
 
 const MealRow = React.memo(function MealRow({
   mealKey,
@@ -130,9 +131,7 @@ export default function TraineeDetailsForm() {
     async function fetchTrainee() {
       try {
         const res = await fetch(`${config.apiBaseUrl}/api/trainees/${id}`, {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-          },
+          headers: { ...authHeaders(), "Content-Type": "application/json" },
         });
         if (!res.ok) throw new Error("שגיאה בטעינת פרטי מתאמנת");
         const data = await res.json();
@@ -236,7 +235,7 @@ export default function TraineeDetailsForm() {
     };
 
     Object.keys(payload).forEach(
-      (k) => typeof payload[k] === "undefined" && delete payload[k]
+      (k) => typeof payload[k] === "undefined" && delete payload[k],
     );
 
     try {
@@ -244,7 +243,7 @@ export default function TraineeDetailsForm() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          ...authHeaders(),
         },
         body: JSON.stringify(payload),
       });

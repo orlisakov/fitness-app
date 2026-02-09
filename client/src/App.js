@@ -23,6 +23,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
   const navigate = useNavigate();
+  console.log("API BASE:", config.apiBaseUrl);
 
   useEffect(() => {
     const token = sessionStorage.getItem("token");

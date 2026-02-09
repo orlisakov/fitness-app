@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { authHeaders } from "../utils/auth";
 import "../styles/theme.css";
 import config from "../config";
 
@@ -212,7 +213,7 @@ export default function DashboardCoach() {
     try {
       const res = await fetch(`${config.apiBaseUrl}/api/trainees`, {
         headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          ...authHeaders(),
         },
       });
       if (!res.ok) throw new Error("לא ניתן לטעון את רשימת המתאמנות");
@@ -236,7 +237,7 @@ export default function DashboardCoach() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          ...authHeaders(),
         },
         body: JSON.stringify({
           fullName: newFullName.trim(),
@@ -351,7 +352,7 @@ export default function DashboardCoach() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            ...authHeaders(),
           },
           body: JSON.stringify(payload),
         },
@@ -377,7 +378,7 @@ export default function DashboardCoach() {
       const res = await fetch(`${config.apiBaseUrl}/api/trainees/${id}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          ...authHeaders(),
         },
       });
       if (!res.ok) throw new Error("שגיאה במחיקה");
@@ -404,7 +405,7 @@ export default function DashboardCoach() {
         `${config.apiBaseUrl}/api/measurements/${trainee._id}`,
         {
           headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            ...authHeaders(),
           },
         },
       );
@@ -449,7 +450,7 @@ export default function DashboardCoach() {
         `${config.apiBaseUrl}/api/measurements/${trainee._id}`,
         {
           headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            ...authHeaders(),
           },
         },
       );
@@ -489,8 +490,7 @@ export default function DashboardCoach() {
       const res = await fetch(`${config.apiBaseUrl}/api/measurements`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-          // שימי לב: לא להגדיר כאן Content-Type, הדפדפן יוסיף boundary נכון
+          ...authHeaders(),
         },
         body: fd,
       });
@@ -516,7 +516,7 @@ export default function DashboardCoach() {
         {
           method: "DELETE",
           headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            ...authHeaders(),
           },
         },
       );
@@ -535,7 +535,7 @@ export default function DashboardCoach() {
     try {
       const foodsRes = await fetch(`${config.apiBaseUrl}/api/foods`, {
         headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          ...authHeaders(),
         },
       });
       if (!foodsRes.ok) {
@@ -569,7 +569,7 @@ export default function DashboardCoach() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            ...authHeaders(),
           },
           body: JSON.stringify({ dislikedFoods }),
         },

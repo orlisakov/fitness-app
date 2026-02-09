@@ -3,6 +3,7 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import "../styles/theme.css";
 import Select from "react-select";
 import config from "../config";
+import { authHeaders } from "../utils/auth";
 
 const FLAG_TO_SAFE_CAT = {
   isVegan: "safe_vegan",
@@ -126,9 +127,7 @@ export default function ManageFoods() {
     try {
       const query = searchTerm ? `?name=${encodeURIComponent(searchTerm)}` : "";
       const res = await fetch(`${config.apiBaseUrl}/api/foods${query}`, {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
+        headers: { ...authHeaders() },
       });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
@@ -150,7 +149,7 @@ export default function ManageFoods() {
     if (!window.confirm("את/ה בטוח/ה שברצונך למחוק?")) return;
     const res = await fetch(`${config.apiBaseUrl}/api/foods/${id}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
+      headers: { ...authHeaders() },
     });
     if (!res.ok) {
       const j = await res.json().catch(() => ({}));
@@ -166,7 +165,7 @@ export default function ManageFoods() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          ...authHeaders(),
         },
         body: JSON.stringify(food),
       });
@@ -189,7 +188,7 @@ export default function ManageFoods() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          ...authHeaders(),
         },
         body: JSON.stringify(food),
       });

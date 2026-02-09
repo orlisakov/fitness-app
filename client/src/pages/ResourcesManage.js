@@ -1,6 +1,7 @@
 // src/pages/ResourcesManage.jsx
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import config from "../config";
+import { authHeaders } from "../utils/auth";
 
 export default function ResourcesManage() {
   const api = config.apiBaseUrl;
@@ -24,7 +25,7 @@ export default function ResourcesManage() {
 
   const headers = useMemo(
     () => ({
-      Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+      ...authHeaders(),
     }),
     [],
   );

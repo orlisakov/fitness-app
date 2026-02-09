@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import config from "../config";
+import { authHeaders } from "../utils/auth";
 
 export default function ResourcesLibrary() {
   const api = config.apiBaseUrl;
@@ -9,7 +10,7 @@ export default function ResourcesLibrary() {
   const [q, setQ] = useState("");
 
   const headers = {
-    Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+    ...authHeaders(),
   };
 
   // טוען קטגוריות (ללא ריקים)
