@@ -12,6 +12,12 @@ export default function Login({ onLogin }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ✅ Disable auto-login: always require manual login click
+  useEffect(() => {
+    sessionStorage.removeItem("token");
+    localStorage.removeItem("token"); // מנקה שאריות מהעבר
+  }, []);
+
   // ✅ נרמול טלפון: משאיר רק ספרות (053-... / רווחים / וכו')
   const normalizePhone = (p) => String(p || "").replace(/[^\d]/g, "");
 
@@ -108,7 +114,7 @@ export default function Login({ onLogin }) {
             return;
           }
           sessionStorage.setItem("token", cleanToken);
-          localStorage.setItem("token", cleanToken);
+          //localStorage.setItem("token", cleanToken);
           onLogin?.(data2);
           return;
         }
@@ -125,7 +131,7 @@ export default function Login({ onLogin }) {
       }
 
       sessionStorage.setItem("token", cleanToken);
-      localStorage.setItem("token", cleanToken);
+      //localStorage.setItem("token", cleanToken);
       onLogin?.(data);
     } catch (err) {
       // AbortError / Failed to fetch וכו'
