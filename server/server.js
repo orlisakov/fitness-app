@@ -7,13 +7,21 @@ if (process.env.NODE_ENV !== "production") {
   require("dotenv").config();
 }
 
+app.use(cors());
+app.use(express.json());
+
 const { connectDB } = require("./config/db");
 const authMiddleware = require("./middleware/authMiddleware");
 
-connectDB();
+// ✅ Health check (Warm-up) — הכי מהיר, בלי DB
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ ok: true, ts: Date.now() });
+});
 
-app.use(cors());
-app.use(express.json());
+// ✅ חיבור DB פעם אחת בזמן עליית השרת
+connectDB().catch((err) => {
+  console.error("❌ Failed to connect DB on boot:", err);
+});
 
 // ראוטים
 app.use("/api/auth", require("./routes/auth"));

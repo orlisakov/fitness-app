@@ -5,7 +5,7 @@ import axios from "axios";
 import "../styles/theme.css";
 import config from "../config";
 import { loadRubikFonts } from "../utils/pdfFonts";
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
 
 console.log("🌐 API BASE URL FROM CONFIG:", config.apiBaseUrl);
 
@@ -100,19 +100,79 @@ const PDI = "\u2069"; // Pop Directional Isolate
 
 // ===== Main Component =====
 export default function PersonalMenu({ traineeData }) {
-  const traineeName =
-    traineeData?.displayName ||
-    traineeData?.fullName ||
-    [traineeData?.firstName, traineeData?.lastName].filter(Boolean).join(" ") ||
-    traineeData?.name ||
-    "מתאמנת";
-
   const [mealPlan, setMealPlan] = useState(null);
   const [appliedPrefs, setAppliedPrefs] = useState(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const [resolvedTrainee, setResolvedTrainee] = useState(traineeData || null);
   const guardRef = useRef("");
+
+  // תמיד לסנכרן אם הגיעו props חדשים
+  useEffect(() => {
+    setResolvedTrainee(traineeData || null);
+  }, [traineeData]);
+
+  useEffect(() => {
+    const t = resolvedTrainee;
+    if (!t) return;
+
+    const protein = toNumber(t?.proteinGrams);
+    const carbs = toNumber(t?.carbGrams);
+    const fat = toNumber(t?.fatGrams);
+    const calories = toNumber(t?.dailyCalories);
+
+    // אם חסר משהו → נביא את הנתונים מהשרת
+    if ([protein, carbs, fat, calories].some((x) => x == null)) {
+      const rawToken =
+        sessionStorage.getItem("token") || localStorage.getItem("token");
+      const token = rawToken?.replace(/^Bearer\s+/i, "");
+      if (!token) return;
+
+      let cancelled = false;
+      setIsLoading(true);
+      setError("");
+
+      axios
+        .get(`${config.apiBaseUrl}/api/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then(({ data }) => {
+          if (cancelled) return;
+          // לפי איך שהשרת מחזיר: data.user או data
+          const fresh = data?.user || data;
+          if (fresh) setResolvedTrainee(fresh);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          // לא חייבים שגיאה כאן, אפשר להשאיר טוען עד שיגיע
+          setError("");
+        })
+        .finally(() => {
+          if (cancelled) return;
+          setIsLoading(false);
+        });
+
+      return () => {
+        cancelled = true;
+      };
+    }
+  }, [
+    resolvedTrainee?._id,
+    resolvedTrainee?.proteinGrams,
+    resolvedTrainee?.carbGrams,
+    resolvedTrainee?.fatGrams,
+    resolvedTrainee?.dailyCalories,
+  ]);
+
+  const traineeName =
+    resolvedTrainee?.displayName ||
+    resolvedTrainee?.fullName ||
+    [resolvedTrainee?.firstName, resolvedTrainee?.lastName]
+      .filter(Boolean)
+      .join(" ") ||
+    resolvedTrainee?.name ||
+    "מתאמנת";
 
   function fmt(n, d = 2) {
     const x = Number(n);
@@ -146,12 +206,13 @@ export default function PersonalMenu({ traineeData }) {
     let alive = true;
 
     const run = async () => {
-      if (!traineeData) return;
+      if (!resolvedTrainee) return;
+      setError("");
 
-      const proteinGrams = toNumber(traineeData?.proteinGrams);
-      const carbGrams = toNumber(traineeData?.carbGrams);
-      const fatGrams = toNumber(traineeData?.fatGrams);
-      const dailyCalories = toNumber(traineeData?.dailyCalories);
+      const proteinGrams = toNumber(resolvedTrainee?.proteinGrams);
+      const carbGrams = toNumber(resolvedTrainee?.carbGrams);
+      const fatGrams = toNumber(resolvedTrainee?.fatGrams);
+      const dailyCalories = toNumber(resolvedTrainee?.dailyCalories);
 
       let fat = fatGrams;
       if (
@@ -173,11 +234,13 @@ export default function PersonalMenu({ traineeData }) {
       if (
         [proteinGrams, carbGrams, fat, dailyCalories].some((x) => x == null)
       ) {
+        // במקום שגיאה – נמתין לטעינת נתוני המאקרו (בדרך כלל מגיעים רגע אחרי)
         guardRef.current = "";
         if (!alive) return;
-        setError("נתוני מאקרו חסרים. לא ניתן ליצור תפריט.");
+        setError(""); // ✅ לא “ננעלים” על שגיאה
         setMealPlan(null);
         setAppliedPrefs(null);
+        setIsLoading(true); // ✅ מציג טוען תפריט…
         return;
       }
 
@@ -192,14 +255,14 @@ export default function PersonalMenu({ traineeData }) {
       try {
         const prefs = {
           isVegetarian: !!(
-            traineeData?.vegetarian || traineeData?.isVegetarian
+            resolvedTrainee?.vegetarian || resolvedTrainee?.isVegetarian
           ),
-          isVegan: !!(traineeData?.vegan || traineeData?.isVegan),
+          isVegan: !!(resolvedTrainee?.vegan || resolvedTrainee?.isVegan),
           glutenSensitive: !!(
-            traineeData?.glutenSensitive || traineeData?.isGlutenFree
+            resolvedTrainee?.glutenSensitive || resolvedTrainee?.isGlutenFree
           ),
           lactoseSensitive: !!(
-            traineeData?.lactoseSensitive || traineeData?.isLactoseFree
+            resolvedTrainee?.lactoseSensitive || resolvedTrainee?.isLactoseFree
           ),
         };
 
@@ -269,7 +332,21 @@ export default function PersonalMenu({ traineeData }) {
     return () => {
       alive = false;
     };
-  }, [traineeData]);
+  }, [
+    resolvedTrainee?._id,
+    resolvedTrainee?.proteinGrams,
+    resolvedTrainee?.carbGrams,
+    resolvedTrainee?.fatGrams,
+    resolvedTrainee?.dailyCalories,
+    resolvedTrainee?.isVegetarian,
+    resolvedTrainee?.isVegan,
+    resolvedTrainee?.glutenSensitive,
+    resolvedTrainee?.lactoseSensitive,
+    resolvedTrainee?.vegetarian,
+    resolvedTrainee?.vegan,
+    resolvedTrainee?.isGlutenFree,
+    resolvedTrainee?.isLactoseFree,
+  ]);
 
   /* ---------------------- EXPORT TO PDF ---------------------- */
   async function exportToPDF() {
@@ -594,7 +671,7 @@ export default function PersonalMenu({ traineeData }) {
       { key: "dinner", label: "ארוחת ערב" },
     ];
 
-    const findGroup = (meal, keys = []) =>
+    const findPdfGroup = (meal, keys = []) =>
       meal?.groups?.find((g) => keys.includes(g.key)) || null;
 
     const pickDinnerVariant = (meal) => {
@@ -647,9 +724,9 @@ export default function PersonalMenu({ traineeData }) {
         (key === "dinner" &&
           meal.groups?.some((g) => g.key === "prot_breakfast"))
       ) {
-        const eggs = findGroup(meal, ["eggs"])?.fixed || null;
-        let prot = findGroup(meal, ["prot_breakfast"])?.options || [];
-        const breads = findGroup(meal, ["breads"])?.options || [];
+        const eggs = findPdfGroup(meal, ["eggs"])?.fixed || null;
+        let prot = findPdfGroup(meal, ["prot_breakfast"])?.options || [];
+        const breads = findPdfGroup(meal, ["breads"])?.options || [];
 
         if (eggs) {
           prot = prot.concat([
@@ -680,8 +757,8 @@ export default function PersonalMenu({ traineeData }) {
 
         if (isVegan) {
           const veganProtein =
-            findGroup(meal, ["vegan_protein"])?.options || [];
-          const veganCarbs = findGroup(meal, ["vegan_carbs"])?.options || [];
+            findPdfGroup(meal, ["vegan_protein"])?.options || [];
+          const veganCarbs = findPdfGroup(meal, ["vegan_carbs"])?.options || [];
 
           y = drawTable({
             headRows: [
@@ -698,10 +775,10 @@ export default function PersonalMenu({ traineeData }) {
           return;
         }
 
-        const protein = findGroup(meal, ["protein"])?.options || [];
-        const carbs = findGroup(meal, ["carbs"])?.options || [];
+        const protein = findPdfGroup(meal, ["protein"])?.options || [];
+        const carbs = findPdfGroup(meal, ["carbs"])?.options || [];
         const legumes =
-          findGroup(meal, ["legumes_lunch", "legumes"])?.options || [];
+          findPdfGroup(meal, ["legumes_lunch", "legumes"])?.options || [];
 
         const mergedCarbs = isVegetarian ? carbs : [...carbs, ...legumes];
 
@@ -721,10 +798,11 @@ export default function PersonalMenu({ traineeData }) {
       }
 
       if (key === "snack") {
-        const prot = findGroup(meal, ["protein_snack"])?.options || [];
-        const sweets = findGroup(meal, ["sweet_snack"])?.options || [];
-        const fruits = findGroup(meal, ["fruit_snack"])?.options || [];
-        const fats = findGroup(meal, ["fat_snack"])?.options || [];
+        const prot = findPdfGroup(meal, ["protein_snack"])?.options || [];
+        const sweets = findPdfGroup(meal, ["sweet_snack"])?.options || [];
+        const fruits = findPdfGroup(meal, ["fruit_snack"])?.options || [];
+        const fats = findPdfGroup(meal, ["fat_snack"])?.options || [];
+
         const carbsWithFats = [...sweets, ...fruits, ...fats];
 
         y = drawTable({

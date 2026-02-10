@@ -1,6 +1,7 @@
 // src/App.jsx
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { warmupBackend } from "./utils/warmup";
 
 import ResourcesLibrary from "./pages/ResourcesLibrary";
 import ResourcesManage from "./pages/ResourcesManage";
@@ -24,6 +25,10 @@ export default function App() {
   const [userLoading, setUserLoading] = useState(true);
   const navigate = useNavigate();
   console.log("API BASE:", config.apiBaseUrl);
+
+  useEffect(() => {
+    warmupBackend();
+  }, []);
 
   useEffect(() => {
     const token =
