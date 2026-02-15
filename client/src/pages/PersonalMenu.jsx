@@ -674,91 +674,168 @@ export default function PersonalMenu({ traineeData }) {
     const findPdfGroup = (meal, keys = []) =>
       meal?.groups?.find((g) => keys.includes(g.key)) || null;
 
-    const pickDinnerVariant = (meal) => {
-      if (!meal) return null;
-
-      const isVegan = !!appliedPrefs?.isVegan;
-      const isVegetarian = !!appliedPrefs?.isVegetarian;
-
-      const hasGroups = (m) => Array.isArray(m?.groups);
-      const hasVeganGroups = (m) =>
-        hasGroups(m) &&
-        m.groups.some(
-          (g) => g.key === "vegan_protein" || g.key === "vegan_carbs",
-        );
-
-      const { dairyStyle, meatStyle, veggieStyle, veganStyle } = meal;
-
-      if (isVegan) {
-        // אם meal עצמו כבר "שטוח" עם groups טבעוניים
-        if (hasVeganGroups(meal)) return meal;
-        // אם יש veganStyle
-        if (hasVeganGroups(veganStyle)) return veganStyle;
-        // fallback רק אם במקרה יש vegan_* ב-veggieStyle
-        if (hasVeganGroups(veggieStyle)) return veggieStyle;
-        return meal; // כדי שלא יקרוס, אבל אולי יצא ריק אם אין vegan_*
+    const uniqByFoodId = (arr = []) => {
+      const seen = new Set();
+      const out = [];
+      for (const o of arr) {
+        const id = String(o?.food?._id || o?.food?.id || o?.food?.name || "");
+        if (!id || seen.has(id)) continue;
+        seen.add(id);
+        out.push(o);
       }
-
-      if (isVegetarian) return dairyStyle || veggieStyle || meatStyle || meal;
-      return meatStyle || dairyStyle || veggieStyle || meal;
+      return out;
     };
 
+    const isLegumeOpt = (opt) => {
+      const cats = opt?.food?.categories || [];
+      return cats.includes("legumes_lunch") || cats.includes("legumes");
+    };
+
+    // טבלת קטניות (כמו LegumeBlock באתר)
+    function drawSingleTable({ title, options = [], startY }) {
+      if (!options.length) return startY;
+
+      const body = options.map((o) => [
+        mirrorLines(comboToMultiline(o?.displayText || "")),
+        mirrorLines(comboToMultiline(o?.food?.name || "")),
+      ]);
+
+      autoTable(pdf, {
+        startY,
+        head: [
+          [{ content: mirror(title), colSpan: 2 }],
+          [mirror("כמות"), mirror("מוצר")],
+        ],
+        body,
+        theme: "grid",
+        margin: { left: 12, right: 12 },
+        styles: {
+          font: "Rubik",
+          textColor: [255, 255, 255],
+          fillColor: [0, 0, 0],
+          halign: "right",
+          valign: "middle",
+          cellPadding: 3,
+          lineColor: [255, 71, 126],
+          lineWidth: 0.2,
+        },
+        headStyles: {
+          fontStyle: "bold",
+          halign: "center",
+          textColor: [255, 255, 255],
+          fillColor: [253, 39, 103],
+        },
+        columnStyles: {
+          0: {
+            cellWidth: 42,
+            halign: "center",
+            fontStyle: "bold",
+            textColor: [253, 39, 103],
+          },
+          1: {
+            cellWidth: pdf.internal.pageSize.getWidth() - 24 - 42,
+            halign: "right",
+          },
+        },
+      });
+
+      return pdf.lastAutoTable.finalY;
+    }
+
     order.forEach(({ key, label }) => {
-      let meal = meals[key];
-      if (!meal) return;
-      if (key === "dinner") {
-        const v = pickDinnerVariant(meal);
-        if (!v) return;
-        meal = v;
-      }
+      const mealRaw = meals[key];
+      if (!mealRaw) return;
 
-      pdf.addPage();
-      ({ y } = startPage());
-      y = drawWhiteTitle(label, y);
-      y = addTargetsChips(y + 2, meal.targets); // ממורכז מתחת לכותרת
-      y += 4;
+      const hasGroups = (m) => Array.isArray(m?.groups);
 
-      // בוקר/חלבית: שתי קבוצות – חלבון / פחמימה
-      if (
-        key === "breakfast" ||
-        (key === "dinner" &&
-          meal.groups?.some((g) => g.key === "prot_breakfast"))
-      ) {
-        const eggs = findPdfGroup(meal, ["eggs"])?.fixed || null;
-        let prot = findPdfGroup(meal, ["prot_breakfast"])?.options || [];
-        const breads = findPdfGroup(meal, ["breads"])?.options || [];
-
-        if (eggs) {
-          prot = prot.concat([
-            { food: eggs.food, displayText: eggs.displayText },
-          ]);
-        }
-
-        y = drawTable({
-          headRows: [
-            [
-              { content: mirror("חלבון — בחרי אחד"), colSpan: 2 },
-              { content: mirror("פחמימה — בחרי אחד"), colSpan: 2 },
-            ],
-            [mirror("כמות"), mirror("מוצר"), mirror("כמות"), mirror("מוצר")],
-          ],
-          body: buildDualRows(prot, breads /* או mergedCarbs וכו' */),
-          startY: y + 2,
-        });
-
-        return;
-      }
-
-      // צהריים/בשרית/צמחונית: חלבון מול פחמימות/קטניות מאוחדות
-      // צהריים/ערב: התאמה לטבעוני/צמחוני/רגיל
-      if (key === "lunch" || key === "dinner") {
+      const dinnerVariantsForPdf = (m) => {
         const isVegan = !!appliedPrefs?.isVegan;
         const isVegetarian = !!appliedPrefs?.isVegetarian;
+        const { dairyStyle, meatStyle, veggieStyle, veganStyle } = m || {};
 
+        const hasGroups = (x) => Array.isArray(x?.groups);
+
+        // טבעונית: רק טבעוני
         if (isVegan) {
-          const veganProtein =
-            findPdfGroup(meal, ["vegan_protein"])?.options || [];
-          const veganCarbs = findPdfGroup(meal, ["vegan_carbs"])?.options || [];
+          const cand =
+            (hasGroups(veganStyle) && veganStyle) ||
+            (hasGroups(m) && m) ||
+            null;
+
+          return cand
+            ? [{ title: "ארוחת ערב — גרסה טבעונית", data: cand }]
+            : [];
+        }
+
+        // צמחונית: חלבית + צמחונית (אם קיימות)
+        if (isVegetarian) {
+          const out = [];
+          if (hasGroups(dairyStyle))
+            out.push({ title: "ארוחת ערב — גרסה חלבית", data: dairyStyle });
+          if (hasGroups(veggieStyle))
+            out.push({ title: "ארוחת ערב — גרסה צמחונית", data: veggieStyle });
+          if (!out.length && hasGroups(m))
+            out.push({ title: "ארוחת ערב", data: m });
+          return out;
+        }
+
+        // ✅ רגיל: הדפיסי גם חלבית וגם בשרית (אם קיימות)
+        const out = [];
+        if (hasGroups(dairyStyle))
+          out.push({ title: "ארוחת ערב — גרסה חלבית", data: dairyStyle });
+        if (hasGroups(meatStyle))
+          out.push({ title: "ארוחת ערב — גרסה בשרית", data: meatStyle });
+
+        // fallback אם משום מה אין styles אבל יש groups ישירות על dinner
+        if (!out.length && hasGroups(m))
+          out.push({ title: "ארוחת ערב", data: m });
+
+        return out;
+      };
+
+      console.log(
+        "PDF meal key:",
+        key,
+        "groups:",
+        mealRaw?.groups?.map((g) => g.key),
+      );
+
+      let pages =
+        key === "dinner"
+          ? dinnerVariantsForPdf(mealRaw)
+          : [{ title: label, data: mealRaw }];
+
+      if (key === "dinner" && pages.length === 0) {
+        pages = [{ title: "ארוחת ערב", data: mealRaw }];
+      }
+
+      pages.forEach(({ title, data }) => {
+        const meal = data;
+
+        pdf.addPage();
+        ({ y } = startPage());
+        y = drawWhiteTitle(title, y);
+        y = addTargetsChips(y + 2, meal.targets);
+        y += 4;
+
+        // ===== breakfast-like =====
+        if (
+          key === "breakfast" ||
+          (key === "dinner" &&
+            meal?.groups?.some((g) => g.key === "prot_breakfast"))
+        ) {
+          const eggs =
+            meal?.groups?.find((g) => g.key === "eggs")?.fixed || null;
+          let prot =
+            meal?.groups?.find((g) => g.key === "prot_breakfast")?.options ||
+            [];
+          const breads =
+            meal?.groups?.find((g) => g.key === "breads")?.options || [];
+
+          if (eggs)
+            prot = prot.concat([
+              { food: eggs.food, displayText: eggs.displayText },
+            ]);
 
           y = drawTable({
             headRows: [
@@ -768,57 +845,139 @@ export default function PersonalMenu({ traineeData }) {
               ],
               [mirror("כמות"), mirror("מוצר"), mirror("כמות"), mirror("מוצר")],
             ],
-            body: buildDualRows(veganProtein, veganCarbs),
+            body: buildDualRows(prot, breads),
+            startY: y + 2,
+          });
+
+          return; // יוצא רק מה־pages.forEach (בסדר)
+        }
+
+        // ===== lunch/dinner table logic =====
+        if (key === "lunch" || key === "dinner") {
+          const isVegan = !!appliedPrefs?.isVegan;
+          const isVegetarian = !!appliedPrefs?.isVegetarian;
+
+          if (isVegan) {
+            const veganProtein =
+              findPdfGroup(meal, ["vegan_protein"])?.options || [];
+            const veganCarbs =
+              findPdfGroup(meal, ["vegan_carbs"])?.options || [];
+
+            y = drawTable({
+              headRows: [
+                [
+                  { content: mirror("חלבון — בחרי אחד"), colSpan: 2 },
+                  { content: mirror("פחמימה — בחרי אחד"), colSpan: 2 },
+                ],
+                [
+                  mirror("כמות"),
+                  mirror("מוצר"),
+                  mirror("כמות"),
+                  mirror("מוצר"),
+                ],
+              ],
+              body: buildDualRows(veganProtein, veganCarbs),
+              startY: y + 2,
+            });
+
+            return;
+          }
+
+          const proteinGroup = isVegetarian
+            ? findPdfGroup(meal, ["veges_Protein"])
+            : findPdfGroup(meal, ["protein"]);
+
+          const carbsGroup = findPdfGroup(meal, ["carbs"]);
+          const legumesGroup = findPdfGroup(meal, ["legumes_lunch", "legumes"]);
+
+          const protein = proteinGroup?.options || [];
+          const allCarbs = carbsGroup?.options || [];
+
+          const legumesFromCarbs = allCarbs.filter(isLegumeOpt);
+          const carbsNoLegumes = allCarbs.filter((o) => !isLegumeOpt(o));
+
+          const legumesMerged = uniqByFoodId([
+            ...(legumesGroup?.options || []),
+            ...legumesFromCarbs,
+          ]);
+
+          if (isVegetarian) {
+            y = drawTable({
+              headRows: [
+                [
+                  {
+                    content: mirror(proteinGroup?.title || "חלבון — בחרי אחד"),
+                    colSpan: 2,
+                  },
+                  {
+                    content: mirror(carbsGroup?.title || "פחמימה — בחרי אחד"),
+                    colSpan: 2,
+                  },
+                ],
+                [
+                  mirror("כמות"),
+                  mirror("מוצר"),
+                  mirror("כמות"),
+                  mirror("מוצר"),
+                ],
+              ],
+              body: buildDualRows(protein, carbsNoLegumes),
+              startY: y + 2,
+            });
+
+            y = drawSingleTable({
+              title: "או — מקטניות",
+              options: legumesMerged,
+              startY: y + 6,
+            });
+
+            return;
+          }
+
+          const carbsMerged = [...carbsNoLegumes, ...legumesMerged];
+
+          y = drawTable({
+            headRows: [
+              [
+                {
+                  content: mirror(proteinGroup?.title || "חלבון — בחרי אחד"),
+                  colSpan: 2,
+                },
+                { content: mirror("פחמימות / קטניות — בחרי אחד"), colSpan: 2 },
+              ],
+              [mirror("כמות"), mirror("מוצר"), mirror("כמות"), mirror("מוצר")],
+            ],
+            body: buildDualRows(protein, carbsMerged),
             startY: y + 2,
           });
 
           return;
         }
 
-        const protein = findPdfGroup(meal, ["protein"])?.options || [];
-        const carbs = findPdfGroup(meal, ["carbs"])?.options || [];
-        const legumes =
-          findPdfGroup(meal, ["legumes_lunch", "legumes"])?.options || [];
+        // ===== snack =====
+        if (key === "snack") {
+          const prot = findPdfGroup(meal, ["protein_snack"])?.options || [];
+          const sweets = findPdfGroup(meal, ["sweet_snack"])?.options || [];
+          const fruits = findPdfGroup(meal, ["fruit_snack"])?.options || [];
+          const fats = findPdfGroup(meal, ["fat_snack"])?.options || [];
 
-        const mergedCarbs = isVegetarian ? carbs : [...carbs, ...legumes];
+          const carbsWithFats = [...sweets, ...fruits, ...fats];
 
-        y = drawTable({
-          headRows: [
-            [
-              { content: mirror("חלבון — בחרי אחד"), colSpan: 2 },
-              { content: mirror("פחמימה — בחרי אחד"), colSpan: 2 },
+          y = drawTable({
+            headRows: [
+              [
+                { content: mirror("חלבון — בחרי אחד"), colSpan: 2 },
+                { content: mirror("בחרי אחד"), colSpan: 2 },
+              ],
+              [mirror("כמות"), mirror("מוצר"), mirror("כמות"), mirror("מוצר")],
             ],
-            [mirror("כמות"), mirror("מוצר"), mirror("כמות"), mirror("מוצר")],
-          ],
-          body: buildDualRows(protein, mergedCarbs),
-          startY: y + 2,
-        });
+            body: buildDualRows(prot, carbsWithFats),
+            startY: y + 2,
+          });
 
-        return;
-      }
-
-      if (key === "snack") {
-        const prot = findPdfGroup(meal, ["protein_snack"])?.options || [];
-        const sweets = findPdfGroup(meal, ["sweet_snack"])?.options || [];
-        const fruits = findPdfGroup(meal, ["fruit_snack"])?.options || [];
-        const fats = findPdfGroup(meal, ["fat_snack"])?.options || [];
-
-        const carbsWithFats = [...sweets, ...fruits, ...fats];
-
-        y = drawTable({
-          headRows: [
-            [
-              { content: mirror("חלבון — בחרי אחד"), colSpan: 2 },
-              { content: mirror("בחרי אחד"), colSpan: 2 },
-            ],
-            [mirror("כמות"), mirror("מוצר"), mirror("כמות"), mirror("מוצר")],
-          ],
-          body: buildDualRows(prot, carbsWithFats),
-          startY: y + 2,
-        });
-
-        return;
-      }
+          return;
+        }
+      });
     });
 
     pdf.save("תפריט-אישי.pdf");
@@ -914,27 +1073,23 @@ export default function PersonalMenu({ traineeData }) {
 
   // בוקר/ערב-חלבית
   function BreakfastLike({ meal, title }) {
-    const t = meal.targets;
-    const eggs = meal.groups.find((g) => g.key === "eggs")?.fixed || null;
+    const t = meal?.targets;
+    const eggs = meal?.groups?.find((g) => g.key === "eggs")?.fixed || null;
     let prot =
-      meal.groups.find((g) => g.key === "prot_breakfast")?.options || [];
-    const carbs = meal.groups.find((g) => g.key === "breads")?.options || [];
+      meal?.groups?.find((g) => g.key === "prot_breakfast")?.options || [];
+    const carbs = meal?.groups?.find((g) => g.key === "breads")?.options || [];
 
     if (eggs) {
       prot = [
         ...prot,
-        {
-          food: eggs.food,
-          displayText: eggs.displayText,
-          _isEggCombo: true,
-        },
+        { food: eggs.food, displayText: eggs.displayText, _isEggCombo: true },
       ];
     }
 
     return (
       <div className="meal-card stacked">
         <SectionTitle>{title}</SectionTitle>
-        <TargetsRow t={t} />
+        {t && <TargetsRow t={t} />}
 
         <DualGroupTable
           proteinTitle="חלבון - בחרי אחד"
@@ -956,7 +1111,8 @@ export default function PersonalMenu({ traineeData }) {
   }
 
   function LegumeBlock({ meal, legumesOptions }) {
-    const t = meal.targets;
+    const t = meal?.targets;
+
     const vegFree = findGroup(meal, ["veg_free"])?.options || [];
 
     const legumes =
@@ -1004,7 +1160,7 @@ export default function PersonalMenu({ traineeData }) {
 
   // צהריים
   function LunchBlock({ meal, title = "ארוחת צהריים" }) {
-    const t = meal.targets;
+    const t = meal?.targets;
 
     const isVegan = !!appliedPrefs?.isVegan;
     const isVegetarian = !!appliedPrefs?.isVegetarian;
@@ -1230,44 +1386,23 @@ export default function PersonalMenu({ traineeData }) {
     );
   }
 
-  // ---- הוסיפי מחוץ לקומפוננטה (למעלה בקובץ) ----
-  function shapeBulletLine(line) {
-    if (!line) return line;
-
-    // • [מספר/כמות/אנגלית] [טקסט]
-    const m1 = line.match(/^\s*•\s*([0-9A-Za-z.,/()%+\-]+)\s+(.*)$/);
-    if (m1) {
-      const [, amount, rest] = m1;
-      // בונים "טקסט כמות •" כדי שאחרי rtlFix התבליט יופיע בצד ימין
-      return `${rest.trim()} ${amount.trim()} •`;
-    }
-
-    // • [טקסט בלבד]
-    const m2 = line.match(/^\s*•\s*(.*)$/);
-    if (m2) {
-      return `${m2[1].trim()} •`;
-    }
-
-    return line;
-  }
-
   function SnackBlock({ meal }) {
-    const t = meal.targets;
+    const t = meal?.targets;
     const prot =
-      meal.groups.find((g) => g.key === "protein_snack")?.options || [];
+      meal?.groups?.find((g) => g.key === "protein_snack")?.options || [];
     const sweets =
-      meal.groups.find((g) => g.key === "sweet_snack")?.options || [];
+      meal?.groups?.find((g) => g.key === "sweet_snack")?.options || [];
     const fruits =
-      meal.groups.find((g) => g.key === "fruit_snack")?.options || [];
-    const fats = meal.groups.find((g) => g.key === "fat_snack")?.options || [];
+      meal?.groups?.find((g) => g.key === "fruit_snack")?.options || [];
+    const fats =
+      meal?.groups?.find((g) => g.key === "fat_snack")?.options || [];
 
-    // ✅ פחמימות בסנאק = מתוקים + פירות + שומנים
     const carbsWithFats = [...sweets, ...fruits, ...fats];
 
     return (
       <div className="meal-card stacked">
         <SectionTitle>ארוחת ביניים</SectionTitle>
-        <TargetsRow t={t} />
+        {t && <TargetsRow t={t} />}
 
         <DualGroupTable
           proteinTitle="חלבון - בחרי אחד"
