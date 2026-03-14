@@ -1,4 +1,4 @@
-מעולה. אני 
+ 
 
 🏋️ Fitness Coach Management Platform
 
