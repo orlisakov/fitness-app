@@ -1228,7 +1228,7 @@ class RuleBasedPlanner {
       (f) =>
         bySuitability("breakfast", minSuit)(f) &&
         !this.isMayo(f) &&
-        !inCats(f, ["protein_snack"]) &&
+        (!inCats(f, ["protein_snack"]) || inCats(f, ["protein_breakfast"])) &&
         (hasFlag(f, "flag_dairy") ||
           hasFlag(f, "flag_fish") ||
           hasFlag(f, "flag_egg")),
