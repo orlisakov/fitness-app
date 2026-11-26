@@ -12,6 +12,15 @@ const measurementSchema = new mongoose.Schema(
     TopCircumference: { type: Number },
     ButtockCircumference: { type: Number },
     BodyWeight: { type: Number },
+    BodyFatPercentage: { type: Number, min: 0, max: 100 },
+    RMR: {
+      type: Number,
+      min: 1,
+      validate: {
+        validator: Number.isInteger,
+        message: "RMR חייב להיות מספר שלם וחיובי בקק״ל ליום",
+      },
+    },
     ArmCircumference: { type: Number },
     imagePaths: {
       type: [String],

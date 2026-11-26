@@ -46,6 +46,10 @@ const num = (v) => {
   const n = parseFloat(v);
   return Number.isFinite(n) ? n : undefined;
 };
+// Empty optional fields stay absent; invalid numeric input is rejected by Mongoose.
+const optionalNumber = (value) =>
+  value == null || String(value).trim() === "" ? undefined : Number(value);
+
 const toRelPath = (fname) =>
   `uploads/measurements/${fname}`.replace(/\\/g, "/");
 const safeUnlink = (abs) => {
@@ -69,6 +73,8 @@ router.post("/", (req, res) => {
         TopCircumference,
         ButtockCircumference,
         BodyWeight,
+        BodyFatPercentage,
+        RMR,
         ArmCircumference,
       } = req.body;
 
@@ -96,6 +102,8 @@ router.post("/", (req, res) => {
         TopCircumference: num(TopCircumference),
         ButtockCircumference: num(ButtockCircumference),
         BodyWeight: num(BodyWeight),
+        BodyFatPercentage: optionalNumber(BodyFatPercentage),
+        RMR: optionalNumber(RMR),
         ArmCircumference: num(ArmCircumference),
         imagePaths,
         imagePath: imagePaths[0] || undefined, // תאימות לאחור

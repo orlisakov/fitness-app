@@ -126,6 +126,8 @@ export default function DashboardCoach() {
     TopCircumference: "",
     ButtockCircumference: "",
     BodyWeight: "",
+    BodyFatPercentage: "",
+    RMR: "",
     ArmCircumference: "",
   });
 
@@ -400,6 +402,8 @@ export default function DashboardCoach() {
       TopCircumference: "",
       ButtockCircumference: "",
       BodyWeight: "",
+      BodyFatPercentage: "",
+      RMR: "",
       ArmCircumference: "",
     });
     setMeasurementPhotos([]);
@@ -484,6 +488,8 @@ export default function DashboardCoach() {
         measurementData.ButtockCircumference || "",
       );
       fd.append("BodyWeight", measurementData.BodyWeight || "");
+      fd.append("BodyFatPercentage", measurementData.BodyFatPercentage ?? "");
+      fd.append("RMR", measurementData.RMR ?? "");
       fd.append("ArmCircumference", measurementData.ArmCircumference || "");
 
       // שולחים מערך 'photos' (וכדאי להשאיר גם 'photo' לתאימות אחורה אם השרת עוד מצפה לשם הזה)
@@ -1110,6 +1116,8 @@ export default function DashboardCoach() {
                         <th>חזה</th>
                         <th>ישבן</th>
                         <th>משקל</th>
+                        <th>אחוז שומן (%)</th>
+                        <th>RMR (קק״ל ליום)</th>
                         <th>זרוע</th>
                       </tr>
                     </thead>
@@ -1124,6 +1132,8 @@ export default function DashboardCoach() {
                         <td>{measurements[0].TopCircumference}</td>
                         <td>{measurements[0].ButtockCircumference}</td>
                         <td>{measurements[0].BodyWeight}</td>
+                        <td>{measurements[0].BodyFatPercentage ?? "—"}</td>
+                        <td>{measurements[0].RMR ?? "—"}</td>
                         <td>{measurements[0].ArmCircumference}</td>
                       </tr>
                     </tbody>
@@ -1189,6 +1199,38 @@ export default function DashboardCoach() {
                     ...p,
                     BodyWeight: e.target.value,
                   }))
+                }
+              />
+              <label htmlFor="measurement-body-fat">אחוז שומן (%)</label>
+              <input
+                id="measurement-body-fat"
+                type="number"
+                min="0"
+                max="100"
+                step="any"
+                inputMode="decimal"
+                placeholder="לדוגמה: 28.5"
+                value={measurementData.BodyFatPercentage}
+                onChange={(e) =>
+                  setMeasurementData((p) => ({
+                    ...p,
+                    BodyFatPercentage: e.target.value,
+                  }))
+                }
+              />
+              <label htmlFor="measurement-rmr">
+                RMR — חילוף חומרים במנוחה (קק״ל ליום)
+              </label>
+              <input
+                id="measurement-rmr"
+                type="number"
+                min="1"
+                step="1"
+                inputMode="numeric"
+                placeholder="לדוגמה: 1400"
+                value={measurementData.RMR}
+                onChange={(e) =>
+                  setMeasurementData((p) => ({ ...p, RMR: e.target.value }))
                 }
               />
               <input
@@ -1276,6 +1318,8 @@ export default function DashboardCoach() {
                       <th>חזה/עליון (ס״מ)</th>
                       <th>ישבן/אגן (ס״מ)</th>
                       <th>משקל (ק"ג)</th>
+                      <th>אחוז שומן (%)</th>
+                      <th>RMR (קק״ל ליום)</th>
                       <th>זרוע (ס״מ)</th>
                       <th>תמונות</th>
                       <th>הסר</th>
@@ -1289,6 +1333,8 @@ export default function DashboardCoach() {
                         <td>{m.TopCircumference}</td>
                         <td>{m.ButtockCircumference}</td>
                         <td>{m.BodyWeight}</td>
+                        <td>{m.BodyFatPercentage ?? "—"}</td>
+                        <td>{m.RMR ?? "—"}</td>
                         <td>{m.ArmCircumference}</td>
                         <td className="measure-photos-cell">
                           {(() => {

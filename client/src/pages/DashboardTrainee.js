@@ -628,6 +628,8 @@ export default function DashboardTrainee() {
                         <th>חזה/עליון (ס״מ)</th>
                         <th>ישבן/אגן (ס״מ)</th>
                         <th>משקל (ק"ג)</th>
+                        <th>אחוז שומן (%)</th>
+                        <th>RMR (קק״ל ליום)</th>
                         <th>זרוע (ס״מ)</th>
                         <th>תמונות</th>
                       </tr>
@@ -640,6 +642,8 @@ export default function DashboardTrainee() {
                           <td>{m.TopCircumference}</td>
                           <td>{m.ButtockCircumference}</td>
                           <td>{m.BodyWeight}</td>
+                          <td>{m.BodyFatPercentage ?? "—"}</td>
+                          <td>{m.RMR ?? "—"}</td>
                           <td>{m.ArmCircumference}</td>
                           <td className="measure-photos-cell">
                             {(() => {
